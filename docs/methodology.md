@@ -38,6 +38,26 @@ signals, written to `matches.jsonl` in every release. Manual decisions in
 `review/manual_overrides.yaml` (`same_as`, `not_same_as`) win over every automatic rule,
 and a rejection blocks transitive merges through a third record.
 
+### Persons and person mentions (ADR-0006)
+
+A canonical Person needs an identity anchor (own institutional profile, MTMT, ORCID or a
+manual decision). Every other person-like observation is a `PersonMention`, and the
+question entity resolution answers is whether a mention `RESOLVES_TO` a Person. As of
+#4 only two rules resolve a mention: the page links to the Person's exact profile URL,
+or it states the Person's MTMT/ORCID with a compatible name. Everything else is
+`UNRESOLVED` and contributes nothing to the analytical graph.
+
+Signal classes for evidence-based mention resolution (#5; proposed, not implemented):
+
+| Class | Signals | May resolve on its own? |
+|---|---|---|
+| Deterministic | exact canonical profile URL (after host-alias normalisation); MTMT or ORCID stated on the page + compatible name; manual `same_as` | yes (`DETERMINISTIC` / `MANUAL_CONFIRMED`) |
+| Strong contextual | same `/kutato/<slug>` on another TK host + same name; full name match + the observing page belongs to the Person's own unit or institution family; the Person's own profile lists the same project (profile ↔ project page reciprocity); a unique full name among all anchored Persons *and* same institution family | only as `HIGH_CONFIDENCE_AUTO`, only under a documented rule that combines at least two strong signals, and never across a disagreeing hard id |
+| Weak | name similarity alone, initials, order-free name key, topic overlap, co-occurrence with the Person's collaborators, an LLM judgement | never; ranks `candidate_person_ids` for review only |
+
+An LLM may propose a candidate or summarise evidence, but its output is never an observed
+fact and never a resolution decision by itself.
+
 Org units and projects: identical normalised name/title on the same site = same entity
 (unit page vs "Osztály: …" line on a profile). Across sites, never automatic.
 
