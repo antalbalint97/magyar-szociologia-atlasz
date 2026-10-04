@@ -38,6 +38,7 @@ ID_PREFIX: dict[EntityType, str] = {
     EntityType.TRADITION: "trd",
     EntityType.EVENT: "evt",
     EntityType.PERSON_MENTION: "pmn",
+    EntityType.PROJECT_MENTION: "pjm",
 }
 
 
@@ -169,6 +170,74 @@ class PersonMention(CanonicalEntity):
     candidates: list[MentionCandidate] = Field(default_factory=list)  # never a resolution by themselves
 
 
+class ProjectMentionResolution(BaseModel):
+    """The identity decision for a project mention; projected as (:ProjectMention)-[:RESOLVES_TO]->(:Project).
+
+    Same vocabulary as MentionResolution (ADR-0007); signal codes are in ADR-0008.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+    status: MentionResolutionStatus
+    project_id: str | None = None
+    method: str | None = None  # "project_url", "grant_and_title", "title_and_owner", "manual:..."
+    signals: list[str] = Field(default_factory=list)
+    negative_signals: list[str] = Field(default_factory=list)
+    evidence: dict[str, Any] = Field(default_factory=dict)
+    reason: str | None = None
+    decision_source: str | None = None
+    resolver_version: str | None = None
+    decided_at: datetime | None = None  # manual decisions only
+
+    @model_validator(mode="after")
+    def _target(self) -> ProjectMentionResolution:
+        if self.status.resolved != (self.project_id is not None):
+            raise ValueError("a resolved mention needs project_id; an unresolved one must not have it")
+        return self
+
+
+class ProjectCandidate(BaseModel):
+    """A canonical Project this mention might refer to, with the evidence for and against."""
+
+    model_config = ConfigDict(extra="forbid")
+    project_id: str
+    title_match: str | None = None  # TITLE_EXACT | TITLE_EQUAL_AFTER_AFFIXES | TITLE_PREFIX | None (grant only)
+    signals: list[str] = Field(default_factory=list)
+    negative_signals: list[str] = Field(default_factory=list)
+    rejected: bool = False  # manual not_same_as
+
+
+class ProjectMention(CanonicalEntity):
+    """Evidence: a project-like record observed in one page other than the project's own (ADR-0008).
+
+    Not a mini-Project: it keeps what the page said (title as written, the owner's role, a
+    stated period, raw funder and grant strings) and the identity decision.
+    """
+
+    entity_type: ClassVar[EntityType] = EntityType.PROJECT_MENTION
+
+    stated_title: str
+    title_key: str  # folded, grant/role/period/funder affixes removed; for matching only
+    observation: str  # profile_list | project_listing | other
+    source_ref: str
+    source_id: str
+    source_url: str
+    document_ids: list[str] = Field(default_factory=list)
+    linked_url: str | None = None
+    observed_on_profile_of: str | None = None  # Person whose own profile lists the project
+    stated_period_from: str | None = None
+    stated_period_until: str | None = None
+    stated_funders: list[str] = Field(default_factory=list)
+    stated_grant_ids: list[str] = Field(default_factory=list)
+    grant_keys: list[str] = Field(default_factory=list)  # e.g. "nkfih:143593"; matching only
+    stated_roles: list[str] = Field(default_factory=list)
+    stated_leads: list[str] = Field(default_factory=list)  # names as written, never resolved here
+    stated_status: list[str] = Field(default_factory=list)
+    context: list[MentionContext] = Field(default_factory=list)
+    activity_cues: list[str] = Field(default_factory=list)  # hints for #9; never a classification
+    resolution: ProjectMentionResolution
+    candidates: list[ProjectCandidate] = Field(default_factory=list)
+
+
 class Institution(CanonicalEntity):
     entity_type: ClassVar[EntityType] = EntityType.INSTITUTION
 
@@ -203,9 +272,12 @@ class ResearchGroup(OrganisationalUnit):
 
 
 class Project(CanonicalEntity):
+    """A canonical project identity. Exists only with identity evidence (ADR-0008)."""
+
     entity_type: ClassVar[EntityType] = EntityType.PROJECT
 
     title: str
+    identity_evidence: list[IdentityAnchor] = Field(default_factory=list)
     alternate_titles: list[str] = Field(default_factory=list)
     abstract: str | None = None
     start: str | None = None
@@ -289,6 +361,7 @@ ENTITY_CLASSES: dict[EntityType, type[CanonicalEntity]] = {
         Tradition,
         Event,
         PersonMention,
+        ProjectMention,
     )
 }
 

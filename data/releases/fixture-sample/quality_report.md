@@ -1,24 +1,20 @@
 # Data-quality report: fixture-sample
 
-- generated_at: 2026-10-04T18:34:11+00:00
+- generated_at: 2026-10-04T21:54:21+00:00
 - dataset_kind: **fixture**
 - schema_version: 0.1.0
 - sources: tk_kisebbsegkutato, tk_politikatudomany, tk_recens, tk_szociologia
-- parsers: curated=curated/0.1.0, derive.taxonomy=taxonomy_keyword_map/0.1.0, tk.listing=tk/0.3.0, tk.profile=tk/0.3.0, tk.project=tk/0.3.0, tk.project_listing=tk/0.3.0, tk.unit=tk/0.3.0
+- parsers: curated=curated/0.1.0, derive.taxonomy=taxonomy_keyword_map/0.1.0, tk.listing=tk/0.4.0, tk.profile=tk/0.4.0, tk.project=tk/0.4.0, tk.project_listing=tk/0.4.0, tk.unit=tk/0.4.0
 
 | severity | count |
 |---|---|
 | error | 0 |
-| warning | 10 |
-| info | 8 |
+| warning | 9 |
+| info | 11 |
 
 ## [warning] provenance.synthetic_documents
 
 18 documents are reconstructed fixtures; this dataset is NOT a publishable release
-
-## [warning] review.project_label_suspicious
-
-project 'Intersections.East European Journal of Society and Politics' may be a journal/role listed under Projektek
 
 ## [warning] seeds.missing
 
@@ -153,6 +149,81 @@ not_resolved_reasons:
   no canonical Person with a compatible name or the linked profile slug: 50
 ```
 
+## [info] project.activity_cues
+
+0 Projects and 4 project mentions carry words suggesting a journal, network, programme, infrastructure, consortium or newsletter (left for #9)
+
+```yaml
+mentions:
+  journal: 1
+  research_group: 2
+  programme: 1
+  network: 1
+projects: {}
+```
+
+## [info] project.mention_resolution
+
+1 of 78 project mentions resolved (1.3%); 0 need review, 77 have no candidate Project
+
+```yaml
+by_status:
+  DETERMINISTIC: 1
+  UNRESOLVED: 77
+resolved_by_method:
+  project_url: 1
+by_source:
+  tk_kisebbsegkutato:
+    UNRESOLVED: 15
+    resolved: 0
+    total: 15
+    resolution_rate: 0.0
+  tk_politikatudomany:
+    UNRESOLVED: 17
+    resolved: 0
+    total: 17
+    resolution_rate: 0.0
+  tk_recens:
+    UNRESOLVED: 22
+    resolved: 0
+    total: 22
+    resolution_rate: 0.0
+  tk_szociologia:
+    DETERMINISTIC: 1
+    UNRESOLVED: 23
+    resolved: 1
+    total: 24
+    resolution_rate: 0.042
+by_observation:
+  profile_list:
+    DETERMINISTIC: 1
+    UNRESOLVED: 67
+    resolved: 1
+    total: 68
+    resolution_rate: 0.015
+  project_listing:
+    UNRESOLVED: 10
+    resolved: 0
+    total: 10
+    resolution_rate: 0.0
+not_resolved_reasons:
+  no anchored Project with a compatible title or grant id: 45
+  linked project page not fetched: 32
+```
+
+## [info] project.unattached_metadata
+
+27 project-section metadata lines are kept unattached (no structural evidence ties them to one project)
+
+```yaml
+section_label: 2
+table_row: 1
+grant: 9
+role: 13
+funder: 1
+other: 1
+```
+
 ## [info] seeds.present
 
 Koltai Júlia -> per_965aaf3d0d
@@ -222,7 +293,7 @@ ResearchGroup: 2
 ResearchTopic: 34
 Method: 19
 Person: 11
-Project: 79
+Project: 2
 ```
 
 ## [info] stats.epistemic
@@ -230,8 +301,8 @@ Project: 79
 relations by epistemic status
 
 ```yaml
-OBSERVED: 151
-DERIVED: 101
+OBSERVED: 68
+DERIVED: 26
 ```
 
 ## [info] stats.person_mentions
@@ -253,9 +324,9 @@ AFFILIATED_WITH: 11
 BROADER: 2
 HOSTED_BY: 2
 MEMBER_OF: 8
-PARTICIPATES_IN: 68
+PARTICIPATES_IN: 1
 PART_OF: 43
-PRINCIPAL_INVESTIGATOR_OF: 17
-USES_METHOD: 16
-WORKS_ON_TOPIC: 85
+PRINCIPAL_INVESTIGATOR_OF: 1
+USES_METHOD: 4
+WORKS_ON_TOPIC: 22
 ```

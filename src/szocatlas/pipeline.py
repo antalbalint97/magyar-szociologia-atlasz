@@ -19,6 +19,7 @@ import yaml
 from . import SCHEMA_VERSION, __version__
 from .canonical.build import build_canonical
 from .canonical.mentions import build_mentions
+from .canonical.project_mentions import build_project_mentions
 from .canonical.curated import Taxonomy, derive_classifications, registry_claims
 from .fetch import FixtureFetcher, PoliteFetcher, RawStore, ReplayFetcher, dump_jsonl
 from .models.enums import EntityType, IdentityAnchor, ReviewStatus
@@ -32,8 +33,15 @@ from .resolution.mentions import (
     load_mention_decisions,
     resolve_mentions,
 )
-from .resolution.review import write_mention_review
-from .validation.mention_stats import mention_stats
+from .resolution.projects import (
+    ProjectDecision,
+    ProjectIndex,
+    claim_projects,
+    load_project_decisions,
+    resolve_project_mentions,
+)
+from .resolution.review import write_mention_review, write_project_review
+from .validation.mention_stats import mention_stats, project_mention_stats
 from .sources.base import ParseResult, SourceAdapter
 from .sources.tk.adapter import TKAdapter
 from .validation.qa import render_markdown, run_checks
@@ -186,15 +194,17 @@ def build(release_id: str, *, source_ids: list[str] | None = None, paths: Paths 
     ref_to_id, decisions = resolve(combined.records, claim_list, overrides, identity)
     if persist_identity:
         identity.save()
-    anchors = identity_anchors(combined.records, claim_list)
+    anchors = identity_anchors(combined.records, claim_list, overrides)
     # person-to-person ambiguity between identities; mention ambiguity goes to mention_review.yaml
     write_review_queue(decisions, paths.review / "unresolved_people.yaml", only_refs=set(anchors))
 
     documents = list({d.document_id: d for d in combined.documents}.values())
     ds = canonicalize(combined.records, claim_list, documents, ref_to_id, decisions, anchors, registry,
                       ResolutionConfig.load(paths.config / "resolution.yaml"),
-                      load_mention_decisions(paths.review / "manual_overrides.yaml"))
+                      load_mention_decisions(paths.review / "manual_overrides.yaml"),
+                      load_project_decisions(paths.review / "manual_overrides.yaml"))
     write_mention_review(ds, paths.review / "mention_review.yaml")
+    write_project_review(ds, paths.review / "project_review.yaml")
 
     synthetic = any(d.synthetic for d in documents)
     parser_versions = dict(sorted({c.parser: c.parser_version for c in claim_list}.items()))
@@ -209,9 +219,11 @@ def build(release_id: str, *, source_ids: list[str] | None = None, paths: Paths 
         "documents": len(documents),
         "claims": len(claim_list),
         "entities": dict(Counter(e.entity_type.value for e in ds.entities.values()))
-        | ({"PersonMention": len(ds.mentions)} if ds.mentions else {}),
-        "counts": person_counts(ds),
+        | ({"PersonMention": len(ds.mentions)} if ds.mentions else {})
+        | ({"ProjectMention": len(ds.project_mentions)} if ds.project_mentions else {}),
+        "counts": person_counts(ds) | project_counts(ds, claim_list),
         "mention_resolution": mention_stats(ds),
+        "project_mention_resolution": project_mention_stats(ds),
         "relations": dict(Counter(r.type.value for r in ds.relations)),
         "source_retrieval_window": _window(documents),
     }
@@ -225,6 +237,9 @@ def build(release_id: str, *, source_ids: list[str] | None = None, paths: Paths 
                    sorted(ds.by_type(etype), key=lambda e: e.canonical_id))
     if ds.mentions:
         dump_jsonl(out / "entities" / "PersonMention.jsonl", [ds.mentions[k] for k in sorted(ds.mentions)])
+    if ds.project_mentions:
+        dump_jsonl(out / "entities" / "ProjectMention.jsonl",
+                   [ds.project_mentions[k] for k in sorted(ds.project_mentions)])
     dump_jsonl(out / "relations.jsonl", sorted(ds.relations, key=lambda r: r.relation_id))
     dump_jsonl(out / "claims.jsonl", sorted(claim_list, key=lambda c: c.claim_id))
     dump_jsonl(out / "documents.jsonl", sorted(documents, key=lambda d: d.document_id))
@@ -273,6 +288,38 @@ def person_counts(ds) -> dict[str, Any]:
     }
 
 
+def project_counts(ds, claims) -> dict[str, Any]:
+    """Canonical Projects vs project mentions, always reported together (ADR-0008)."""
+    projects = ds.by_type(EntityType.PROJECT)
+    pms = list(ds.project_mentions.values())
+    status = Counter(m.resolution.status.value for m in pms)
+    unresolved = [m for m in pms if not m.resolution.status.resolved]
+    titles: dict[str, set[str]] = defaultdict(set)
+    for m in unresolved:
+        titles[m.title_key].add(m.source_url)
+    return {
+        "projects": {
+            "canonical": len(projects),
+            "page_backed": sum(1 for p in projects if IdentityAnchor.PROJECT_PAGE in p.identity_evidence),
+            "manual_only": sum(1 for p in projects if p.identity_evidence == [IdentityAnchor.MANUAL]),
+            "with_grant_id": sum(1 for p in projects if p.grant_id),
+        },
+        "project_mentions": {
+            "total": len(pms),
+            "resolved": len(pms) - len(unresolved),
+            "unresolved": len(unresolved),
+            "by_status": dict(sorted(status.items())),
+            "by_observation": dict(sorted(Counter(m.observation for m in pms).items())),
+            "unresolved_distinct_records": len({m.source_ref for m in unresolved}),
+            "unresolved_title_groups_on_several_pages": sum(1 for v in titles.values() if len(v) > 1),
+            "with_activity_cues": sum(1 for m in pms if m.activity_cues),
+            "claims_only_on_unresolved_project_mentions": ds.project_mention_claims_skipped,
+        },
+        "unattached_project_metadata": dict(sorted(Counter(
+            c.qualifiers.get("kind", "other") for c in claims if c.predicate == "unattached_project_metadata").items())),
+    }
+
+
 def _window(documents: list[SourceDocument]) -> dict[str, str] | None:
     web = [d.retrieved_at for d in documents if not d.url.startswith("repo://")]
     if not web:
@@ -281,21 +328,35 @@ def _window(documents: list[SourceDocument]) -> dict[str, str] | None:
 
 
 def canonicalize(records, claims, documents, ref_to_id, decisions, anchors, registry, config: ResolutionConfig,
-                 mention_decisions: list[MentionDecision]):
-    """Claims + identity -> canonical dataset with person mentions (ADR-0006, ADR-0007)."""
+                 mention_decisions: list[MentionDecision], project_decisions: list[ProjectDecision] | None = None):
+    """Claims + identity -> canonical dataset with person and project mentions (ADR-0006/0007/0008).
+
+    Decisions never chain: project rules see certain evidence only; person rules see
+    certain person evidence plus resolved projects (a one-way dependency, ADR-0008).
+    """
     evidence: dict[str, set] = defaultdict(set)
     for ref, kinds in anchors.items():
         if ref in ref_to_id:
             evidence[ref_to_id[ref]] |= kinds
     ev = {k: sorted(v) for k, v in evidence.items()}
-    mb = build_mentions(records, claims, {d.document_id: d for d in documents}, ref_to_id, decisions, anchors,
-                        registry)
-    # pass 1: certain evidence only (own profiles, certain mention decisions), the context #5 rules may use
-    certain = build_canonical(claims, documents, ref_to_id, ev,
-                              claim_persons(mb.mentions, mb.claim_mention, mb.own_claims, certain_only=True))
+    docs = {d.document_id: d for d in documents}
+    mb = build_mentions(records, claims, docs, ref_to_id, decisions, anchors, registry)
+    pmb = build_project_mentions(records, claims, docs, ref_to_id, anchors, mb.own_claims)
+    certain_persons = claim_persons(mb.mentions, mb.claim_mention, mb.own_claims, certain_only=True)
+    certain_projects = claim_projects(pmb.mentions, pmb.claim_mention, pmb.own_claims, certain_only=True)
+    # pass 1a: certain evidence only; the context project rules may use
+    base = build_canonical(claims, documents, ref_to_id, ev, certain_persons, certain_projects)
+    resolve_project_mentions(pmb.mentions, ProjectIndex(base, records, claims, certain_projects, ref_to_id),
+                             config.project_resolver_version, project_decisions or [])
+    projects = claim_projects(pmb.mentions, pmb.claim_mention, pmb.own_claims)
+    # pass 1b: certain person evidence and every resolved project, the context #5 rules may use
+    certain = build_canonical(claims, documents, ref_to_id, ev, certain_persons, projects)
+    certain.project_mentions = pmb.mentions
     resolve_mentions(mb.mentions, certain, registry, config, ref_to_id, mention_decisions)
-    # pass 2: project claims of every resolved mention onto its Person
-    ds = build_canonical(claims, documents, ref_to_id, ev, claim_persons(mb.mentions, mb.claim_mention, mb.own_claims))
+    # pass 2: project claims of every resolved mention onto its Person / Project
+    ds = build_canonical(claims, documents, ref_to_id, ev, claim_persons(mb.mentions, mb.claim_mention, mb.own_claims),
+                         projects)
     ds.anchor_refs = set(anchors)
     ds.mentions = mb.mentions
+    ds.project_mentions = pmb.mentions
     return ds

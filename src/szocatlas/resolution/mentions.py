@@ -99,6 +99,7 @@ class ResolutionConfig:
     resolver_version: str = "person-mention-resolver/0"
     families: list[Family] = field(default_factory=list)
     common_surnames: set[str] = field(default_factory=set)
+    project_resolver_version: str = "project-mention-resolver/0"
 
     @classmethod
     def load(cls, path: Path) -> ResolutionConfig:
@@ -109,7 +110,8 @@ class ResolutionConfig:
                        bool(v.get("shared_profile_slug_namespace")))
                 for k, v in (data.get("institution_families") or {}).items()]
         return cls(data.get("resolver_version", "person-mention-resolver/0"), fams,
-                   {s.lower() for s in data.get("common_surnames") or []})
+                   {s.lower() for s in data.get("common_surnames") or []},
+                   data.get("project_resolver_version", "project-mention-resolver/0"))
 
     def family_of_source(self, source_id: str) -> Family | None:
         return next((f for f in self.families if source_id in f.sources), None)
@@ -245,6 +247,12 @@ class Index:
                     self.by_surname[k.split()[0]].add(p.canonical_id)
             for s in facts.slugs:
                 self.by_slug[s].add(p.canonical_id)
+        # titles the person's own profile lists that did not resolve to a Project (ADR-0008):
+        # the same folded-title evidence ADR-0007 used when such titles were Projects
+        for pm in getattr(ds, "project_mentions", {}).values():
+            pf = self.persons.get(pm.observed_on_profile_of or "")
+            if pf is not None and len(t := title_fold(pm.stated_title)) >= 15:
+                pf.project_titles.setdefault(t, pm.resolution.project_id or pm.canonical_id)
 
     def ancestors(self, unit: str) -> set[str]:
         seen, stack = set(), [unit]

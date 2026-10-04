@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import EgoGraph from "@/components/EgoGraph";
 import MentionView, { statusLabel } from "@/components/MentionView";
 import { graph, type Edge, type EntitySummary } from "@/lib/graph";
+import { RESOLVED_MENTION } from "@/lib/graph/mentions";
 
 const OUT: Record<string, string> = {
   AFFILIATED_WITH: "Affiliáció", MEMBER_OF: "Szervezeti egység", LEADS: "Vezeti",
@@ -53,7 +54,7 @@ function EdgeRow({ e, other }: { e: Edge; other?: EntitySummary }) {
 export default async function EntityPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const g = graph();
-  const mention = id.startsWith("pmn_") ? await g.mention(id) : null;
+  const mention = id.startsWith("pmn_") || id.startsWith("pjm_") ? await g.mention(id) : null;
   if (mention) return <MentionView m={mention} g={g} />;
   const hood = await g.neighbourhood(id, 2);
   if (!hood) notFound();
@@ -80,7 +81,10 @@ export default async function EntityPage({ params }: { params: Promise<{ id: str
   const f = e.fields;
   const urls = [...((f.profile_urls as string[]) ?? []), ...(f.website ? [f.website as string] : [])];
   const areas = (f.stated_research_areas as string[]) ?? [];
-  const mentions = e.type === "Person" ? await g.mentionsOf(id) : [];
+  const mentions = e.type === "Person" || e.type === "Project" ? await g.mentionsOf(id) : [];
+  // projects the person's own profile lists that did not resolve to a Project (ADR-0008)
+  const stated = e.type === "Person"
+    ? (await g.statedProjectsOf(id)).filter((m) => !RESOLVED_MENTION.has(m.status)) : [];
 
   return (
     <>
@@ -132,6 +136,22 @@ export default async function EntityPage({ params }: { params: Promise<{ id: str
           ))}
         </div>
         <div>
+          {stated.length > 0 && (
+            <section className="card">
+              <h2>Saját profilon felsorolt, nem azonosított projektek <span className="muted">({stated.length})</span></h2>
+              <p className="muted" style={{ fontSize: 13 }}>
+                Nincs hozzájuk projektoldal vagy elég bizonyíték, ezért nem részei a projekthálózatnak.
+              </p>
+              <ul className="edge-list">
+                {stated.map((m) => (
+                  <li key={m.id}>
+                    <Link href={`/entity/${m.id}`}>„{m.statedName}”</Link>
+                    <span className="badge UNRESOLVED">{statusLabel(m)}</span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
           {mentions.length > 0 && (
             <section className="card">
               <h2>Említések a forrásokban <span className="muted">({mentions.length})</span></h2>

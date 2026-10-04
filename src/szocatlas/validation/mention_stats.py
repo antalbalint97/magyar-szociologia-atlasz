@@ -76,3 +76,39 @@ def _reason_class(reason: str | None) -> str:
     if reason.startswith("no rule satisfied"):
         return "no rule satisfied"
     return reason.split(";")[0]
+
+
+def project_mention_stats(ds) -> dict[str, Any]:
+    """Project-mention resolution (#7, ADR-0008), by source site and by kind of observation."""
+    pms = list(getattr(ds, "project_mentions", {}).values())
+    if not pms:
+        return {}
+    resolved = [m for m in pms if m.resolution.status.resolved]
+    open_ = [m for m in pms if not m.resolution.status.resolved]
+    by_source: dict[str, Counter] = defaultdict(Counter)
+    by_obs: dict[str, Counter] = defaultdict(Counter)
+    for m in pms:
+        for bucket in (by_source[m.source_id], by_obs[m.observation]):
+            bucket["total"] += 1
+            bucket[m.resolution.status.value] += 1
+            bucket["resolved"] += int(m.resolution.status.resolved)
+
+    def table(groups: dict[str, Counter]) -> dict[str, dict[str, Any]]:
+        return {k: dict(sorted(v.items())) | {"resolution_rate": _rate(v["resolved"], v["total"])}
+                for k, v in sorted(groups.items())}
+
+    return {
+        "total": len(pms),
+        "resolved": len(resolved),
+        "not_resolved": len(open_),
+        "resolution_rate": _rate(len(resolved), len(pms)),
+        "by_status": dict(sorted(Counter(m.resolution.status.value for m in pms).items())),
+        "resolved_by_method": dict(sorted(Counter(m.resolution.method for m in resolved).items())),
+        "review_required": sum(1 for m in pms if m.resolution.status is MentionResolutionStatus.REVIEW_REQUIRED),
+        "no_candidate": sum(1 for m in pms if m.resolution.status is MentionResolutionStatus.UNRESOLVED),
+        "with_multiple_viable_candidates": sum(
+            1 for m in pms if any("MULTIPLE_CANDIDATES" in c.negative_signals for c in m.candidates)),
+        "not_resolved_reasons": dict(Counter(_reason_class(m.resolution.reason) for m in open_).most_common()),
+        "by_source": table(by_source),
+        "by_observation": table(by_obs),
+    }

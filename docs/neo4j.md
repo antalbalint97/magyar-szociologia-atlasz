@@ -81,3 +81,23 @@ name on a listing, unit or project page).
 
 Structural queries match `(:Person)` and never traverse mentions. Provenance queries walk
 `SourceDocument ← Claim`, `PersonMention -[:RESOLVES_TO]-> Person` (queries 11–13).
+
+## Project mentions (ADR-0008)
+
+`:ProjectMention` nodes are evidence as well, without `:Entity`. A project mention is one
+project-like record observed on one page other than the project's own: a category-listing
+article, a line in a researcher profile's "Projektek" section.
+
+* `(:ProjectMention)-[:RESOLVES_TO {status, method, signals, negative_signals, ...}]->(:Project)`
+  for resolved mentions (`project_url`, `grant_and_title`, `grant_and_owner`,
+  `title_and_owner`, manual).
+* `(:ProjectMention)-[:MENTIONED_IN {relation, direction: 'in', role}]->(:Person)` for the
+  profile owner who lists the project. `observed_on_profile_of` carries the same id, so
+  "projects X lists but that have no page" is
+  `MATCH (m:ProjectMention {observed_on_profile_of: $id}) WHERE NOT (m)-[:RESOLVES_TO]->() RETURN m`.
+* `stated_title`, `stated_period_from/until`, `stated_grant_ids`, `grant_keys`,
+  `stated_roles` and `activity_cues` are properties. Candidates and evidence are JSON strings.
+
+Co-participation queries match `(:Person)-[:PARTICIPATES_IN]->(:Project)` and therefore
+see only anchored projects. Unresolved profile titles never create a tie.
+

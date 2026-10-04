@@ -66,8 +66,43 @@ graph. There is no confidence score: each decision names its rule and signals.
 An LLM may propose a candidate or summarise evidence, but its output is never an observed
 fact and never a resolution decision by itself.
 
-Org units and projects: identical normalised name/title on the same site = same entity
-(unit page vs "Osztály: …" line on a profile). Across sites, never automatic.
+Org units: identical normalised name on the same site = same entity (unit page vs
+"Osztály: …" line on a profile). Across sites, never automatic.
+
+### Projects and project mentions (ADR-0008)
+
+Projects follow the same layering, with project-specific evidence (#7). A canonical
+`Project` needs an identity anchor: its own page on an institutional site was fetched, or
+a reviewer joined its record to another one. Every other project-like observation is a
+`ProjectMention` (`pjm_`): a category-listing article, a line in a researcher profile's
+"Projektek" section, a link to a project page that was never fetched. A mention keeps
+what the page said: the title as written, the profile owner's role, a stated period, and
+raw funder and grant strings.
+
+Same title is never the same project, because editions share titles (`Éghajlatváltozás
+és egészség` 2020 and 2021 are two Projects). Candidates come from a shared grant number,
+an equal title key (grant, role, period and funder affixes removed), or a long title
+prefix. A decision is one of:
+
+| Class | Signals | Resolves? |
+|---|---|---|
+| Certain | the mention links the Project's own page; manual decision | yes: `DETERMINISTIC` / `MANUAL_CONFIRMED` |
+| Strong | same grant number (OTKA/NKFI/NKFIH share one numbering; labels ignored); compatible title; the page links or names the profile owner | only through `grant_and_title`, `grant_and_owner` or `title_and_owner`: `HIGH_CONFIDENCE_AUTO` |
+| Weak | same site | never |
+| Negative | different grant numbers, disjoint periods (year precision), a link to another page, several viable candidates, manual `not_same_as` | block automatic rules |
+
+Title evidence never decides alone. Project rules read only certain evidence and the
+names written on project pages, never an automatic person decision. Person rules may use
+resolved projects (`own-profile-project`), a one-way dependency, so no decision supports
+itself. Unresolved project mentions are listed in `review/project_review.yaml`, together
+with titles that stay unresolved on several pages. Their participation claims stay on
+the mention and are not in the analytical graph.
+
+Metadata lines in a profile's project section that the markup does not tie to one
+project (role, period, grant, funder, section labels) are kept as
+`unattached_project_metadata` claims and never attached by proximity. Journals, networks,
+programmes and other activities listed as projects keep `activity_cues` for #9 and are
+not reclassified here.
 
 Host aliases (`szociologia.tk.mta.hu`, `szociologia.tk.hu` → `szociologia.tk.elte.hu`)
 are URL normalisation declared in the registry, not entity resolution: they are the same

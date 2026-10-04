@@ -24,7 +24,7 @@ from bs4 import BeautifulSoup, NavigableString, Tag
 from ...normalize.names import clean_display_name, normalise_whitespace
 from ...normalize.urls import canonical_url, mtmt_id, orcid_id, scholar_id
 
-PARSER_VERSION = "tk/0.3.0"
+PARSER_VERSION = "tk/0.4.0"
 
 PROFILE_PATH_RE = re.compile(r"^/kutato/(?!pdf/)([a-z0-9][a-z0-9-]*)/?$")
 CV_PATH_RE = re.compile(r"^/kutato/pdf/(\d+)$")
@@ -645,6 +645,21 @@ def is_project_metadata(text: str) -> bool:
                           or PERIOD_LINE_RE.match(t) or re.fullmatch(r"\d{4}\.?", t)
                           or GRANT_LINE_RE.match(t) or FUNDER_ROLE_LINE_RE.match(t)
                           or FUNDER_ONLY_LINE_RE.match(t)))
+
+
+def metadata_kind(text: str) -> str:
+    """What kind of metadata a rejected project-section line is (#7: kept as an unattached claim)."""
+    t = text.strip().strip("„”\"").strip()
+    if " | " in t and not is_project_metadata(t):
+        return "table_row"  # a row with no title cell, usually the header
+    for kind, rx in (("section_label", PROJECT_SECTION_LABEL_RE), ("role", ROLE_LINE_RE),
+                     ("period", PERIOD_LINE_RE), ("grant", GRANT_LINE_RE), ("funder_role", FUNDER_ROLE_LINE_RE),
+                     ("funder", FUNDER_ONLY_LINE_RE)):
+        if rx.match(t):
+            return kind
+    if re.fullmatch(r"\d{4}\.?", t):
+        return "period"
+    return "table_row" if " | " in t else "other"
 
 
 def _profile_projects(blocks: list[Tag], base: str, aliases: dict[str, str],

@@ -1,4 +1,5 @@
-// Converts a PersonMention row (release file or Neo4j node) into the UI shape (ADR-0006).
+// Converts a PersonMention / ProjectMention row (release file or Neo4j node) into the UI shape
+// (ADR-0006, ADR-0008).
 import type { Mention, MentionCandidate, MentionContext, MentionStatus } from "./types.ts";
 
 export const RESOLVED_MENTION: ReadonlySet<MentionStatus> = new Set([
@@ -21,21 +22,25 @@ export function toMention(r: Row): Mention {
     snippet: c.snippet ?? "",
     claimIds: c.claim_ids ?? [],
   }));
+  const project = String(r.canonical_id).startsWith("pjm_");
   return {
     id: r.canonical_id,
-    statedName: r.stated_name,
+    kind: project ? "project" : "person",
+    statedName: project ? r.stated_title : r.stated_name,
     sourceUrl: r.source_url,
-    linkedProfileUrl: r.linked_profile_url ?? null,
+    linkedProfileUrl: (project ? r.linked_url : r.linked_profile_url) ?? null,
     status: res.status ?? "UNRESOLVED",
-    personId: res.person_id ?? null,
+    resolvedTo: (project ? res.project_id : res.person_id) ?? null,
+    observedOnProfileOf: r.observed_on_profile_of ?? null,
+    activityCues: r.activity_cues ?? [],
     method: res.method ?? null,
     decisionSource: res.decision_source ?? null,
     signals: res.signals ?? [],
     negativeSignals: res.negative_signals ?? [],
     reason: res.reason ?? null,
     candidates: cands.map((c): MentionCandidate => ({
-      personId: c.person_id,
-      nameMatch: c.name_match,
+      targetId: c.person_id ?? c.project_id,
+      match: c.name_match ?? c.title_match ?? null,
       signals: c.signals ?? [],
       negativeSignals: c.negative_signals ?? [],
       rejected: Boolean(c.rejected),

@@ -37,6 +37,8 @@ FIELD_MAP: dict[EntityType, dict[str, tuple[str, bool]]] = {
         "academic_rank": ("academic_rank", False),
         "discipline": ("disciplines", True),
         "email_domain": (None, False),  # resolution signal only; not published
+        # #7: project-section lines the markup does not tie to a project; kept as claims only
+        "unattached_project_metadata": (None, False),
     },
     EntityType.INSTITUTION: {
         "name": ("canonical_name", False),
@@ -98,6 +100,8 @@ class CanonicalDataset:
     issues: list[dict[str, Any]] = field(default_factory=list)
     mentions: dict[str, Any] = field(default_factory=dict)  # pmn_ id -> PersonMention (ADR-0006)
     mention_claims_skipped: int = 0  # claims kept only as context of unresolved mentions
+    project_mentions: dict[str, Any] = field(default_factory=dict)  # pjm_ id -> ProjectMention (ADR-0008)
+    project_mention_claims_skipped: int = 0  # claims kept only on unresolved project mentions
     anchor_refs: set[str] = field(default_factory=set)  # person records carrying identity evidence
 
     def by_type(self, etype: EntityType) -> list[CanonicalEntity]:
@@ -137,6 +141,7 @@ def build_canonical(
     ref_to_id: dict[str, str],
     identity_evidence: dict[str, list] | None = None,
     person_claims: dict[tuple[str, str], str] | None = None,
+    project_claims: dict[tuple[str, str], str] | None = None,
 ) -> CanonicalDataset:
     """Project claims onto canonical entities.
 
@@ -144,6 +149,7 @@ def build_canonical(
     observed on a page counts only through its own profile or a resolved mention, so the
     same source record can resolve on one page and stay a mention on another. Without
     it, person records resolve through ``ref_to_id`` (fixtures and unit tests).
+    ``project_claims`` does the same for project sides (ADR-0008).
     """
     ds = CanonicalDataset(claims=claims, documents={d.document_id: d for d in documents})
     literal: dict[tuple[str, EntityType], dict[str, list[Claim]]] = defaultdict(lambda: defaultdict(list))
@@ -153,14 +159,25 @@ def build_canonical(
     def resolve_side(ref, claim_id: str, pos: str) -> str | None:
         if ref.entity_type is EntityType.PERSON and person_claims is not None and not ref.canonical_id:
             return person_claims.get((claim_id, pos))
+        if ref.entity_type is EntityType.PROJECT and project_claims is not None and not ref.canonical_id:
+            return project_claims.get((claim_id, pos))
         return _cid(ref, ref_to_id)
+
+    def mention_only(ref, cid) -> EntityType | None:
+        if ref is not None and cid is None and ref.entity_type in (EntityType.PERSON, EntityType.PROJECT):
+            return ref.entity_type
+        return None
 
     for c in claims:
         sid = resolve_side(c.subject, c.claim_id, "subject")
         oid = resolve_side(c.object, c.claim_id, "object") if c.object is not None else None
-        if (c.subject.entity_type is EntityType.PERSON and sid is None) or (
-                c.object is not None and c.object.entity_type is EntityType.PERSON and oid is None):
-            ds.mention_claims_skipped += 1  # a person side that is only a mention: kept in its context
+        kinds = {mention_only(c.subject, sid), mention_only(c.object, oid)} - {None}
+        if kinds:
+            # a side that is only a mention: the claim is kept in that mention's context
+            if EntityType.PERSON in kinds:
+                ds.mention_claims_skipped += 1
+            else:
+                ds.project_mention_claims_skipped += 1
             continue
         if sid is None:
             ds.issues.append({"check": "unresolved_subject", "claim_id": c.claim_id})
@@ -250,7 +267,7 @@ def build_canonical(
                 if conf:
                     conflicts[fname] = conf
             provenance.setdefault(fname, []).extend(c.claim_id for c in cs)
-        if etype is EntityType.PERSON:
+        if etype in (EntityType.PERSON, EntityType.PROJECT):
             values["identity_evidence"] = sorted((identity_evidence or {}).get(cid, []))
             pts = position_titles.get(cid, [])
             if pts:

@@ -21,3 +21,7 @@ CREATE FULLTEXT INDEX entity_search IF NOT EXISTS FOR (n:Entity) ON EACH [n.labe
 CREATE CONSTRAINT person_mention_id IF NOT EXISTS FOR (m:PersonMention) REQUIRE m.canonical_id IS UNIQUE;
 CREATE INDEX mention_status IF NOT EXISTS FOR (m:PersonMention) ON (m.resolution_status);
 CREATE FULLTEXT INDEX mention_search IF NOT EXISTS FOR (m:PersonMention) ON EACH [m.label, m.search_text];
+// Project mentions (ADR-0008): evidence nodes, deliberately not :Entity.
+CREATE CONSTRAINT project_mention_id IF NOT EXISTS FOR (m:ProjectMention) REQUIRE m.canonical_id IS UNIQUE;
+CREATE INDEX project_mention_status IF NOT EXISTS FOR (m:ProjectMention) ON (m.resolution_status);
+CREATE FULLTEXT INDEX project_mention_search IF NOT EXISTS FOR (m:ProjectMention) ON EACH [m.label, m.search_text];

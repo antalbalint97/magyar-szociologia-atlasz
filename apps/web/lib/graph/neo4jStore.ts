@@ -78,6 +78,9 @@ export class Neo4jStore implements GraphStore {
       "CALL db.index.fulltext.queryNodes('entity_search', $terms) YIELD node, score RETURN node, score " +
       "UNION CALL db.index.fulltext.queryNodes('mention_search', $terms) YIELD node, score " +
       "WITH node, score WHERE node.resolution_status IN ['REVIEW_REQUIRED', 'UNRESOLVED'] " +
+      "RETURN node, score * 0.5 AS score " +
+      "UNION CALL db.index.fulltext.queryNodes('project_mention_search', $terms) YIELD node, score " +
+      "WITH node, score WHERE node.resolution_status IN ['REVIEW_REQUIRED', 'UNRESOLVED'] " +
       "RETURN node, score * 0.5 AS score ORDER BY score DESC LIMIT $limit", { terms, limit: neo4j.int(limit) });
     return rows.map((r) => {
       const p = r.get("node").properties;
@@ -87,26 +90,33 @@ export class Neo4jStore implements GraphStore {
 
   async entity(id: string) {
     const [r] = await this.q(
-      "MATCH (n {canonical_id: $id}) WHERE n:Entity OR n:PersonMention RETURN n", { id });
+      "MATCH (n {canonical_id: $id}) WHERE n:Entity OR n:PersonMention OR n:ProjectMention RETURN n", { id });
     return r ? nodeToEntity(r.get("n").properties) : null;
   }
 
   async mention(id: string): Promise<Mention | null> {
-    const [r] = await this.q("MATCH (m:PersonMention {canonical_id: $id}) RETURN m", { id });
+    const [r] = await this.q(
+      "MATCH (m {canonical_id: $id}) WHERE m:PersonMention OR m:ProjectMention RETURN m", { id });
     return r ? toMention(r.get("m").properties) : null;
   }
 
-  async mentionsOf(personId: string): Promise<Mention[]> {
+  async mentionsOf(id: string): Promise<Mention[]> {
     const rows = await this.q(
-      "MATCH (m:PersonMention)-[:RESOLVES_TO]->(:Person {canonical_id: $id}) RETURN m ORDER BY m.source_url",
-      { id: personId });
+      "MATCH (m)-[:RESOLVES_TO]->(:Entity {canonical_id: $id}) WHERE m:PersonMention OR m:ProjectMention " +
+      "RETURN m ORDER BY m.source_url", { id });
+    return rows.map((r) => toMention(r.get("m").properties));
+  }
+
+  async statedProjectsOf(personId: string): Promise<Mention[]> {
+    const rows = await this.q(
+      "MATCH (m:ProjectMention {observed_on_profile_of: $id}) RETURN m ORDER BY m.stated_title", { id: personId });
     return rows.map((r) => toMention(r.get("m").properties));
   }
 
   async neighbourhood(id: string, depth: 1 | 2): Promise<Neighbourhood | null> {
     const center = await this.entity(id);
     if (!center) return null;
-    if (center.type === "PersonMention") return { center, nodes: [center], edges: [] };
+    if (center.type === "PersonMention" || center.type === "ProjectMention") return { center, nodes: [center], edges: [] };
     const hop2 = depth === 2
       ? "UNION MATCH (c:Entity {canonical_id: $id})-[:MEMBER_OF|AFFILIATED_WITH|LEADS|PARTICIPATES_IN]->(h)" +
         "<-[r:MEMBER_OF|AFFILIATED_WITH|LEADS|PARTICIPATES_IN]-(o:Person) RETURN o AS a, r, h AS b, startNode(r) = o AS fwd"

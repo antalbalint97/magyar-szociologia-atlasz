@@ -20,12 +20,14 @@ import yaml
 
 from ..canonical.build import CanonicalDataset
 from ..canonical.mentions import mention_id
+from ..canonical.project_mentions import project_mention_id
 from ..models.entities import Person, Project
 from ..models.enums import EntityType, EpistemicStatus, MatchStatus, MentionResolutionStatus, RelationType
 from ..normalize.names import name_key, order_free_key
 from ..resolution.matcher import MatchDecision
 from ..sources.tk.parser import is_project_metadata
-from .mention_stats import mention_stats
+from ..resolution.projects import activity_cues, grant_keys, title_key
+from .mention_stats import mention_stats, project_mention_stats
 
 AFFILIATION_TYPES = {RelationType.AFFILIATED_WITH, RelationType.MEMBER_OF, RelationType.LEADS,
                      RelationType.WORKED_AT}
@@ -178,6 +180,7 @@ def run_checks(ds: CanonicalDataset, decisions: list[MatchDecision], seeds_path:
                          sorted(multi), {"identity_records": multi}))
 
     F += _mention_checks(ds, claims_by_id)
+    F += _project_checks(ds, claims_by_id)
 
     # conflicts
     for e in ds.entities.values():
@@ -289,6 +292,113 @@ def _mention_checks(ds: CanonicalDataset, claims_by_id: dict) -> list[Finding]:
                              f"{st['not_resolved_sharing_a_person_name']} share a canonical Person's name "
                              "(review/mention_review.yaml)",
                              detail={"top_persons": st["persons_with_most_unresolved_same_name_mentions"]}))
+    return F
+
+
+PROJECT_BLOCKING = {"GRANT_ID_CONFLICT", "PERIOD_CONFLICT", "LINKS_OTHER_PAGE", "MULTIPLE_CANDIDATES",
+                    "MANUAL_NOT_SAME_AS"}
+PROJECT_INDEPENDENT = {"GRANT_ID_MATCH", "PAGE_LINKS_OWNER", "PAGE_NAMES_OWNER"}
+
+
+def _project_checks(ds: CanonicalDataset, claims_by_id: dict) -> list[Finding]:
+    """ADR-0008: Projects are identities with an anchor; project mentions are evidence with a decision."""
+    F: list[Finding] = []
+    projects = {p.canonical_id: p for p in ds.by_type(EntityType.PROJECT)}
+    no_evidence = [pid for pid, p in projects.items() if not getattr(p, "identity_evidence", None)]
+    if no_evidence:
+        F.append(Finding("project.without_evidence", "error",
+                         f"{len(no_evidence)} canonical Projects have no identity evidence", no_evidence[:50]))
+    pms = list(ds.project_mentions.values())
+    missing = [m.canonical_id for m in pms if m.resolution.project_id and m.resolution.project_id not in projects]
+    if missing:
+        F.append(Finding("project.mention_target_missing", "error",
+                         f"{len(missing)} project mentions resolve to a Project that is not in the release", missing[:50]))
+    unstable = [m.canonical_id for m in pms if m.canonical_id != project_mention_id(m.source_ref, m.source_url)]
+    if unstable:
+        F.append(Finding("project.unstable_mention_id", "error",
+                         f"{len(unstable)} project mention ids are not derived from (record, page)", unstable[:50]))
+    unsupported = [m.canonical_id for m in pms if not any(m.provenance.values())
+                   or any(i not in claims_by_id for ids in m.provenance.values() for i in ids)]
+    if unsupported:
+        F.append(Finding("project.mention_without_claim", "error",
+                         f"{len(unsupported)} project mentions have no valid supporting claim", unsupported[:50]))
+    auto = [m for m in pms if m.resolution.status is MentionResolutionStatus.HIGH_CONFIDENCE_AUTO]
+    unexplained = [m.canonical_id for m in auto
+                   if not m.resolution.method or len(m.resolution.signals) < 2 or not m.resolution.resolver_version]
+    if unexplained:
+        F.append(Finding("project.auto_unexplained", "error",
+                         f"{len(unexplained)} automatic project resolutions lack a rule, two signals or a resolver "
+                         "version", unexplained[:50]))
+    title_only = [m.canonical_id for m in auto if not set(m.resolution.signals) & PROJECT_INDEPENDENT]
+    if title_only:
+        F.append(Finding("project.title_only_auto", "error",
+                         f"{len(title_only)} automatic project resolutions rest on title evidence alone",
+                         title_only[:50]))
+    blocked = [m.canonical_id for m in auto if set(m.resolution.negative_signals) & PROJECT_BLOCKING]
+    if blocked:
+        F.append(Finding("project.auto_despite_contradiction", "error",
+                         f"{len(blocked)} automatic project resolutions carry a blocking negative signal", blocked[:50]))
+
+    grants = {pid: sorted({k for v in [p.grant_id] + [cv.value for cv in p.conflicts.get("grant_id", [])] if v
+                           for k in grant_keys(str(v))}) for pid, p in projects.items()}
+    conflicting = {pid: g for pid, g in grants.items() if len(g) > 1}
+    if conflicting:
+        F.append(Finding("project.conflicting_grant_ids", "warning",
+                         f"{len(conflicting)} Projects state more than one grant number", sorted(conflicting),
+                         {"grants": conflicting}))
+    multi_url = {pid: [p.website] + [cv.value for cv in p.conflicts.get("website", []) if cv.value != p.website]
+                 for pid, p in projects.items() if p.conflicts.get("website")}
+    if multi_url:
+        F.append(Finding("project.multiple_urls", "warning",
+                         f"{len(multi_url)} Projects carry more than one page URL (one project on several pages, "
+                         "or a false join)", sorted(multi_url), {"urls": multi_url}))
+    by_key: dict[str, list[str]] = defaultdict(list)
+    for pid, p in sorted(projects.items()):
+        by_key[title_key(p.title)].append(pid)
+    same = {k: v for k, v in by_key.items() if k and len(v) > 1}
+    if same:
+        F.append(Finding("project.same_title_distinct", "info",
+                         f"{len(same)} titles are shared by distinct Projects (editions or phases are kept apart "
+                         "until a page states the relation)", [i for v in same.values() for i in v],
+                         {"groups": {k: [(i, projects[i].title, projects[i].start, projects[i].end) for i in v]
+                                     for k, v in same.items()}}))
+    groups: dict[str, set[str]] = defaultdict(set)
+    for m in pms:
+        if not m.resolution.status.resolved and m.title_key:
+            groups[m.title_key].add(m.source_url)
+    dup = {k: sorted(v) for k, v in groups.items() if len(v) > 1}
+    if dup:
+        F.append(Finding("project.duplicate_title_groups", "info",
+                         f"{len(dup)} unresolved project titles appear on several pages; never merged automatically "
+                         "(review/project_review.yaml)", detail={"groups": dict(sorted(dup.items())[:30])}))
+    cues = [m for m in pms if m.activity_cues]
+    cued_projects = {pid: activity_cues(p.title) for pid, p in projects.items() if activity_cues(p.title)}
+    if cues or cued_projects:
+        F.append(Finding("project.activity_cues", "info",
+                         f"{len(cued_projects)} Projects and {len(cues)} project mentions carry words suggesting a "
+                         "journal, network, programme, infrastructure, consortium or newsletter (left for #9)",
+                         sorted(cued_projects),
+                         {"mentions": dict(Counter(c for m in cues for c in m.activity_cues)),
+                          "projects": {pid: [projects[pid].title, c] for pid, c in sorted(cued_projects.items())}}))
+    unattached = [c for c in ds.claims if c.predicate == "unattached_project_metadata"]
+    if unattached:
+        F.append(Finding("project.unattached_metadata", "info",
+                         f"{len(unattached)} project-section metadata lines are kept unattached (no structural "
+                         "evidence ties them to one project)",
+                         detail=dict(Counter(str(c.qualifiers.get("kind")) for c in unattached))))
+    if pms:
+        st = project_mention_stats(ds)
+        F.append(Finding("project.mention_resolution", "info",
+                         f"{st['resolved']} of {st['total']} project mentions resolved ({st['resolution_rate']:.1%}); "
+                         f"{st['review_required']} need review, {st['no_candidate']} have no candidate Project",
+                         detail={k: st[k] for k in ("by_status", "resolved_by_method", "by_source", "by_observation",
+                                                    "not_resolved_reasons")}))
+        rates = {k: v["resolution_rate"] for k, v in st["by_source"].items() if v["total"] >= 20}
+        if len(rates) > 1 and max(rates.values()) - min(rates.values()) > 0.2:
+            F.append(Finding("project.resolution_uneven_by_source", "warning",
+                             f"project mention resolution rates differ by "
+                             f"{max(rates.values()) - min(rates.values()):.0%} between source sites; project "
+                             "networks will be denser where project pages were crawled", detail=rates))
     return F
 
 

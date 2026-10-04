@@ -2,9 +2,9 @@ import Link from "next/link";
 import type { Evidence, GraphStore, Mention } from "@/lib/graph";
 import { RESOLVED_MENTION } from "@/lib/graph/mentions";
 
-// ADR-0006/0007: a mention page shows what one source page said about a person-like name and
-// the identity decision behind it, with the evidence for and against each candidate. It never
-// shows a biography or an unestablished identity.
+// ADR-0006/0007/0008: a mention page shows what one source page said about a person-like name
+// or a project-like title and the identity decision behind it, with the evidence for and against
+// each candidate. It never shows a biography or an unestablished identity.
 
 const STATUS_HU: Record<string, string> = {
   DETERMINISTIC: "azonosítva (profil-link vagy azonosító)",
@@ -33,14 +33,15 @@ export function statusLabel(m: Mention) {
 }
 
 export default async function MentionView({ m, g }: { m: Mention; g: GraphStore }) {
-  const ids = [...new Set([m.personId, ...m.candidates.map((c) => c.personId), ...m.context.map((c) => c.targetId)]
-    .filter(Boolean))] as string[];
+  const ids = [...new Set([m.resolvedTo, m.observedOnProfileOf, ...m.candidates.map((c) => c.targetId),
+    ...m.context.map((c) => c.targetId)].filter(Boolean))] as string[];
   const labels = new Map((await Promise.all(ids.map((i) => g.entity(i)))).filter(Boolean).map((e) => [e!.id, e!.label]));
   const evidence: Evidence[] = await g.evidence(m.claimIds);
-  const resolved = RESOLVED_MENTION.has(m.status) && m.personId;
+  const resolved = RESOLVED_MENTION.has(m.status) && m.resolvedTo;
+  const project = m.kind === "project";
   return (
     <>
-      <div className="type">Említés a forrásban</div>
+      <div className="type">{project ? "Projektemlítés a forrásban" : "Említés a forrásban"}</div>
       <h1 style={{ margin: "4px 0 2px" }}>„{m.statedName}”</h1>
       <span className={`badge ${resolved ? "OBSERVED" : "UNRESOLVED"}`}>{statusLabel(m)}</span>
       <div className="grid" style={{ marginTop: 16 }}>
@@ -48,7 +49,14 @@ export default async function MentionView({ m, g }: { m: Mention; g: GraphStore 
           <section className="card">
             <h2>Azonosítás</h2>
             {resolved ? (
-              <div>Ugyanaz a személy: <Link href={`/entity/${m.personId}`}>{labels.get(m.personId!) ?? m.personId}</Link></div>
+              <div>{project ? "Ugyanaz a projekt" : "Ugyanaz a személy"}:{" "}
+                <Link href={`/entity/${m.resolvedTo}`}>{labels.get(m.resolvedTo!) ?? m.resolvedTo}</Link></div>
+            ) : project ? (
+              <p className="muted">
+                Ez a projektcím egy forrásoldalon szerepel, de a bizonyítékok nem elegendők ahhoz, hogy egy
+                azonosított projekthez kössük (saját projektoldal, pályázati azonosító, dokumentált szabály vagy kézi
+                döntés). Nem számít projektnek a hálózatban; a cím egyezése önmagában nem azonosítás.
+              </p>
             ) : (
               <p className="muted">
                 Ez a név egy forrásoldalon szerepel, de a bizonyítékok nem elegendők ahhoz, hogy egy azonosított
@@ -67,8 +75,8 @@ export default async function MentionView({ m, g }: { m: Mention; g: GraphStore 
                 <span className="muted">Jelöltek (egy jelölt önmagában nem azonosítás):</span>
                 <ul>
                   {m.candidates.map((c) => (
-                    <li key={c.personId}>
-                      <Link href={`/entity/${c.personId}`}>{labels.get(c.personId) ?? c.personId}</Link>
+                    <li key={c.targetId}>
+                      <Link href={`/entity/${c.targetId}`}>{labels.get(c.targetId) ?? c.targetId}</Link>
                       {c.rejected && <span className="muted"> (kézzel elutasítva)</span>}
                       <div><Signals pos={c.signals} neg={c.negativeSignals} /></div>
                     </li>
@@ -81,7 +89,16 @@ export default async function MentionView({ m, g }: { m: Mention; g: GraphStore 
             <h2>Mit mond a forrás</h2>
             <div><span className="muted">Oldal:</span> <a href={m.sourceUrl} rel="noreferrer">{m.sourceUrl}</a></div>
             {m.linkedProfileUrl && (
-              <div><span className="muted">Hivatkozott profil:</span> <a href={m.linkedProfileUrl} rel="noreferrer">{m.linkedProfileUrl}</a></div>
+              <div><span className="muted">{project ? "Hivatkozott oldal:" : "Hivatkozott profil:"}</span>{" "}
+                <a href={m.linkedProfileUrl} rel="noreferrer">{m.linkedProfileUrl}</a></div>
+            )}
+            {m.observedOnProfileOf && (
+              <div><span className="muted">Saját profilján sorolja fel:</span>{" "}
+                <Link href={`/entity/${m.observedOnProfileOf}`}>{labels.get(m.observedOnProfileOf) ?? m.observedOnProfileOf}</Link></div>
+            )}
+            {m.activityCues.length > 0 && (
+              <div><span className="muted">Lehet, hogy nem projekt (#9 dönti el):</span>{" "}
+                {m.activityCues.map((c) => <code key={c} style={{ marginRight: 4 }}>{c}</code>)}</div>
             )}
             {m.context.length > 0 && (
               <ul className="edge-list">

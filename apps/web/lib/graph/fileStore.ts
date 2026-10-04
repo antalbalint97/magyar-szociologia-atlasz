@@ -63,7 +63,13 @@ interface Loaded {
   claims: Map<string, Row>;
   docs: Map<string, Row>;
   mentions: Map<string, Mention>;
-  mentionsByPerson: Map<string, Mention[]>;
+  mentionsByTarget: Map<string, Mention[]>;
+  projectsByOwner: Map<string, Mention[]>;
+}
+
+function push<K, V>(m: Map<K, V[]>, k: K, v: V) {
+  if (!m.has(k)) m.set(k, []);
+  m.get(k)!.push(v);
 }
 
 export class FileStore implements GraphStore {
@@ -75,18 +81,17 @@ export class FileStore implements GraphStore {
       const manifest = JSON.parse(await readFile(path.join(this.dir, "manifest.json"), "utf-8"));
       const entities = new Map<string, Entity>();
       const mentions = new Map<string, Mention>();
-      const mentionsByPerson = new Map<string, Mention[]>();
+      const mentionsByTarget = new Map<string, Mention[]>();
+      const projectsByOwner = new Map<string, Mention[]>();
       for (const f of await readdir(path.join(this.dir, "entities"))) {
         const type = f.replace(/\.jsonl$/, "");
         for (const r of await jsonl(path.join(this.dir, "entities", f))) {
           entities.set(r.canonical_id, toEntity(type, r));
-          if (type !== "PersonMention") continue;
+          if (type !== "PersonMention" && type !== "ProjectMention") continue;
           const m = toMention(r);
           mentions.set(m.id, m);
-          if (m.personId) {
-            if (!mentionsByPerson.has(m.personId)) mentionsByPerson.set(m.personId, []);
-            mentionsByPerson.get(m.personId)!.push(m);
-          }
+          if (m.resolvedTo) push(mentionsByTarget, m.resolvedTo, m);
+          if (m.observedOnProfileOf) push(projectsByOwner, m.observedOnProfileOf, m);
         }
       }
       const edges = (await jsonl(path.join(this.dir, "relations.jsonl"))).map(toEdge);
@@ -106,7 +111,7 @@ export class FileStore implements GraphStore {
           generatedAt: manifest.generated_at,
           sources: manifest.sources ?? [],
         },
-        entities, edges, byNode, claims, docs, mentions, mentionsByPerson,
+        entities, edges, byNode, claims, docs, mentions, mentionsByTarget, projectsByOwner,
       };
     })();
     return this.loaded;
@@ -125,7 +130,8 @@ export class FileStore implements GraphStore {
         s: score(query, [e.label, ...e.alternateNames, String(e.fields.name_hu ?? "")]),
       })),
       ...[...mentions.values()].filter((m) => !RESOLVED_MENTION.has(m.status)).map((m) => ({
-        e: { id: m.id, type: "PersonMention", label: m.statedName, alternateNames: [] },
+        e: { id: m.id, type: m.kind === "project" ? "ProjectMention" : "PersonMention", label: m.statedName,
+             alternateNames: [] },
         s: score(query, [m.statedName]) * 0.9,
       })),
     ];
@@ -172,8 +178,12 @@ export class FileStore implements GraphStore {
     return (await this.load()).mentions.get(id) ?? null;
   }
 
-  async mentionsOf(personId: string): Promise<Mention[]> {
-    return (await this.load()).mentionsByPerson.get(personId) ?? [];
+  async mentionsOf(id: string): Promise<Mention[]> {
+    return (await this.load()).mentionsByTarget.get(id) ?? [];
+  }
+
+  async statedProjectsOf(personId: string): Promise<Mention[]> {
+    return (await this.load()).projectsByOwner.get(personId) ?? [];
   }
 
   async evidence(claimIds: string[]): Promise<Evidence[]> {

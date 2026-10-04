@@ -51,14 +51,15 @@ export interface Neighbourhood {
   edges: Edge[];
 }
 
-// ADR-0006: a person-like record observed on one page. Evidence, not an identity.
+// ADR-0006 / ADR-0008: a person- or project-like record observed on one page. Evidence, not an identity.
+export type MentionKind = "person" | "project";
 export type MentionStatus =
   | "DETERMINISTIC" | "MANUAL_CONFIRMED" | "HIGH_CONFIDENCE_AUTO" | "REVIEW_REQUIRED" | "UNRESOLVED";
 
-// A canonical Person a mention might refer to, with the evidence for and against (ADR-0007).
+// A canonical Person / Project a mention might refer to, with the evidence for and against (ADR-0007/0008).
 export interface MentionCandidate {
-  personId: string;
-  nameMatch: string;
+  targetId: string;
+  match: string | null; // name match (persons) or title match (projects)
   signals: string[];
   negativeSignals: string[];
   rejected: boolean;
@@ -76,11 +77,14 @@ export interface MentionContext {
 
 export interface Mention {
   id: string;
-  statedName: string;
+  kind: MentionKind;
+  statedName: string; // the name (person) or title (project) as written
   sourceUrl: string;
-  linkedProfileUrl: string | null;
+  linkedProfileUrl: string | null; // the profile or project URL the page linked
   status: MentionStatus;
-  personId: string | null;
+  resolvedTo: string | null; // Person or Project id
+  observedOnProfileOf: string | null; // project mentions: the Person whose own profile lists it
+  activityCues: string[]; // project mentions: hints for activity classification (#9)
   method: string | null;
   decisionSource: string | null;
   signals: string[];
@@ -105,5 +109,6 @@ export interface GraphStore {
   neighbourhood(id: string, depth: 1 | 2): Promise<Neighbourhood | null>;
   evidence(claimIds: string[]): Promise<Evidence[]>;
   mention(id: string): Promise<Mention | null>;
-  mentionsOf(personId: string): Promise<Mention[]>; // mentions resolved to this person
+  mentionsOf(id: string): Promise<Mention[]>; // mentions resolved to this Person or Project
+  statedProjectsOf(personId: string): Promise<Mention[]>; // project mentions on the person's own profile
 }

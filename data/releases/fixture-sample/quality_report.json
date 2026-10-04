@@ -85,13 +85,94 @@
     }
   },
   {
-    "check": "review.project_label_suspicious",
-    "severity": "warning",
-    "message": "project 'Intersections.East European Journal of Society and Politics' may be a journal/role listed under Projektek",
-    "subjects": [
-      "prj_14dc36e3a1"
-    ],
-    "detail": {}
+    "check": "project.activity_cues",
+    "severity": "info",
+    "message": "0 Projects and 4 project mentions carry words suggesting a journal, network, programme, infrastructure, consortium or newsletter (left for #9)",
+    "subjects": [],
+    "detail": {
+      "mentions": {
+        "journal": 1,
+        "research_group": 2,
+        "programme": 1,
+        "network": 1
+      },
+      "projects": {}
+    }
+  },
+  {
+    "check": "project.unattached_metadata",
+    "severity": "info",
+    "message": "27 project-section metadata lines are kept unattached (no structural evidence ties them to one project)",
+    "subjects": [],
+    "detail": {
+      "section_label": 2,
+      "table_row": 1,
+      "grant": 9,
+      "role": 13,
+      "funder": 1,
+      "other": 1
+    }
+  },
+  {
+    "check": "project.mention_resolution",
+    "severity": "info",
+    "message": "1 of 78 project mentions resolved (1.3%); 0 need review, 77 have no candidate Project",
+    "subjects": [],
+    "detail": {
+      "by_status": {
+        "DETERMINISTIC": 1,
+        "UNRESOLVED": 77
+      },
+      "resolved_by_method": {
+        "project_url": 1
+      },
+      "by_source": {
+        "tk_kisebbsegkutato": {
+          "UNRESOLVED": 15,
+          "resolved": 0,
+          "total": 15,
+          "resolution_rate": 0.0
+        },
+        "tk_politikatudomany": {
+          "UNRESOLVED": 17,
+          "resolved": 0,
+          "total": 17,
+          "resolution_rate": 0.0
+        },
+        "tk_recens": {
+          "UNRESOLVED": 22,
+          "resolved": 0,
+          "total": 22,
+          "resolution_rate": 0.0
+        },
+        "tk_szociologia": {
+          "DETERMINISTIC": 1,
+          "UNRESOLVED": 23,
+          "resolved": 1,
+          "total": 24,
+          "resolution_rate": 0.042
+        }
+      },
+      "by_observation": {
+        "profile_list": {
+          "DETERMINISTIC": 1,
+          "UNRESOLVED": 67,
+          "resolved": 1,
+          "total": 68,
+          "resolution_rate": 0.015
+        },
+        "project_listing": {
+          "UNRESOLVED": 10,
+          "resolved": 0,
+          "total": 10,
+          "resolution_rate": 0.0
+        }
+      },
+      "not_resolved_reasons": {
+        "no anchored Project with a compatible title or grant id": 45,
+        "linked project page not fetched": 32
+      }
+    }
   },
   {
     "check": "stats.entities",
@@ -105,7 +186,7 @@
       "ResearchTopic": 34,
       "Method": 19,
       "Person": 11,
-      "Project": 79
+      "Project": 2
     }
   },
   {
@@ -129,11 +210,11 @@
       "BROADER": 2,
       "HOSTED_BY": 2,
       "MEMBER_OF": 8,
-      "PARTICIPATES_IN": 68,
+      "PARTICIPATES_IN": 1,
       "PART_OF": 43,
-      "PRINCIPAL_INVESTIGATOR_OF": 17,
-      "USES_METHOD": 16,
-      "WORKS_ON_TOPIC": 85
+      "PRINCIPAL_INVESTIGATOR_OF": 1,
+      "USES_METHOD": 4,
+      "WORKS_ON_TOPIC": 22
     }
   },
   {
@@ -142,8 +223,8 @@
     "message": "relations by epistemic status",
     "subjects": [],
     "detail": {
-      "OBSERVED": 151,
-      "DERIVED": 101
+      "OBSERVED": 68,
+      "DERIVED": 26
     }
   },
   {

@@ -14,25 +14,29 @@ The same snapshots replayed with tk/0.2.0 reproduce the original `2026-10-tk` ex
 (docs/architecture.md); they are shared as tarballs with their quality reports.
 
 Raw and canonical counts, side by side. The Milestone 2 columns are the same snapshot
-built on the Milestone 2 branch (#4 ADR-0006, #5 ADR-0007); they are previews, not
-published releases.
+built on the Milestone 2 branch (#4 ADR-0006, #5 ADR-0007, #27, #7 ADR-0008); they are
+previews, not published releases.
 
-| | `2026-10-tk-r2` (Milestone 1 model) | `2026-10-tk-m2` (#4) | `2026-10-tk-m2-p5` (#5) |
-|---|---|---|---|
-| Documents / claims | 509 / 9,063 | 509 / 9,063 | 509 / 9,063 |
-| Person-like source records | 364 | 364 | 364 |
-| Canonical Persons | 364 (161 profiled, 203 name strings) | **161**, all with an institutional profile; 134 with MTMT, 1 with ORCID | 161 |
-| Person mentions (outside own profile) | n/a | 1,021: 682 resolved (profile URL), **339 unresolved** | 1,021: **797 resolved** (668 certain, 129 by documented rule), 53 need review, 171 have no candidate |
-| Projects | 606 (315 page-backed, 291 profile titles only) | 606 | 606 |
-| Relations | 2,209 | 1,969 | 2,043 (`PARTICIPATES_IN` 622 → 670, `PRINCIPAL_INVESTIGATOR_OF` 88 → 112) |
-| QA | 0 errors, 46 warnings, 191 orphan persons, 3 "suspicious merges" | 0 errors, 43 warnings, 0 orphan persons, 0 suspicious merges | 0 errors; resolution uneven by source (KI 99%, SZI 81%, PTI 67%) |
+| | `2026-10-tk-r2` (Milestone 1 model) | `2026-10-tk-m2-p5` (#4, #5) | `2026-10-tk-m2-s27` (#27) | `2026-10-tk-m2-p7` (#7) |
+|---|---|---|---|---|
+| Documents / claims | 509 / 9,063 | 509 / 9,063 | 509 / 9,063 | 509 / 9,119 (+56 unattached project metadata, tk/0.4.0) |
+| Canonical Persons | 364 (161 profiled, 203 name strings) | 161 | **160** (Stefkovics Ádám's two profiles joined) | 160 |
+| Person mentions | n/a | 1,021: 797 resolved, 53 review, 171 no candidate | 1,021: 798 / 52 / 171 | 1,021: **808** resolved (668 certain, 140 by rule) / **42** / 171 |
+| Projects | 606 (315 page-backed, 291 profile titles only) | 606 | 606 | **223**, all page-backed |
+| Project mentions | n/a | n/a | n/a | 783: 355 resolved (327 by URL, 28 by rule), 8 review, 420 no candidate |
+| Relations | 2,209 | 2,043 | 2,042 | 1,237 (`PARTICIPATES_IN` 671 → 225, `PRINCIPAL_INVESTIGATOR_OF` 112 → 93) |
+| Co-participation ties (person pairs sharing a project) | | | 491 | 446 (52 lost, 7 gained) |
+| QA | 0 errors, 46 warnings | 0 errors | 0 errors, 43 warnings | 0 errors, 38 warnings |
 
 **0 QA errors means pipeline correctness, not coverage.** The QA seed Virág Tünde is
 absent (#13), and fetch, parse, field and taxonomy coverage are not measured yet (#12).
-**The data is not ready for network analysis** (#17): 224 mentions are still outside the
-analytical graph (Ságvári Bence: 6 resolved, 10 in review), resolution rates differ by
-source, and profile titles do not yet resolve to project pages (#7; 6 title-collision
-groups, 1 known edition false merge).
+**The data is not ready for network analysis** (#17):
+* Project resolution is very uneven by institute. 25 KI researchers had project edges,
+  and none do now, because KI project pages were never crawled: their profiles link
+  them, but no page anchors a Project (#12/#16).
+* 213 person mentions and 428 project mentions are outside the analytical graph.
+* Five page-backed projects with long participant lists produce two thirds of all
+  co-participation ties.
 
 ## Current milestone
 
@@ -52,13 +56,15 @@ crawl into a trustworthy canonical graph before more institutions are added.
 
 ## Known blockers
 
-- **Identity**: #4 and #5 are implemented on the Milestone 2 branch (not merged). 53
-  mentions wait for review (`review/mention_review.yaml`); 171 have no candidate, mostly
-  former staff whose profile is gone. Two TK profiles of one person (Stefkovics Ádám)
-  stay separate Persons until a reviewer decides.
-- **Projects**: profile titles do not resolve to project pages (#7). Pseudo-projects
-  from profile metadata lines are fixed in PR #2 (#8, tk/0.2.2); many profile titles
-  still carry role or grant suffixes ("… – Kutató"), which #7 must normalise.
+- **Identity**: #4, #5 and #27 are done on the Milestone 2 branch (not merged). 42 person
+  mentions wait for review (`review/mention_review.yaml`). 171 have no candidate, mostly
+  former staff whose profile is gone (#28).
+- **Projects**: #7 is implemented on the Milestone 2 branch (ADR-0008, not merged).
+  * 8 project mentions wait for review (`review/project_review.yaml`).
+  * 420 have no candidate: 131 link a project page the crawl never fetched (mostly
+    KI), 289 are profile titles with no page.
+  * Activity classification of journals, networks and programmes listed as projects is
+    #9.
 - **Unreachable hosts** from the crawl environment: doktori.hu, web.archive.org, tk.hu,
   tk.mta.hu, `*.tk.hun-ren.hu`, socio.mta.hu, rki.krtk.hu. Their aliases are inferred
   (#14).
@@ -66,13 +72,16 @@ crawl into a trustworthy canonical graph before more institutions are added.
 
 ## Open high-priority issues
 
-#4 Person mention vs canonical Person and #5 evidence-based person resolution
-(implemented, Milestone 2 branch, in review) · #7 ProjectMention vs canonical Project ·
-#12 Source coverage QA
+#7 ProjectMention vs canonical Project (implemented, Milestone 2 branch, in review) ·
+#12 Source coverage QA · #17 analysis readiness · #9 activity classification
 
 ## Next
 
-- Implementation: #7 (ProjectMention vs canonical Project), after review of #4/#5.
+- After review of #7, the choice is between three issues:
+  * coverage QA (#12), including crawling the project pages that profiles link but the
+    crawl never fetched;
+  * analysis readiness (#17);
+  * activity classification (#9).
 - Expansion target after Milestone 2: KRTK Regionális Kutatások Intézete, then TÁRKI (#21).
 
 ## Future milestones

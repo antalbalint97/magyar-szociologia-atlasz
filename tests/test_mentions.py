@@ -93,10 +93,12 @@ class World:
         return ref
 
     def project(self, url: str, title: str | None = None) -> EntityRef:
+        """A project's own page: the record anchors the Project (ADR-0008)."""
         er = EntityRef(entity_type=EntityType.PROJECT, source_ref=f"{self.owner(url)}|{url}")
         if not any(r.ref == er for r in self.records):
             title = title or f"Projekt {url.rsplit('/', 1)[-1]}"
-            self.records.append(SourceRecord(ref=er, label=title, document_id=self.doc(url)))
+            self.records.append(SourceRecord(ref=er, label=title, document_id=self.doc(url),
+                                             identity_anchor="project_page"))
             self.claim(er, "title", url, title)
         return er
 

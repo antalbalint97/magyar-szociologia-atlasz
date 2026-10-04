@@ -38,6 +38,7 @@ from ..normalize.names import name_key, order_free_key
 
 HARD_IDS = ("mtmt_id", "orcid")
 HARD_ID_ANCHOR = {"mtmt_id": IdentityAnchor.MTMT, "orcid": IdentityAnchor.ORCID}
+ANCHORED_TYPES = (EntityType.PERSON, EntityType.PROJECT)  # canonical only with identity evidence
 
 
 class MatchDecision(BaseModel):
@@ -199,11 +200,14 @@ def match_people(ents: dict[str, SourceEntity], overrides: Overrides) -> list[Ma
 
 
 def match_structural(ents: dict[str, SourceEntity]) -> list[MatchDecision]:
-    """Units and projects: the same name/title within one site is the same thing."""
+    """Units and research groups: the same name within one site is the same thing.
+
+    Projects are excluded (ADR-0008): editions share titles, so a same-title pair is a
+    candidate for the project resolver, never an automatic merge."""
     out = []
     groups: dict[tuple, list[SourceEntity]] = defaultdict(list)
     for e in ents.values():
-        if e.entity_type in (EntityType.ORG_UNIT, EntityType.PROJECT, EntityType.RESEARCH_GROUP):
+        if e.entity_type in (EntityType.ORG_UNIT, EntityType.RESEARCH_GROUP):
             site = e.ref.split("|", 1)[0]
             for lab in e.labels:
                 groups[(e.entity_type, site, name_key(lab))].append(e)
@@ -215,6 +219,23 @@ def match_structural(ents: dict[str, SourceEntity]) -> list[MatchDecision]:
             out.append(MatchDecision(left=left, right=right, entity_type=etype, status=MatchStatus.CONFIRMED,
                                      method="auto:same_site_same_name", score=0.95,
                                      left_label=a.labels[0], right_label=b.labels[0]))
+    return out
+
+
+def match_manual(ents: dict[str, SourceEntity], overrides: Overrides) -> list[MatchDecision]:
+    """Reviewer same_as / not_same_as between records of other types (projects, ADR-0008)."""
+    out = []
+    for pairs, status, method in ((overrides.same_as, MatchStatus.CONFIRMED, "manual:same_as"),
+                                  (overrides.not_same_as, MatchStatus.REJECTED, "manual:not_same_as")):
+        for a, b in pairs:
+            ea, eb = ents.get(a), ents.get(b)
+            if ea is None or eb is None or ea.entity_type is EntityType.PERSON or ea.entity_type is not eb.entity_type:
+                continue
+            left, right = sorted((a, b))
+            la, lb = (ea, eb) if a == left else (eb, ea)
+            out.append(MatchDecision(left=left, right=right, entity_type=ea.entity_type, status=status,
+                                     method=method, score=1.0 if status is MatchStatus.CONFIRMED else 0.0,
+                                     left_label=la.labels[0], right_label=lb.labels[0]))
     return out
 
 
@@ -298,7 +319,7 @@ def resolve(
     identity: IdentityMap,
 ) -> tuple[dict[str, str], list[MatchDecision]]:
     ents = collect(records, claims)
-    decisions = match_people(ents, overrides) + match_structural(ents)
+    decisions = match_people(ents, overrides) + match_structural(ents) + match_manual(ents, overrides)
     uf = _UF()
     for e in ents:
         uf.find(e)
@@ -317,30 +338,41 @@ def resolve(
     clusters: dict[str, list[SourceEntity]] = defaultdict(list)
     for ref, e in ents.items():
         clusters[uf.find(ref)].append(e)
-    # A person cluster becomes a canonical Person only with identity evidence; its other
-    # records are mentions of it. Clusters without evidence stay mentions (ADR-0006).
-    anchors = identity_anchors(records, claims)
+    # A person or project cluster becomes a canonical entity only with identity evidence;
+    # its other records are mentions of it. Clusters without evidence stay mentions
+    # (ADR-0006, ADR-0008).
+    anchors = identity_anchors(records, claims, overrides)
     keep = {k: ms for k, ms in clusters.items()
-            if ms[0].entity_type is not EntityType.PERSON or any(m.ref in anchors for m in ms)}
+            if ms[0].entity_type not in ANCHORED_TYPES or any(m.ref in anchors for m in ms)}
     identity.retire([m.ref for k, ms in clusters.items() if k not in keep for m in ms])
     strength = {ref: len(kinds & {IdentityAnchor.MTMT, IdentityAnchor.ORCID}) for ref, kinds in anchors.items()}
     return identity.assign(keep, overrides.survivors, strength), decisions
 
 
-def identity_anchors(records: list[SourceRecord], claims: list[Claim]) -> dict[str, set[IdentityAnchor]]:
-    """Person source ref -> the identity evidence it carries (ADR-0006).
+def identity_anchors(records: list[SourceRecord], claims: list[Claim],
+                     overrides: Overrides | None = None) -> dict[str, set[IdentityAnchor]]:
+    """Person / project source ref -> the identity evidence it carries (ADR-0006, ADR-0008).
 
-    A record from the person's own page (``identity_anchor``) or a stated hard identifier
-    anchors an identity. A name on someone else's page does not.
+    A record from the entity's own page (``identity_anchor``: a researcher's profile, a
+    project's page) or a stated hard identifier anchors an identity. A name or title on
+    someone else's page does not. A project record a reviewer joined to another with
+    ``same_as`` is anchored by that decision.
     """
     out: dict[str, set[IdentityAnchor]] = defaultdict(set)
+    projects = set()
     for r in records:
-        if r.ref.entity_type is EntityType.PERSON and r.ref.source_ref and r.identity_anchor:
+        if r.ref.entity_type in ANCHORED_TYPES and r.ref.source_ref and r.identity_anchor:
             out[r.ref.source_ref].add(IdentityAnchor(r.identity_anchor))
+        if r.ref.entity_type is EntityType.PROJECT and r.ref.source_ref:
+            projects.add(r.ref.source_ref)
     for c in claims:
         if (c.subject.entity_type is EntityType.PERSON and c.subject.source_ref and c.object is None
                 and c.predicate in HARD_ID_ANCHOR and c.value):
             out[c.subject.source_ref].add(HARD_ID_ANCHOR[c.predicate])
+    for a, b in (overrides.same_as if overrides else []):
+        if a in projects and b in projects:
+            out[a].add(IdentityAnchor.MANUAL)
+            out[b].add(IdentityAnchor.MANUAL)
     return out
 
 

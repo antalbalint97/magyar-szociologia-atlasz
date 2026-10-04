@@ -2,6 +2,36 @@
 
 ## Unreleased (Milestone 2 branch)
 
+* Project mentions vs canonical Projects (#7, ADR-0008): a Project needs an identity
+  anchor (its own page, or a manual decision). Every other project-like observation
+  (listing article, profile line, link to an unfetched page) is a `ProjectMention` that
+  may `RESOLVES_TO` one. `auto:same_site_same_name` no longer merges projects; this
+  splits the `Éghajlatváltozás és egészség` 2020/2021 false merge into two Projects (the
+  2021 page gets a new id, `previous_id: prj_2c4d005975`).
+* Conservative project resolution: candidates from grant numbers and title keys (grant,
+  role, period and funder affixes removed); rules `grant_and_title`, `grant_and_owner`,
+  `title_and_owner`; title evidence never decides alone; blocking on conflicting grant
+  numbers, disjoint periods, links to another page, several candidates, manual
+  rejection. Links to the NKFIH public grant registry count as grant statements. Manual
+  `project_decisions` and project `same_as` / `not_same_as`. Review queue
+  `review/project_review.yaml`; resolver version in `config/resolution.yaml`.
+* Person rule `own-profile-project` also uses projects resolved by the project rules
+  (one-way dependency) and the titles of unresolved project mentions on the person's own
+  profile.
+* TK parser 0.4.0: project pages mark their record as the project's identity
+  (`identity_anchor: project_page`); project-section metadata lines that the markup does
+  not tie to one project are kept as `unattached_project_metadata` claims (kind, position,
+  `attachment: unresolved`) instead of being dropped (moved from #8).
+* QA and manifest: project counts next to project-mention counts, resolution by source
+  and observation, errors for title-only or contradicted automatic decisions and for
+  Projects without evidence; same-title distinct Projects, duplicate unresolved titles,
+  activity cues (#9) and unattached metadata reported. Neo4j loader and explorer show
+  project mentions, and a person page lists the projects on their own profile that did
+  not resolve.
+* Manual canonicalisation of one person's two profiles (#27): a `same_as` entry may name
+  the `survivor` id; otherwise the oldest id survives, then the one with the stronger
+  anchor (ADR-0003 addendum).
+
 * Person mentions vs canonical Persons (#4, ADR-0006): a Person needs an identity anchor;
   every other person-like observation is a `PersonMention` that may `RESOLVES_TO` one.
 * Evidence-based mention resolution (#5, ADR-0007): candidate generation separate from

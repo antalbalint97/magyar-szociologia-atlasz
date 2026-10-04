@@ -20,6 +20,7 @@ class EntityType(StrEnum):
     TRADITION = "IntellectualTradition"
     EVENT = "Event"
     PERSON_MENTION = "PersonMention"  # evidence: a person-like record observed in one page (ADR-0006)
+    PROJECT_MENTION = "ProjectMention"  # evidence: a project-like record observed in one page (ADR-0008)
 
 
 class RelationType(StrEnum):
@@ -120,18 +121,19 @@ class ReviewStatus(StrEnum):
 
 
 class IdentityAnchor(StrEnum):
-    """Evidence that makes a Person an identity rather than a name string (ADR-0006)."""
+    """Evidence that makes a Person or Project an identity rather than a string (ADR-0006, ADR-0008)."""
 
     INSTITUTIONAL_PROFILE = "institutional_profile"  # the person's own profile page was fetched
     MTMT = "mtmt"
     ORCID = "orcid"
+    PROJECT_PAGE = "project_page"  # the project's own page on an institutional site was fetched
     MANUAL = "manual"  # a reviewer established the identity
 
 
 class MentionResolutionStatus(StrEnum):
-    """How a PersonMention is tied to a canonical Person (ADR-0006)."""
+    """How a PersonMention / ProjectMention is tied to its canonical entity (ADR-0006, ADR-0008)."""
 
-    DETERMINISTIC = "DETERMINISTIC"  # exact profile URL (canonical or verified alias host), or hard id + name
+    DETERMINISTIC = "DETERMINISTIC"  # exact profile / project URL (canonical or verified alias host), or hard id + name
     MANUAL_CONFIRMED = "MANUAL_CONFIRMED"  # mention_decisions / same_as in review/manual_overrides.yaml
     HIGH_CONFIDENCE_AUTO = "HIGH_CONFIDENCE_AUTO"  # a documented rule of >=2 strong signals (#5)
     REVIEW_REQUIRED = "REVIEW_REQUIRED"  # candidates exist, evidence is insufficient or contradictory

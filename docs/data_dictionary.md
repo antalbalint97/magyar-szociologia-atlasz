@@ -208,7 +208,7 @@ A canonical identity. Exists only with identity evidence (ADR-0006).
 
 ## Project (`Project`, id prefix `prj_`)
 
-
+A canonical project identity. Exists only with identity evidence (ADR-0008).
 
 | field | type | required |
 |---|---|---|
@@ -220,6 +220,7 @@ A canonical identity. Exists only with identity evidence (ADR-0006).
 | `first_observed_at` | `datetime \| None` |  |
 | `last_verified_at` | `datetime \| None` |  |
 | `title` | `str` | yes |
+| `identity_evidence` | `list[IdentityAnchor]` |  |
 | `alternate_titles` | `list[str]` |  |
 | `abstract` | `str \| None` |  |
 | `start` | `str \| None` |  |
@@ -365,13 +366,48 @@ Evidence: a person-like record observed in one source page (ADR-0006).
 | `resolution` | `MentionResolution` | yes |
 | `candidates` | `list[MentionCandidate]` |  |
 
+## ProjectMention (`ProjectMention`, id prefix `pjm_`)
+
+Evidence: a project-like record observed in one page other than the project's own (ADR-0008).
+
+| field | type | required |
+|---|---|---|
+| `canonical_id` | `str` | yes |
+| `label` | `str` | yes |
+| `provenance` | `dict[str, list[str]]` |  |
+| `conflicts` | `dict[str, list[ConflictingValue]]` |  |
+| `source_refs` | `list[str]` |  |
+| `first_observed_at` | `datetime \| None` |  |
+| `last_verified_at` | `datetime \| None` |  |
+| `stated_title` | `str` | yes |
+| `title_key` | `str` | yes |
+| `observation` | `str` | yes |
+| `source_ref` | `str` | yes |
+| `source_id` | `str` | yes |
+| `source_url` | `str` | yes |
+| `document_ids` | `list[str]` |  |
+| `linked_url` | `str \| None` |  |
+| `observed_on_profile_of` | `str \| None` |  |
+| `stated_period_from` | `str \| None` |  |
+| `stated_period_until` | `str \| None` |  |
+| `stated_funders` | `list[str]` |  |
+| `stated_grant_ids` | `list[str]` |  |
+| `grant_keys` | `list[str]` |  |
+| `stated_roles` | `list[str]` |  |
+| `stated_leads` | `list[str]` |  |
+| `stated_status` | `list[str]` |  |
+| `context` | `list[MentionContext]` |  |
+| `activity_cues` | `list[str]` |  |
+| `resolution` | `ProjectMentionResolution` | yes |
+| `candidates` | `list[ProjectCandidate]` |  |
+
 ## Enumerations
 
 * **AssertionType**: `SELF_DECLARED`, `INSTITUTIONAL`, `BIBLIOMETRIC`, `TOPIC_SIMILARITY`, `RESEARCH_GROUP_MEMBERSHIP`, `GENEALOGICAL`, `ANALYST_CODED`, `HISTORICAL_LITERATURE`
-* **EntityType**: `Person`, `Institution`, `OrganisationalUnit`, `ResearchGroup`, `Project`, `Publication`, `Journal`, `ResearchTopic`, `Method`, `IntellectualTradition`, `Event`, `PersonMention`
+* **EntityType**: `Person`, `Institution`, `OrganisationalUnit`, `ResearchGroup`, `Project`, `Publication`, `Journal`, `ResearchTopic`, `Method`, `IntellectualTradition`, `Event`, `PersonMention`, `ProjectMention`
 * **EpistemicStatus**: `OBSERVED`, `DERIVED`, `INFERRED`, `INTERPRETIVE`
 * **ExtractionMethod**: `html_parser`, `structured_api`, `taxonomy_keyword_map`, `manual_entry`, `llm_assisted`
-* **IdentityAnchor**: `institutional_profile`, `mtmt`, `orcid`, `manual`
+* **IdentityAnchor**: `institutional_profile`, `mtmt`, `orcid`, `project_page`, `manual`
 * **InstitutionType**: `university`, `faculty`, `research_centre`, `research_institute`, `academy`, `research_network`, `independent_organisation`, `association`, `government_agency`, `funder`
 * **MatchStatus**: `possible_match`, `confirmed_match`, `rejected_match`
 * **MentionResolutionStatus**: `DETERMINISTIC`, `MANUAL_CONFIRMED`, `HIGH_CONFIDENCE_AUTO`, `REVIEW_REQUIRED`, `UNRESOLVED`

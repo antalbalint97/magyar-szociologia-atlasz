@@ -2,6 +2,9 @@
 # assumption it relies on is declared here, so a release can say which ones it used.
 
 resolver_version: person-mention-resolver/1.0
+# Project-mention resolution (#7, ADR-0008): rules grant_and_title, grant_and_owner,
+# title_and_owner; title evidence never decides alone.
+project_resolver_version: project-mention-resolver/1.0
 
 # An institution family groups sources whose people share one profile system. Two
 # assumptions are scoped to a family and never applied across families:

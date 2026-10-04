@@ -1,7 +1,7 @@
 {
   "release_id": "fixture-sample",
   "dataset_kind": "fixture",
-  "generated_at": "2026-10-04T18:34:11+00:00",
+  "generated_at": "2026-10-04T21:54:21+00:00",
   "schema_version": "0.1.0",
   "software_version": "0.1.0",
   "sources": [
@@ -13,14 +13,14 @@
   "parser_versions": {
     "curated": "curated/0.1.0",
     "derive.taxonomy": "taxonomy_keyword_map/0.1.0",
-    "tk.listing": "tk/0.3.0",
-    "tk.profile": "tk/0.3.0",
-    "tk.project": "tk/0.3.0",
-    "tk.project_listing": "tk/0.3.0",
-    "tk.unit": "tk/0.3.0"
+    "tk.listing": "tk/0.4.0",
+    "tk.profile": "tk/0.4.0",
+    "tk.project": "tk/0.4.0",
+    "tk.project_listing": "tk/0.4.0",
+    "tk.unit": "tk/0.4.0"
   },
   "documents": 21,
-  "claims": 998,
+  "claims": 1025,
   "entities": {
     "Institution": 15,
     "OrganisationalUnit": 37,
@@ -28,8 +28,9 @@
     "ResearchTopic": 34,
     "Method": 19,
     "Person": 11,
-    "Project": 79,
-    "PersonMention": 57
+    "Project": 2,
+    "PersonMention": 57,
+    "ProjectMention": 78
   },
   "counts": {
     "persons": {
@@ -53,7 +54,38 @@
       "unresolved_distinct_names": 47,
       "claims_only_on_unresolved_mentions": 111
     },
-    "person_like_records": 59
+    "person_like_records": 59,
+    "projects": {
+      "canonical": 2,
+      "page_backed": 2,
+      "manual_only": 0,
+      "with_grant_id": 1
+    },
+    "project_mentions": {
+      "total": 78,
+      "resolved": 1,
+      "unresolved": 77,
+      "by_status": {
+        "DETERMINISTIC": 1,
+        "UNRESOLVED": 77
+      },
+      "by_observation": {
+        "profile_list": 68,
+        "project_listing": 10
+      },
+      "unresolved_distinct_records": 77,
+      "unresolved_title_groups_on_several_pages": 0,
+      "with_activity_cues": 4,
+      "claims_only_on_unresolved_project_mentions": 274
+    },
+    "unattached_project_metadata": {
+      "funder": 1,
+      "grant": 9,
+      "other": 1,
+      "role": 13,
+      "section_label": 2,
+      "table_row": 1
+    }
   },
   "mention_resolution": {
     "total": 57,
@@ -128,23 +160,85 @@
     },
     "source_rate_spread": null
   },
+  "project_mention_resolution": {
+    "total": 78,
+    "resolved": 1,
+    "not_resolved": 77,
+    "resolution_rate": 0.013,
+    "by_status": {
+      "DETERMINISTIC": 1,
+      "UNRESOLVED": 77
+    },
+    "resolved_by_method": {
+      "project_url": 1
+    },
+    "review_required": 0,
+    "no_candidate": 77,
+    "with_multiple_viable_candidates": 0,
+    "not_resolved_reasons": {
+      "no anchored Project with a compatible title or grant id": 45,
+      "linked project page not fetched": 32
+    },
+    "by_source": {
+      "tk_kisebbsegkutato": {
+        "UNRESOLVED": 15,
+        "resolved": 0,
+        "total": 15,
+        "resolution_rate": 0.0
+      },
+      "tk_politikatudomany": {
+        "UNRESOLVED": 17,
+        "resolved": 0,
+        "total": 17,
+        "resolution_rate": 0.0
+      },
+      "tk_recens": {
+        "UNRESOLVED": 22,
+        "resolved": 0,
+        "total": 22,
+        "resolution_rate": 0.0
+      },
+      "tk_szociologia": {
+        "DETERMINISTIC": 1,
+        "UNRESOLVED": 23,
+        "resolved": 1,
+        "total": 24,
+        "resolution_rate": 0.042
+      }
+    },
+    "by_observation": {
+      "profile_list": {
+        "DETERMINISTIC": 1,
+        "UNRESOLVED": 67,
+        "resolved": 1,
+        "total": 68,
+        "resolution_rate": 0.015
+      },
+      "project_listing": {
+        "UNRESOLVED": 10,
+        "resolved": 0,
+        "total": 10,
+        "resolution_rate": 0.0
+      }
+    }
+  },
   "relations": {
     "AFFILIATED_WITH": 11,
     "BROADER": 2,
     "HOSTED_BY": 2,
     "MEMBER_OF": 8,
-    "PARTICIPATES_IN": 68,
+    "PARTICIPATES_IN": 1,
     "PART_OF": 43,
-    "PRINCIPAL_INVESTIGATOR_OF": 17,
-    "USES_METHOD": 16,
-    "WORKS_ON_TOPIC": 85
+    "PRINCIPAL_INVESTIGATOR_OF": 1,
+    "USES_METHOD": 4,
+    "WORKS_ON_TOPIC": 22
   },
   "source_retrieval_window": {
     "from": "2026-10-04T00:00:00+00:00",
     "until": "2026-10-04T00:00:00+00:00"
   },
   "quality": {
-    "warning": 10,
-    "info": 8
+    "warning": 9,
+    "info": 11
   }
 }

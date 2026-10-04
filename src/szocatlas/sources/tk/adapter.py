@@ -231,6 +231,14 @@ class TKAdapter(SourceAdapter):
                 f.literal(ref, "stated_research_area", area, locator="profile.section.kutatasi_teruletek",
                           snippet=area, qualifiers={"authorship": "profile page; author not stated"})
             )
+        for pos, line in enumerate(prof.rejected_project_lines):
+            # #7: a metadata line the markup does not tie to one project is kept, unattached;
+            # never attached by proximity (role lines follow the title on some profiles,
+            # precede it on others)
+            c.append(f.literal(ref, "unattached_project_metadata", line, locator="profile.section.projektek.unattached",
+                               snippet=line, confidence=0.8,
+                               qualifiers={"kind": P.metadata_kind(line), "attachment": "unresolved",
+                                           "position": pos}))
         for pm in prof.projects:
             pref = self.project_ref(pm.url, pm.title)
             res.records.append(SourceRecord(ref=pref, label=pm.title, document_id=doc.document_id,
@@ -295,7 +303,8 @@ class TKAdapter(SourceAdapter):
         res = ParseResult()
         proj = P.parse_project(page.text, doc.final_url, self.aliases)
         pref = self.project_ref(doc.canonical_url, proj.title)
-        self._emit_project(res, f, doc, pref, proj, "project", title_locator="project.h1")
+        self._emit_project(res, f, doc, pref, proj, "project", title_locator="project.h1",
+                           anchor=IdentityAnchor.PROJECT_PAGE.value)
         c = res.claims
         c.append(f.literal(pref, "website", doc.canonical_url, locator="document.url", snippet=doc.canonical_url))
         if status := self._project_status.get(doc.canonical_url):
@@ -320,9 +329,11 @@ class TKAdapter(SourceAdapter):
         return res
 
     def _emit_project(self, res: ParseResult, f: ClaimFactory, doc, pref: EntityRef, proj: P.ProjectPage,
-                      loc: str, *, title_locator: str) -> None:
+                      loc: str, *, title_locator: str, anchor: str | None = None) -> None:
+        # ``anchor``: the record comes from the project's own page, which makes it an identity (ADR-0008)
         res.records.append(SourceRecord(ref=pref, label=proj.title, document_id=doc.document_id,
-                                        hints={k: v for k, v in {"url": proj.url, "grant_id": proj.grant_id}.items() if v}))
+                                        hints={k: v for k, v in {"url": proj.url, "grant_id": proj.grant_id}.items() if v},
+                                        identity_anchor=anchor))
         c = res.claims
         c.append(f.literal(pref, "title", proj.title, locator=title_locator, snippet=proj.title))
         if proj.grant_id:

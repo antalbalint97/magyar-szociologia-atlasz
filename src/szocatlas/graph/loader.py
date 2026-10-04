@@ -15,11 +15,13 @@ What becomes a node vs a property (docs/neo4j.md):
 * JSON-string properties: nested structures nobody filters on in Cypher
   (field-level provenance, conflicts).
 
-Person mentions (ADR-0006) are evidence, not entities: they are loaded as
-``:PersonMention`` nodes WITHOUT the ``:Entity`` label, with
-``(:PersonMention)-[:RESOLVES_TO]->(:Person)`` for resolved ones and
-``(:PersonMention)-[:MENTIONED_IN {relation, role}]->(target)`` for the context the page
-states. Analytical queries match ``:Person`` / ``:Entity`` and never see them.
+Person and project mentions (ADR-0006, ADR-0008) are evidence, not entities: they are
+loaded as ``:PersonMention`` / ``:ProjectMention`` nodes WITHOUT the ``:Entity`` label,
+with ``(:PersonMention)-[:RESOLVES_TO]->(:Person)`` and
+``(:ProjectMention)-[:RESOLVES_TO]->(:Project)`` for resolved ones and
+``-[:MENTIONED_IN {relation, direction, role}]->(target)`` for the context the page states
+(for a project mention on a profile: the profile owner, direction "in"). Analytical
+queries match ``:Person`` / ``:Project`` / ``:Entity`` and never see them.
 """
 
 from __future__ import annotations
@@ -50,6 +52,12 @@ LABELS: dict[str, list[str]] = {
 }
 NESTED = {"provenance", "conflicts"}
 MENTION_FILE = EntityType.PERSON_MENTION.value
+PROJECT_MENTION_FILE = EntityType.PROJECT_MENTION.value
+# mention label -> (label of the identity it resolves to, resolution key, text searched)
+MENTION_KINDS = {
+    MENTION_FILE: ("Person", "person_id", "stated_name"),
+    PROJECT_MENTION_FILE: ("Project", "project_id", "stated_title"),
+}
 MENTION_REL_TYPES = ("RESOLVES_TO", "MENTIONED_IN")  # evidence layer only, never in relations.jsonl
 MENTION_NESTED = NESTED | {"context", "resolution", "stated_identifiers", "candidates"}
 BATCH = 500
@@ -80,7 +88,7 @@ def node_rows(release: Path) -> dict[tuple[str, ...], list[dict]]:
     out: dict[tuple[str, ...], list[dict]] = defaultdict(list)
     for f in sorted((release / "entities").glob("*.jsonl")):
         etype = f.stem
-        if etype == MENTION_FILE:
+        if etype in MENTION_KINDS:
             continue  # evidence layer, see mention_rows()
         labels = tuple(["Entity", *LABELS[etype]])
         for row in _read_jsonl(f):
@@ -112,23 +120,24 @@ def edge_rows(release: Path) -> dict[str, list[dict]]:
     return out
 
 
-def mention_rows(release: Path) -> tuple[list[dict], list[dict], list[dict]]:
-    """(mention nodes, RESOLVES_TO rows, MENTIONED_IN rows) from entities/PersonMention.jsonl."""
+def mention_rows(release: Path, kind: str = MENTION_FILE) -> tuple[list[dict], list[dict], list[dict]]:
+    """(mention nodes, RESOLVES_TO rows, MENTIONED_IN rows) from entities/<kind>.jsonl."""
+    _target_label, target_key, text_key = MENTION_KINDS[kind]
     nodes, resolves, contexts = [], [], []
-    for row in _read_jsonl(release / "entities" / f"{MENTION_FILE}.jsonl"):
+    for row in _read_jsonl(release / "entities" / f"{kind}.jsonl"):
         res = row["resolution"]
         props = {k: _prop(v) for k, v in row.items() if k not in MENTION_NESTED}
         props["resolution_status"] = res["status"]
-        props["resolved_to"] = res.get("person_id")
+        props["resolved_to"] = res.get(target_key)
         props["provenance_json"] = json.dumps(row.get("provenance", {}), ensure_ascii=False, sort_keys=True)
         props["context_json"] = json.dumps(row.get("context", []), ensure_ascii=False, sort_keys=True)
         props["resolution_json"] = json.dumps(res, ensure_ascii=False, sort_keys=True, default=str)
         props["candidates_json"] = json.dumps(row.get("candidates", []), ensure_ascii=False, sort_keys=True)
-        props["entity_type"] = MENTION_FILE
-        props["search_text"] = strip_accents(row.get("stated_name", "")).lower()
+        props["entity_type"] = kind
+        props["search_text"] = strip_accents(row.get(text_key, "")).lower()
         nodes.append({"canonical_id": row["canonical_id"], "props": props})
-        if res.get("person_id"):
-            resolves.append({"source": row["canonical_id"], "target": res["person_id"],
+        if res.get(target_key):
+            resolves.append({"source": row["canonical_id"], "target": res[target_key],
                              "props": {"status": res["status"], "method": res.get("method"),
                                        "decision_source": res.get("decision_source"),
                                        "decided_at": _prop(res.get("decided_at")),
@@ -227,22 +236,23 @@ def load_release(session: Session, release: Path, *, prune: bool = False) -> dic
             )
             stats["relationships"] += len(b)
 
-    m_nodes, m_resolves, m_contexts = mention_rows(release)
-    for b in _batches(m_nodes):
-        session.run("UNWIND $rows AS row MERGE (m:PersonMention {canonical_id: row.canonical_id}) "
-                    "SET m += row.props SET m.release_id = $rid", rows=b, rid=rid)
-        stats["mentions"] += len(b)
-    for b in _batches(m_resolves):
-        session.run("UNWIND $rows AS row MATCH (m:PersonMention {canonical_id: row.source}), "
-                    "(p:Person {canonical_id: row.target}) MERGE (m)-[r:RESOLVES_TO]->(p) "
-                    "SET r += row.props SET r.release_id = $rid", rows=b, rid=rid)
-        stats["resolves_to"] += len(b)
-    for b in _batches(m_contexts):
-        session.run("UNWIND $rows AS row MATCH (m:PersonMention {canonical_id: row.source}), "
-                    "(t:Entity {canonical_id: row.target}) "
-                    "MERGE (m)-[r:MENTIONED_IN {relation: row.relation}]->(t) "
-                    "SET r += row.props SET r.release_id = $rid", rows=b, rid=rid)
-        stats["mentioned_in"] += len(b)
+    for kind, (target_label, _key, _text) in MENTION_KINDS.items():  # labels from constants, never data
+        m_nodes, m_resolves, m_contexts = mention_rows(release, kind)
+        for b in _batches(m_nodes):
+            session.run(f"UNWIND $rows AS row MERGE (m:{kind} {{canonical_id: row.canonical_id}}) "
+                        "SET m += row.props SET m.release_id = $rid", rows=b, rid=rid)
+            stats["mentions" if kind == MENTION_FILE else "project_mentions"] += len(b)
+        for b in _batches(m_resolves):
+            session.run(f"UNWIND $rows AS row MATCH (m:{kind} {{canonical_id: row.source}}), "
+                        f"(p:{target_label} {{canonical_id: row.target}}) MERGE (m)-[r:RESOLVES_TO]->(p) "
+                        "SET r += row.props SET r.release_id = $rid", rows=b, rid=rid)
+            stats["resolves_to"] += len(b)
+        for b in _batches(m_contexts):
+            session.run(f"UNWIND $rows AS row MATCH (m:{kind} {{canonical_id: row.source}}), "
+                        "(t:Entity {canonical_id: row.target}) "
+                        "MERGE (m)-[r:MENTIONED_IN {relation: row.relation}]->(t) "
+                        "SET r += row.props SET r.release_id = $rid", rows=b, rid=rid)
+            stats["mentioned_in"] += len(b)
 
     docs, claims = claim_rows(release)
     for b in _batches(docs):
@@ -265,7 +275,7 @@ def load_release(session: Session, release: Path, *, prune: bool = False) -> dic
         )
     if prune:
         session.run("MATCH ()-[r]->() WHERE r.release_id IS NOT NULL AND r.release_id <> $rid DELETE r", rid=rid)
-        session.run("MATCH (n) WHERE (n:Entity OR n:PersonMention OR n:Claim OR n:SourceDocument) "
+        session.run("MATCH (n) WHERE (n:Entity OR n:PersonMention OR n:ProjectMention OR n:Claim OR n:SourceDocument) "
                     "AND n.release_id <> $rid "
                     "DETACH DELETE n", rid=rid)
     session.run("MERGE (m:ReleaseInfo {key: 'current'}) SET m += $m",
