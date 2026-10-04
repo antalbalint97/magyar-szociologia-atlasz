@@ -6,10 +6,29 @@
 #     reviewer: <name>
 #     date: 2026-10-04
 #     evidence: "Both profiles link the same CV / same MTMT record"
+#     survivor: per_...   # optional: the canonical id to keep when both records already have one
+#                         # (default, ADR-0003: oldest assignment, then stronger anchor, then lowest id)
 # not_same_as:
 #   - refs: [...]
 #     reviewer: <name>
 #     date: ...
 #     evidence: "..."
-same_as: []
+same_as:
+  # #27: one person, two TK profiles served by one CMS record
+  - refs:
+      - "tk_recens|https://recens.tk.elte.hu/kutato/stefkovics-adam"
+      - "tk_szociologia|https://szociologia.tk.elte.hu/kutato/stefkovics-adam"
+    survivor: per_07c6bb757b
+    reviewer: Bálint (antalbalint97)
+    date: 2026-10-04
+    evidence: >-
+      Both profile pages (fetched 2026-10-04) link the same TK CMS record for the CV,
+      /kutato/pdf/615 (https://recens.tk.elte.hu/kutato/pdf/615 and
+      https://szociologia.tk.elte.hu/kutato/pdf/615), and state the same position
+      "Tudományos segédmunkatárs (TK Recens)" and the same research areas. Same slug
+      stefkovics-adam on both sites. Survivor per_07c6bb757b (recens profile): both ids were
+      minted in the same build (no older id) and neither record has MTMT/ORCID (no stronger
+      anchor); the position on both pages names TK Recens, so the recens profile is the
+      home-unit record. per_405c6c90b1 is retired (previous_id in review/identity_map.jsonl).
+      Issue #27.
 not_same_as: []

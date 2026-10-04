@@ -1,16 +1,3 @@
 _comment: 'Generated. Do not edit: record decisions in review/manual_overrides.yaml
   under same_as / not_same_as with reviewer and date.'
-possible_matches:
-- refs:
-  - tk_recens|https://recens.tk.elte.hu/kutato/stefkovics-adam
-  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/stefkovics-adam
-  labels:
-  - Stefkovics Ádám
-  - Stefkovics Ádám
-  method: auto:same_name
-  score: 0.85
-  signals:
-    same_institution_family: true
-    same_profile_slug: true
-    same_email_domain: true
-    unlinked_mention: false
+possible_matches: []

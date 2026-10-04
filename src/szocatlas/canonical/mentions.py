@@ -194,7 +194,9 @@ def _certain(ref: str, stated_urls: list[str], pid: str | None, anchors: dict[st
         return pending()
     ds = confirmed.get(ref, [])
     manual = next((d for d in ds if d.method.startswith("manual")), None)
-    if manual is not None:
+    # a link to an identity record is decided by the link; a manual same_as between two
+    # identity records is a canonicalisation decision about the Person, not about this page
+    if manual is not None and ref not in anchors:
         return MentionResolution(status=MentionResolutionStatus.MANUAL_CONFIRMED, person_id=pid,
                                  method=manual.method, signals=["MANUAL_SAME_AS"],
                                  evidence={"pair": [manual.left, manual.right]}, decision_source=OVERRIDES)

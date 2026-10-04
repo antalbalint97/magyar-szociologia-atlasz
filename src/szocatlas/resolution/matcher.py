@@ -56,6 +56,9 @@ class MatchDecision(BaseModel):
 class Overrides:
     same_as: list[tuple[str, str]] = field(default_factory=list)
     not_same_as: list[tuple[str, str]] = field(default_factory=list)
+    # canonical ids a reviewer chose to keep when a same_as joins records that already
+    # had different ids (ADR-0003: otherwise the oldest id survives)
+    survivors: set[str] = field(default_factory=set)
 
     @classmethod
     def load(cls, path: Path) -> Overrides:
@@ -70,7 +73,8 @@ class Overrides:
                 out += [(refs[0], r) for r in refs[1:]]
             return out
 
-        return cls(pairs("same_as"), pairs("not_same_as"))
+        survivors = {str(item["survivor"]) for item in data.get("same_as") or [] if item.get("survivor")}
+        return cls(pairs("same_as"), pairs("not_same_as"), survivors)
 
 
 class _UF:
@@ -230,21 +234,35 @@ class IdentityMap:
     def mint(etype: EntityType, seed: str) -> str:
         return f"{ID_PREFIX[etype]}_{hashlib.sha1(seed.encode()).hexdigest()[:10]}"
 
-    def assign(self, clusters: dict[str, list[SourceEntity]]) -> dict[str, str]:
+    def assign(self, clusters: dict[str, list[SourceEntity]], survivors: set[str] = frozenset(),
+               strength: dict[str, int] | None = None) -> dict[str, str]:
+        """Give every cluster a canonical id. When a merge joins records that already carry
+        different ids, the survivor is, in order: the id a reviewer named (``survivors``),
+        the oldest assignment, the id whose records carry the stronger identity anchor
+        (``strength`` per source ref), the lowest id. The other ids are recorded as
+        ``previous_id`` on the rows that move (ADR-0003)."""
+        strength = strength or {}
         now = datetime.now(UTC).isoformat(timespec="seconds")
         ref_to_id: dict[str, str] = {}
         used: set[str] = set()
         # clusters whose members already have ids keep the oldest one
-        ordered = sorted(clusters.values(), key=lambda ms: min(
-            (self.rows[m.ref]["assigned_at"] for m in ms if m.ref in self.rows), default="~"))
+        ordered = sorted(clusters.values(), key=lambda ms: (min(
+            (self.rows[m.ref]["assigned_at"] for m in ms if m.ref in self.rows), default="~"),
+            min(m.ref for m in ms)))
         for members in ordered:
             etype = members[0].entity_type
-            known = sorted(
-                (self.rows[m.ref]["assigned_at"], self.rows[m.ref]["canonical_id"])
-                for m in members if m.ref in self.rows
-                and self.rows[m.ref]["canonical_id"].startswith(ID_PREFIX[etype] + "_")
-            )
-            cid = next((c for _, c in known if c not in used), None)
+            ids: dict[str, list[str]] = defaultdict(list)
+            for m in members:
+                row = self.rows.get(m.ref)
+                if row and row["canonical_id"].startswith(ID_PREFIX[etype] + "_"):
+                    ids[row["canonical_id"]].append(m.ref)
+            known = sorted(ids, key=lambda c: (
+                c not in survivors,
+                min(self.rows[r]["assigned_at"] for r in ids[c]),
+                -max(strength.get(r, 0) for r in ids[c]),
+                c,
+            ))
+            cid = next((c for c in known if c not in used), None)
             if cid is None:
                 cid = self.mint(etype, min(m.ref for m in members))
                 while cid in used:
@@ -305,7 +323,8 @@ def resolve(
     keep = {k: ms for k, ms in clusters.items()
             if ms[0].entity_type is not EntityType.PERSON or any(m.ref in anchors for m in ms)}
     identity.retire([m.ref for k, ms in clusters.items() if k not in keep for m in ms])
-    return identity.assign(keep), decisions
+    strength = {ref: len(kinds & {IdentityAnchor.MTMT, IdentityAnchor.ORCID}) for ref, kinds in anchors.items()}
+    return identity.assign(keep, overrides.survivors, strength), decisions
 
 
 def identity_anchors(records: list[SourceRecord], claims: list[Claim]) -> dict[str, set[IdentityAnchor]]:

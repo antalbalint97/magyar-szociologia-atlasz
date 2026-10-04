@@ -147,7 +147,14 @@ def run_checks(ds: CanonicalDataset, decisions: list[MatchDecision], seeds_path:
                          f"{len(same_label)} names are carried by more than one canonical person "
                          "(expected until reviewed; never auto-merged)", detail={"names": same_label}))
     variants = {}
+    multi: dict[str, list[str]] = {}
     for p in ds.by_type(EntityType.PERSON):
+        if "mtmt_id" in p.conflicts or "orcid" in p.conflicts:
+            F.append(Finding("identity.conflicting_hard_ids", "error",
+                             f"{p.canonical_id} carries several MTMT ids / ORCIDs", [p.canonical_id]))
+        anchored_refs = sorted(r for r in p.source_refs if r in ds.anchor_refs)
+        if len(anchored_refs) > 1:
+            multi[p.canonical_id] = anchored_refs
         keys = {name_key(n) for n in [p.label, *getattr(p, "alternate_names", [])]}
         orders = {order_free_key(n) for n in [p.label, *getattr(p, "alternate_names", [])]}
         if len(orders) > 1:
@@ -164,9 +171,11 @@ def run_checks(ds: CanonicalDataset, decisions: list[MatchDecision], seeds_path:
         F.append(Finding("identity.name_variants", "info",
                          f"{len(variants)} people are observed under several name forms of one identity record "
                          "(not a merge of different records)", list(variants), {"names": variants}))
-        if "mtmt_id" in p.conflicts or "orcid" in p.conflicts:
-            F.append(Finding("identity.conflicting_hard_ids", "error",
-                             f"{p.canonical_id} carries several MTMT ids / ORCIDs", [p.canonical_id]))
+    if multi:
+        # one Person from several identity records (hard id or manual same_as): list them for audit
+        F.append(Finding("identity.multi_record_persons", "info",
+                         f"{len(multi)} Persons join several identity records (hard id or manual decision)",
+                         sorted(multi), {"identity_records": multi}))
 
     F += _mention_checks(ds, claims_by_id)
 

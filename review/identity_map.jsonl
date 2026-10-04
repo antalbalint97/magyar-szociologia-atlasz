@@ -794,7 +794,7 @@
 {"assigned_at": "2026-10-04T14:29:22+00:00", "canonical_id": "per_09ddc0691d", "entity_type": "Person", "source_ref": "tk_szociologia|https://szociologia.tk.elte.hu/kutato/paksi-veronika"}
 {"assigned_at": "2026-10-04T14:29:22+00:00", "canonical_id": "per_2a148520d9", "entity_type": "Person", "source_ref": "tk_szociologia|https://szociologia.tk.elte.hu/kutato/sik-endre"}
 {"assigned_at": "2026-10-04T13:54:33+00:00", "canonical_id": "per_0aed041e3b", "entity_type": "Person", "source_ref": "tk_szociologia|https://szociologia.tk.elte.hu/kutato/sipos-alexandra"}
-{"assigned_at": "2026-10-04T14:29:22+00:00", "canonical_id": "per_405c6c90b1", "entity_type": "Person", "source_ref": "tk_szociologia|https://szociologia.tk.elte.hu/kutato/stefkovics-adam"}
+{"assigned_at": "2026-10-04T21:25:12+00:00", "canonical_id": "per_07c6bb757b", "entity_type": "Person", "previous_id": "per_405c6c90b1", "source_ref": "tk_szociologia|https://szociologia.tk.elte.hu/kutato/stefkovics-adam"}
 {"assigned_at": "2026-10-04T14:29:22+00:00", "canonical_id": "per_01bfd81e1a", "entity_type": "Person", "source_ref": "tk_szociologia|https://szociologia.tk.elte.hu/kutato/szabolcsi-zsolt"}
 {"assigned_at": "2026-10-04T14:29:22+00:00", "canonical_id": "per_07617e8bc4", "entity_type": "Person", "source_ref": "tk_szociologia|https://szociologia.tk.elte.hu/kutato/szalai-alida"}
 {"assigned_at": "2026-10-04T14:29:22+00:00", "canonical_id": "per_b3af9ef201", "entity_type": "Person", "source_ref": "tk_szociologia|https://szociologia.tk.elte.hu/kutato/szalai-julia"}

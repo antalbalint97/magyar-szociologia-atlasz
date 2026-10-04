@@ -602,3 +602,107 @@ def test_label_variants_of_one_profile_are_not_a_suspicious_merge(tmp_path, regi
     found = {f.check: f for f in run_checks(ds, [], None)}
     assert "identity.suspicious_merge" not in found
     assert "identity.name_variants" in found
+
+
+# ------------------------------------------------------------------ #27: manual canonicalisation of two profiles
+
+
+def _two_profile_world(registry):
+    w = World(registry)
+    a = w.profile(f"{RECENS}/kutato/stefkovics-adam", "Stefkovics Ádám", also=(f"{RECENS}/kutato/pdf/615",))
+    b = w.profile(f"{SZI}/kutato/stefkovics-adam", "Stefkovics Ádám", also=(f"{SZI}/kutato/pdf/615",))
+    proj = w.project(f"{SZI}/infra4nextgen")
+    w.linked(f"{SZI}/kutatok/s", f"{SZI}/kutato/stefkovics-adam", "Stefkovics Ádám", w.project(f"{SZI}/p"))
+    w.unlinked(f"{SZI}/infra4nextgen", "Stefkovics Ádám", proj)
+    return w, a, b
+
+
+def _seed_ids(tmp_path, rows):
+    import json
+
+    (tmp_path / "identity_map.jsonl").write_text("".join(
+        json.dumps({"source_ref": ref, "entity_type": "Person", "canonical_id": cid, "assigned_at": at}) + "\n"
+        for ref, cid, at in rows), encoding="utf-8")
+
+
+def test_manual_same_as_canonicalises_two_profiles_into_one_person(tmp_path, registry):
+    w, a, b = _two_profile_world(registry)
+    _seed_ids(tmp_path, [(a, "per_bbbbbbbbbb", "2026-10-04T14:29:22+00:00"),
+                         (b, "per_aaaaaaaaaa", "2026-10-04T14:29:22+00:00")])
+    ov = Overrides(same_as=[(a, b)], survivors={"per_bbbbbbbbbb"})
+    ds, ids = w.build(tmp_path, ov)
+    (p,) = persons(ds).values()  # no duplicate Person survives, no SAME_AS edge
+    assert p.canonical_id == ids[a] == ids[b] == "per_bbbbbbbbbb"  # the reviewer's survivor, not the lowest id
+    assert {f"{RECENS}/kutato/stefkovics-adam", f"{SZI}/kutato/stefkovics-adam", f"{RECENS}/kutato/pdf/615",
+            f"{SZI}/kutato/pdf/615"} <= set(p.profile_urls)
+    assert {a, b} <= set(p.source_refs) and not [r for r in ds.relations if r.type.value == "SAME_AS"]
+    # the profile link is still decided by the link; the merge is about the Person
+    linked = next(m for m in of(ds, "Stefkovics Ádám") if m.linked_profile_url)
+    assert linked.resolution.status is S.DETERMINISTIC and linked.resolution.person_id == p.canonical_id
+    # the name-only SZI mention now has one viable candidate with an SZI affiliation
+    unlinked = next(m for m in of(ds, "Stefkovics Ádám") if not m.linked_profile_url)
+    assert unlinked.resolution.person_id == p.canonical_id
+    found = {f.check: f for f in run_checks(ds, [], None)}
+    assert found["identity.multi_record_persons"].subjects == [p.canonical_id]
+
+
+def test_survivor_is_stable_across_rebuilds_and_input_order(tmp_path, registry):
+    w, a, b = _two_profile_world(registry)
+    rows = [(a, "per_bbbbbbbbbb", "2026-10-04T14:29:22+00:00"), (b, "per_aaaaaaaaaa", "2026-10-04T14:29:22+00:00")]
+    ov = Overrides(same_as=[(a, b)], survivors={"per_bbbbbbbbbb"})
+    (tmp_path / "x").mkdir()
+    _seed_ids(tmp_path / "x", rows)
+    first, ids1 = w.build(tmp_path / "x", ov)
+    again, ids2 = w.build(tmp_path / "x", ov)
+    rnd = random.Random(3)
+    rnd.shuffle(w.records)
+    rnd.shuffle(w.claims)
+    (tmp_path / "y").mkdir()
+    _seed_ids(tmp_path / "y", rows[::-1])
+    shuffled, ids3 = w.build(tmp_path / "y", ov)
+    assert ids1 == ids2 == ids3
+    assert _snapshot(first) == _snapshot(again) == _snapshot(shuffled)
+
+
+@pytest.mark.parametrize("rows,expected", [
+    # no reviewer choice: the older assignment survives (ADR-0003)
+    ([("a", "per_bbbbbbbbbb", "2026-10-01T00:00:00+00:00"), ("b", "per_aaaaaaaaaa", "2026-10-04T00:00:00+00:00")],
+     "per_bbbbbbbbbb"),
+    # same age: the lowest id, deterministically
+    ([("a", "per_bbbbbbbbbb", "2026-10-04T00:00:00+00:00"), ("b", "per_aaaaaaaaaa", "2026-10-04T00:00:00+00:00")],
+     "per_aaaaaaaaaa"),
+])
+def test_default_survivor_rule(tmp_path, registry, rows, expected):
+    w, a, b = _two_profile_world(registry)
+    refs = {"a": a, "b": b}
+    _seed_ids(tmp_path, [(refs[k], cid, at) for k, cid, at in rows])
+    _, ids = w.build(tmp_path, Overrides(same_as=[(a, b)]))
+    assert ids[a] == ids[b] == expected
+
+
+def test_stronger_anchor_survives_a_tie(tmp_path, registry):
+    w = World(registry)
+    a = w.profile(f"{RECENS}/kutato/x-y", "X Y")
+    b = w.profile(f"{SZI}/kutato/x-y", "X Y", mtmt="10000001")
+    _seed_ids(tmp_path, [(a, "per_aaaaaaaaaa", "2026-10-04T00:00:00+00:00"),
+                         (b, "per_bbbbbbbbbb", "2026-10-04T00:00:00+00:00")])
+    _, ids = w.build(tmp_path, Overrides(same_as=[(a, b)]))
+    assert ids[a] == ids[b] == "per_bbbbbbbbbb"
+
+
+def test_survivor_is_read_from_the_override_file(tmp_path):
+    p = tmp_path / "manual_overrides.yaml"
+    p.write_text("same_as:\n  - refs: [r1, r2]\n    survivor: per_x\n    reviewer: B\n    date: 2026-10-04\n"
+                 "not_same_as: []\n", encoding="utf-8")
+    ov = Overrides.load(p)
+    assert ov.same_as == [("r1", "r2")] and ov.survivors == {"per_x"} and ov.not_same_as == []
+
+
+def test_committed_override_keeps_one_stefkovics():
+    # the real decision for #27 stays in the override file with its evidence
+    import yaml
+
+    data = yaml.safe_load((REPO_ROOT / "review" / "manual_overrides.yaml").read_text(encoding="utf-8"))
+    (item,) = [i for i in data["same_as"] if any("stefkovics-adam" in r for r in i["refs"])]
+    assert item["survivor"] == "per_07c6bb757b" and "/kutato/pdf/615" in item["evidence"]
+    assert item["reviewer"] and item["date"]
