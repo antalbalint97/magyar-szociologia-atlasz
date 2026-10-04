@@ -5,6 +5,7 @@ const TYPE_HU: Record<string, string> = {
   Person: "személy", Institution: "intézmény", OrganisationalUnit: "szervezeti egység",
   ResearchGroup: "kutatócsoport", Project: "projekt", ResearchTopic: "téma", Method: "módszer",
   IntellectualTradition: "hagyomány", Event: "esemény", Journal: "folyóirat",
+  PersonMention: "azonosítatlan említés",
 };
 
 export default async function Home({ searchParams }: { searchParams: Promise<{ q?: string }> }) {

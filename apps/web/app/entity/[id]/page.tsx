@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import EgoGraph from "@/components/EgoGraph";
+import MentionView, { statusLabel } from "@/components/MentionView";
 import { graph, type Edge, type EntitySummary } from "@/lib/graph";
 
 const OUT: Record<string, string> = {
@@ -52,6 +53,8 @@ function EdgeRow({ e, other }: { e: Edge; other?: EntitySummary }) {
 export default async function EntityPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const g = graph();
+  const mention = id.startsWith("pmn_") ? await g.mention(id) : null;
+  if (mention) return <MentionView m={mention} g={g} />;
   const hood = await g.neighbourhood(id, 2);
   if (!hood) notFound();
   const e = hood.center;
@@ -77,6 +80,7 @@ export default async function EntityPage({ params }: { params: Promise<{ id: str
   const f = e.fields;
   const urls = [...((f.profile_urls as string[]) ?? []), ...(f.website ? [f.website as string] : [])];
   const areas = (f.stated_research_areas as string[]) ?? [];
+  const mentions = e.type === "Person" ? await g.mentionsOf(id) : [];
 
   return (
     <>
@@ -128,6 +132,20 @@ export default async function EntityPage({ params }: { params: Promise<{ id: str
           ))}
         </div>
         <div>
+          {mentions.length > 0 && (
+            <section className="card">
+              <h2>Említések a forrásokban <span className="muted">({mentions.length})</span></h2>
+              <ul className="edge-list">
+                {mentions.map((m) => (
+                  <li key={m.id}>
+                    <Link href={`/entity/${m.id}`}>„{m.statedName}”</Link>
+                    <span className="badge OBSERVED">{statusLabel(m)}</span>
+                    <div className="muted" style={{ fontSize: 13 }}>{m.sourceUrl}</div>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
           <section className="card">
             <h2>Kapcsolatháló (2 lépés)</h2>
             <EgoGraph hood={hood} />

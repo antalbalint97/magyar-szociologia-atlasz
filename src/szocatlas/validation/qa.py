@@ -19,8 +19,9 @@ from urllib.parse import urlsplit
 import yaml
 
 from ..canonical.build import CanonicalDataset
+from ..canonical.mentions import mention_id
 from ..models.entities import Person, Project
-from ..models.enums import EntityType, EpistemicStatus, MatchStatus, RelationType
+from ..models.enums import EntityType, EpistemicStatus, MatchStatus, MentionResolutionStatus, RelationType
 from ..normalize.names import name_key, order_free_key
 from ..resolution.matcher import MatchDecision
 
@@ -140,15 +141,29 @@ def run_checks(ds: CanonicalDataset, decisions: list[MatchDecision], seeds_path:
         F.append(Finding("identity.same_name_distinct_ids", "info",
                          f"{len(same_label)} names are carried by more than one canonical person "
                          "(expected until reviewed; never auto-merged)", detail={"names": same_label}))
+    variants = {}
     for p in ds.by_type(EntityType.PERSON):
         keys = {name_key(n) for n in [p.label, *getattr(p, "alternate_names", [])]}
         orders = {order_free_key(n) for n in [p.label, *getattr(p, "alternate_names", [])]}
         if len(orders) > 1:
-            F.append(Finding("identity.suspicious_merge", "warning",
-                             f"{p.canonical_id} merges different names: {sorted(keys)}", [p.canonical_id]))
+            anchored = [r for r in p.source_refs if r in ds.anchor_refs]
+            if len(anchored) > 1 or not ds.anchor_refs:
+                # several independent identity records joined under different names
+                F.append(Finding("identity.suspicious_merge", "warning",
+                                 f"{p.canonical_id} merges different names: {sorted(keys)}", [p.canonical_id],
+                                 {"identity_records": anchored}))
+            else:
+                # one identity record observed under several name forms (#6)
+                variants[p.canonical_id] = sorted(keys)
+    if variants:
+        F.append(Finding("identity.name_variants", "info",
+                         f"{len(variants)} people are observed under several name forms of one identity record "
+                         "(not a merge of different records)", list(variants), {"names": variants}))
         if "mtmt_id" in p.conflicts or "orcid" in p.conflicts:
             F.append(Finding("identity.conflicting_hard_ids", "error",
                              f"{p.canonical_id} carries several MTMT ids / ORCIDs", [p.canonical_id]))
+
+    F += _mention_checks(ds, claims_by_id)
 
     # conflicts
     for e in ds.entities.values():
@@ -174,10 +189,67 @@ def run_checks(ds: CanonicalDataset, decisions: list[MatchDecision], seeds_path:
     rel_counts = Counter(r.type.value for r in ds.relations)
     status_counts = Counter(r.epistemic_status.value for r in ds.relations)
     F.append(Finding("stats.entities", "info", "entity counts", detail=dict(counts)))
+    if ds.mentions:
+        F.append(Finding("stats.person_mentions", "info", "person mentions by resolution status",
+                         detail=dict(Counter(m.resolution.status.value for m in ds.mentions.values()))))
     F.append(Finding("stats.relations", "info", "relation counts", detail=dict(rel_counts)))
     F.append(Finding("stats.epistemic", "info", "relations by epistemic status", detail=dict(status_counts)))
     if seeds_path and seeds_path.exists():
         F += _seed_coverage(ds, seeds_path)
+    return F
+
+
+def _mention_checks(ds: CanonicalDataset, claims_by_id: dict) -> list[Finding]:
+    """ADR-0006: persons are identities with evidence; mentions are evidence with a decision."""
+    F: list[Finding] = []
+    persons = {p.canonical_id: p for p in ds.by_type(EntityType.PERSON)}
+    no_evidence = [pid for pid, p in persons.items() if not getattr(p, "identity_evidence", None)]
+    if no_evidence:
+        F.append(Finding("identity.person_without_evidence", "error",
+                         f"{len(no_evidence)} canonical people have no identity evidence", no_evidence[:50]))
+    mentions = list(ds.mentions.values())
+    missing = [m.canonical_id for m in mentions if m.resolution.person_id and m.resolution.person_id not in persons]
+    if missing:
+        F.append(Finding("identity.mention_target_missing", "error",
+                         f"{len(missing)} mentions resolve to a Person that is not in the release", missing[:50]))
+    profile_owner = {u: pid for pid, p in persons.items() for u in getattr(p, "profile_urls", [])}
+    stranded = [m.canonical_id for m in mentions if m.resolution.status is MentionResolutionStatus.UNRESOLVED
+                and m.linked_profile_url and m.linked_profile_url in profile_owner]
+    if stranded:
+        F.append(Finding("identity.unresolved_linked_profile", "error",
+                         f"{len(stranded)} unresolved mentions link a profile URL a Person already has "
+                         "(URL normalisation bug)", stranded[:50]))
+    targets: dict[str, set[str]] = defaultdict(set)
+    for m in mentions:
+        if m.resolution.status is MentionResolutionStatus.DETERMINISTIC:
+            targets[m.source_ref].add(m.resolution.person_id or "")
+    multi = {ref: sorted(t) for ref, t in targets.items() if len(t) > 1}
+    if multi:
+        F.append(Finding("identity.multiple_deterministic_targets", "error",
+                         f"{len(multi)} source records resolve deterministically to several people",
+                         list(multi)[:50], {"targets": dict(list(multi.items())[:20])}))
+    unstable = [m.canonical_id for m in mentions if m.canonical_id != mention_id(m.source_ref, m.source_url)]
+    if unstable:
+        F.append(Finding("identity.unstable_mention_id", "error",
+                         f"{len(unstable)} mention ids are not derived from (record, page)", unstable[:50]))
+    unsupported = [m.canonical_id for m in mentions
+                   if not any(m.provenance.values())
+                   or any(i not in claims_by_id for ids in m.provenance.values() for i in ids)]
+    if unsupported:
+        F.append(Finding("provenance.mention_without_claim", "error",
+                         f"{len(unsupported)} mentions have no valid supporting claim", unsupported[:50]))
+    if mentions:
+        unresolved = [m for m in mentions if m.resolution.status is MentionResolutionStatus.UNRESOLVED]
+        person_keys = defaultdict(list)
+        for p in persons.values():
+            for n in [p.label, *getattr(p, "alternate_names", [])]:
+                person_keys[order_free_key(n)].append(p.canonical_id)
+        same_name = Counter(m.normalized_name for m in unresolved if person_keys.get(order_free_key(m.stated_name)))
+        F.append(Finding("identity.unresolved_mentions", "warning" if unresolved else "info",
+                         f"{len(unresolved)} of {len(mentions)} person mentions are not resolved to an identity "
+                         f"({len(same_name)} distinct names also carried by a canonical person; see #5)",
+                         detail={"by_status": dict(Counter(m.resolution.status.value for m in mentions)),
+                                 "same_name_as_a_person": dict(same_name.most_common(30))}))
     return F
 
 
@@ -204,8 +276,10 @@ def _seed_coverage(ds: CanonicalDataset, path: Path) -> list[Finding]:
     for s in seeds:
         hits = index.get(order_free_key(s["name"]), [])
         if not hits:
-            out.append(Finding("seeds.missing", "warning", f"QA seed not in dataset: {s['name']}",
-                               detail={"expect": s.get("expect")}))
+            mentioned = sorted({m.source_url for m in ds.mentions.values()
+                                if order_free_key(m.stated_name) == order_free_key(s["name"])})
+            out.append(Finding("seeds.missing", "warning", f"QA seed not in dataset as a person: {s['name']}",
+                               detail={"expect": s.get("expect"), "mentioned_on": mentioned}))
             continue
         for p in hits:
             aff = sorted({units.get(r.target_id, r.target_id) for r in ds.relations
@@ -214,8 +288,16 @@ def _seed_coverage(ds: CanonicalDataset, path: Path) -> list[Finding]:
                              and r.type is RelationType.WORKS_ON_TOPIC})
             methods = sorted({units.get(r.target_id) for r in ds.relations if r.source_id == p.canonical_id
                               and r.type is RelationType.USES_METHOD})
+            resolved = sum(1 for m in ds.mentions.values() if m.resolution.person_id == p.canonical_id)
             out.append(Finding("seeds.present", "info", f"{s['name']} -> {p.canonical_id}",
-                               [p.canonical_id], {"affiliations": aff, "topics": topics, "methods": methods}))
+                               [p.canonical_id], {"affiliations": aff, "topics": topics, "methods": methods,
+                                                  "resolved_mentions": resolved}))
+        unresolved = [m.source_url for m in ds.mentions.values() if m.resolution.person_id is None
+                      and order_free_key(m.stated_name) == order_free_key(s["name"])]
+        if unresolved:
+            out.append(Finding("seeds.unresolved_mentions", "info",
+                               f"{s['name']}: {len(unresolved)} same-name mentions not resolved to the profile",
+                               detail={"pages": sorted(unresolved)}))
     return out
 
 

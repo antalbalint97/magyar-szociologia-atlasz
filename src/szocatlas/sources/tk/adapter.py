@@ -7,7 +7,7 @@ from collections.abc import Iterator
 from urllib.parse import urlsplit
 
 from ...fetch import Page
-from ...models.enums import AssertionType, EntityType, SourceType, TemporalBasis
+from ...models.enums import AssertionType, EntityType, IdentityAnchor, SourceType, TemporalBasis
 from ...models.provenance import EntityRef, SourceRecord
 from ...normalize.names import slugify
 from ...normalize.urls import canonical_url
@@ -179,7 +179,8 @@ class TKAdapter(SourceAdapter):
         }
         res.records.append(
             SourceRecord(ref=ref, label=prof.name, document_id=doc.document_id,
-                         hints={k: v for k, v in hints.items() if v})
+                         hints={k: v for k, v in hints.items() if v},
+                         identity_anchor=IdentityAnchor.INSTITUTIONAL_PROFILE.value)
         )
         c = res.claims
         c.append(f.literal(ref, "name", prof.name, locator="profile.h1", snippet=prof.name_snippet))

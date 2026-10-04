@@ -51,6 +51,33 @@ export interface Neighbourhood {
   edges: Edge[];
 }
 
+// ADR-0006: a person-like record observed on one page. Evidence, not an identity.
+export type MentionStatus = "DETERMINISTIC" | "MANUAL_CONFIRMED" | "HIGH_CONFIDENCE_AUTO" | "UNRESOLVED";
+
+export interface MentionContext {
+  relation: string;
+  direction: "out" | "in";
+  targetId: string | null;
+  targetRef: string | null;
+  role: string | null;
+  snippet: string;
+  claimIds: string[];
+}
+
+export interface Mention {
+  id: string;
+  statedName: string;
+  sourceUrl: string;
+  linkedProfileUrl: string | null;
+  status: MentionStatus;
+  personId: string | null;
+  method: string | null;
+  decisionSource: string | null;
+  candidates: string[];
+  context: MentionContext[];
+  claimIds: string[];
+}
+
 export interface ReleaseInfo {
   releaseId: string;
   kind: "fixture" | "snapshot";
@@ -64,4 +91,6 @@ export interface GraphStore {
   entity(id: string): Promise<Entity | null>;
   neighbourhood(id: string, depth: 1 | 2): Promise<Neighbourhood | null>;
   evidence(claimIds: string[]): Promise<Evidence[]>;
+  mention(id: string): Promise<Mention | null>;
+  mentionsOf(personId: string): Promise<Mention[]>; // mentions resolved to this person
 }

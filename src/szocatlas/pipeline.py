@@ -8,21 +8,23 @@ from __future__ import annotations
 
 import json
 import logging
-from collections import Counter
+from collections import Counter, defaultdict
 from dataclasses import asdict
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
 import yaml
 
 from . import SCHEMA_VERSION, __version__
 from .canonical.build import build_canonical
+from .canonical.mentions import build_mentions
 from .canonical.curated import Taxonomy, derive_classifications, registry_claims
 from .fetch import FixtureFetcher, PoliteFetcher, RawStore, ReplayFetcher, dump_jsonl
-from .models.enums import ReviewStatus
+from .models.enums import EntityType, IdentityAnchor, MentionResolutionStatus, ReviewStatus
 from .models.provenance import Claim, SourceDocument, SourceRecord
 from .registry import DEFAULT_REGISTRY, REPO_ROOT, Registry, load_registry
-from .resolution.matcher import IdentityMap, Overrides, resolve, write_review_queue
+from .resolution.matcher import IdentityMap, Overrides, identity_anchors, resolve, write_review_queue
 from .sources.base import ParseResult, SourceAdapter
 from .sources.tk.adapter import TKAdapter
 from .validation.qa import render_markdown, run_checks
@@ -178,7 +180,16 @@ def build(release_id: str, *, source_ids: list[str] | None = None, paths: Paths 
     write_review_queue(decisions, paths.review / "unresolved_people.yaml")
 
     documents = list({d.document_id: d for d in combined.documents}.values())
-    ds = build_canonical(claim_list, documents, ref_to_id)
+    anchors = identity_anchors(combined.records, claim_list)
+    evidence: dict[str, set] = defaultdict(set)
+    for ref, kinds in anchors.items():
+        if ref in ref_to_id:
+            evidence[ref_to_id[ref]] |= kinds
+    ds = build_canonical(claim_list, documents, ref_to_id, {k: sorted(v) for k, v in evidence.items()})
+    ds.anchor_refs = set(anchors)
+    built_at = datetime.now(UTC)
+    ds.mentions = build_mentions(combined.records, claim_list, ds.documents, ref_to_id, decisions,
+                                 anchors, built_at)
 
     synthetic = any(d.synthetic for d in documents)
     parser_versions = dict(sorted({c.parser: c.parser_version for c in claim_list}.items()))
@@ -192,7 +203,9 @@ def build(release_id: str, *, source_ids: list[str] | None = None, paths: Paths 
         "parser_versions": parser_versions,
         "documents": len(documents),
         "claims": len(claim_list),
-        "entities": dict(Counter(e.entity_type.value for e in ds.entities.values())),
+        "entities": dict(Counter(e.entity_type.value for e in ds.entities.values()))
+        | ({"PersonMention": len(ds.mentions)} if ds.mentions else {}),
+        "counts": person_counts(ds),
         "relations": dict(Counter(r.type.value for r in ds.relations)),
         "source_retrieval_window": _window(documents),
     }
@@ -204,6 +217,8 @@ def build(release_id: str, *, source_ids: list[str] | None = None, paths: Paths 
     for etype in sorted({e.entity_type for e in ds.entities.values()}, key=lambda t: t.value):
         dump_jsonl(out / "entities" / f"{etype.value}.jsonl",
                    sorted(ds.by_type(etype), key=lambda e: e.canonical_id))
+    if ds.mentions:
+        dump_jsonl(out / "entities" / "PersonMention.jsonl", [ds.mentions[k] for k in sorted(ds.mentions)])
     dump_jsonl(out / "relations.jsonl", sorted(ds.relations, key=lambda r: r.relation_id))
     dump_jsonl(out / "claims.jsonl", sorted(claim_list, key=lambda c: c.claim_id))
     dump_jsonl(out / "documents.jsonl", sorted(documents, key=lambda d: d.document_id))
@@ -213,6 +228,44 @@ def build(release_id: str, *, source_ids: list[str] | None = None, paths: Paths 
         json.dumps([asdict(f) for f in findings], indent=2, ensure_ascii=False, default=str), encoding="utf-8")
     (out / "quality_report.md").write_text(render_markdown(findings, manifest), encoding="utf-8")
     return out, findings
+
+
+def person_counts(ds) -> dict[str, Any]:
+    """Raw vs canonical person counts, always reported together (ADR-0006)."""
+    persons = ds.by_type(EntityType.PERSON)
+    evidence = Counter()
+    for p in persons:
+        kinds = set(p.identity_evidence)
+        if IdentityAnchor.INSTITUTIONAL_PROFILE in kinds:
+            evidence["profile_backed"] += 1
+        elif kinds & {IdentityAnchor.MTMT, IdentityAnchor.ORCID}:
+            evidence["externally_resolved"] += 1
+        else:
+            evidence["other_evidence"] += 1
+    status = Counter(m.resolution.status.value for m in ds.mentions.values())
+    unresolved = [m for m in ds.mentions.values()
+                  if m.resolution.status is MentionResolutionStatus.UNRESOLVED]
+    return {
+        "persons": {
+            "canonical": len(persons),
+            "profile_backed": evidence["profile_backed"],
+            "externally_resolved": evidence["externally_resolved"],
+            "historical": 0,  # no historical sources yet
+            "with_mtmt": sum(1 for p in persons if p.mtmt_id),
+            "with_orcid": sum(1 for p in persons if p.orcid),
+        },
+        "person_mentions": {
+            "total": len(ds.mentions),
+            "resolved": len(ds.mentions) - len(unresolved),
+            "unresolved": len(unresolved),
+            "by_status": dict(sorted(status.items())),
+            "unresolved_distinct_records": len({m.source_ref for m in unresolved}),
+            "unresolved_distinct_names": len({m.normalized_name for m in unresolved}),
+            "claims_only_on_unresolved_mentions": ds.mention_claims_skipped,
+        },
+        "person_like_records": len({r for p in persons for r in p.source_refs}
+                                   | {m.source_ref for m in ds.mentions.values()}),
+    }
 
 
 def _window(documents: list[SourceDocument]) -> dict[str, str] | None:

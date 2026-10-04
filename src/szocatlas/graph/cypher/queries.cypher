@@ -81,3 +81,22 @@ MATCH (a {label: $name})-[r]->(b)
 UNWIND r.claim_ids AS cid
 MATCH (c:Claim {claim_id: cid})-[:SUPPORTED_BY]->(s:SourceDocument)
 RETURN type(r), b.label, c.predicate, c.snippet, c.confidence, s.url, s.retrieved_at;
+
+// --- Person mentions (ADR-0006). Queries above match (:Person) only, so unresolved
+// --- name strings never enter structural analysis.
+
+// 11. Why does the Atlas link this person to this project? Page -> claim -> mention -> person
+MATCH (p:Person {label: $name})<-[res:RESOLVES_TO]-(m:PersonMention)-[mi:MENTIONED_IN]->(t)
+RETURN m.source_url AS page, m.stated_name AS stated_as, mi.relation AS relation, mi.role AS role,
+       t.label AS target, res.status AS resolution, res.method AS rule, mi.claim_ids AS claims;
+
+// 12. Unresolved mentions that carry a canonical person's name (review input for #5)
+MATCH (m:PersonMention {resolution_status: 'UNRESOLVED'})
+MATCH (p:Person) WHERE p.search_text CONTAINS m.search_text
+RETURN m.stated_name AS name, m.source_url AS page, collect(DISTINCT p.canonical_id) AS candidates
+ORDER BY name;
+
+// 13. Raw vs canonical person counts
+MATCH (m:PersonMention)
+RETURN count(m) AS mentions, sum(CASE WHEN m.resolved_to IS NULL THEN 1 ELSE 0 END) AS unresolved,
+       COUNT { MATCH (:Person) } AS canonical_persons;

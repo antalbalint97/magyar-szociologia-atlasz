@@ -14,6 +14,12 @@ What becomes a node vs a property (docs/neo4j.md):
   qualifiers (position title, role, validity interval, epistemic status);
 * JSON-string properties: nested structures nobody filters on in Cypher
   (field-level provenance, conflicts).
+
+Person mentions (ADR-0006) are evidence, not entities: they are loaded as
+``:PersonMention`` nodes WITHOUT the ``:Entity`` label, with
+``(:PersonMention)-[:RESOLVES_TO]->(:Person)`` for resolved ones and
+``(:PersonMention)-[:MENTIONED_IN {relation, role}]->(target)`` for the context the page
+states. Analytical queries match ``:Person`` / ``:Entity`` and never see them.
 """
 
 from __future__ import annotations
@@ -43,6 +49,9 @@ LABELS: dict[str, list[str]] = {
     EntityType.EVENT.value: ["Event"],
 }
 NESTED = {"provenance", "conflicts"}
+MENTION_FILE = EntityType.PERSON_MENTION.value
+MENTION_REL_TYPES = ("RESOLVES_TO", "MENTIONED_IN")  # evidence layer only, never in relations.jsonl
+MENTION_NESTED = NESTED | {"context", "resolution", "stated_identifiers"}
 BATCH = 500
 
 
@@ -71,6 +80,8 @@ def node_rows(release: Path) -> dict[tuple[str, ...], list[dict]]:
     out: dict[tuple[str, ...], list[dict]] = defaultdict(list)
     for f in sorted((release / "entities").glob("*.jsonl")):
         etype = f.stem
+        if etype == MENTION_FILE:
+            continue  # evidence layer, see mention_rows()
         labels = tuple(["Entity", *LABELS[etype]])
         for row in _read_jsonl(f):
             props = {k: _prop(v) for k, v in row.items() if k not in NESTED}
@@ -99,6 +110,39 @@ def edge_rows(release: Path) -> dict[str, list[dict]]:
         out[rtype].append({"source": row["source_id"], "target": row["target_id"],
                            "relation_id": row["relation_id"], "props": props})
     return out
+
+
+def mention_rows(release: Path) -> tuple[list[dict], list[dict], list[dict]]:
+    """(mention nodes, RESOLVES_TO rows, MENTIONED_IN rows) from entities/PersonMention.jsonl."""
+    nodes, resolves, contexts = [], [], []
+    for row in _read_jsonl(release / "entities" / f"{MENTION_FILE}.jsonl"):
+        res = row["resolution"]
+        props = {k: _prop(v) for k, v in row.items() if k not in MENTION_NESTED}
+        props["resolution_status"] = res["status"]
+        props["resolved_to"] = res.get("person_id")
+        props["provenance_json"] = json.dumps(row.get("provenance", {}), ensure_ascii=False, sort_keys=True)
+        props["context_json"] = json.dumps(row.get("context", []), ensure_ascii=False, sort_keys=True)
+        props["resolution_json"] = json.dumps(res, ensure_ascii=False, sort_keys=True, default=str)
+        props["entity_type"] = MENTION_FILE
+        props["search_text"] = strip_accents(row.get("stated_name", "")).lower()
+        nodes.append({"canonical_id": row["canonical_id"], "props": props})
+        if res.get("person_id"):
+            resolves.append({"source": row["canonical_id"], "target": res["person_id"],
+                             "props": {"status": res["status"], "method": res.get("method"),
+                                       "decision_source": res.get("decision_source"),
+                                       "decided_at": _prop(res.get("decided_at")),
+                                       "signals_json": json.dumps(res.get("signals", {}), ensure_ascii=False,
+                                                                  sort_keys=True)}})
+        for cx in row.get("context", []):
+            if not cx.get("target_id"):
+                continue
+            q = cx.get("qualifiers") or {}
+            contexts.append({"source": row["canonical_id"], "target": cx["target_id"],
+                             "relation": RelationType(cx["relation"]).value,
+                             "props": {"relation": cx["relation"], "direction": cx.get("direction", "out"),
+                                       "role": _prop(q.get("role")), "snippet": cx.get("snippet", ""),
+                                       "claim_ids": cx.get("claim_ids", [])}})
+    return nodes, resolves, contexts
 
 
 def claim_rows(release: Path) -> tuple[list[dict], list[dict]]:
@@ -179,6 +223,23 @@ def load_release(session: Session, release: Path, *, prune: bool = False) -> dic
             )
             stats["relationships"] += len(b)
 
+    m_nodes, m_resolves, m_contexts = mention_rows(release)
+    for b in _batches(m_nodes):
+        session.run("UNWIND $rows AS row MERGE (m:PersonMention {canonical_id: row.canonical_id}) "
+                    "SET m += row.props SET m.release_id = $rid", rows=b, rid=rid)
+        stats["mentions"] += len(b)
+    for b in _batches(m_resolves):
+        session.run("UNWIND $rows AS row MATCH (m:PersonMention {canonical_id: row.source}), "
+                    "(p:Person {canonical_id: row.target}) MERGE (m)-[r:RESOLVES_TO]->(p) "
+                    "SET r += row.props SET r.release_id = $rid", rows=b, rid=rid)
+        stats["resolves_to"] += len(b)
+    for b in _batches(m_contexts):
+        session.run("UNWIND $rows AS row MATCH (m:PersonMention {canonical_id: row.source}), "
+                    "(t:Entity {canonical_id: row.target}) "
+                    "MERGE (m)-[r:MENTIONED_IN {relation: row.relation}]->(t) "
+                    "SET r += row.props SET r.release_id = $rid", rows=b, rid=rid)
+        stats["mentioned_in"] += len(b)
+
     docs, claims = claim_rows(release)
     for b in _batches(docs):
         session.run("UNWIND $rows AS row MERGE (s:SourceDocument {document_id: row.document_id}) "
@@ -200,7 +261,8 @@ def load_release(session: Session, release: Path, *, prune: bool = False) -> dic
         )
     if prune:
         session.run("MATCH ()-[r]->() WHERE r.release_id IS NOT NULL AND r.release_id <> $rid DELETE r", rid=rid)
-        session.run("MATCH (n) WHERE (n:Entity OR n:Claim OR n:SourceDocument) AND n.release_id <> $rid "
+        session.run("MATCH (n) WHERE (n:Entity OR n:PersonMention OR n:Claim OR n:SourceDocument) "
+                    "AND n.release_id <> $rid "
                     "DETACH DELETE n", rid=rid)
     session.run("MERGE (m:ReleaseInfo {key: 'current'}) SET m += $m",
                 m={k: _prop(v) for k, v in manifest.items()})

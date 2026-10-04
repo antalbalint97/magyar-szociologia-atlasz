@@ -56,7 +56,8 @@ padded with `-01-01`.
 
 | Type | Id prefix | Node? | Why a node |
 |---|---|---|---|
-| Person | `per_` | yes | traversal target for every question |
+| Person | `per_` | yes | an identity with evidence (`identity_evidence`: institutional profile, MTMT, ORCID or manual); traversal target for every question (ADR-0006) |
+| PersonMention | `pmn_` | yes, provenance layer only (`:PersonMention`, not `:Entity`) | one person-like name observed on one source page, with its resolution decision; never counted as a person (ADR-0006) |
 | Institution | `ins_` | yes | centrality, mobility, succession |
 | OrganisationalUnit | `unit_` | yes | institutes, departments, research centres; hierarchy via `PART_OF` |
 | ResearchGroup | `grp_` | yes (also labelled `OrgUnit` in Neo4j) | Lendület groups etc.; has funding programme |
@@ -111,6 +112,9 @@ All edges carry: `epistemic_status`, `assertion_types`, `confidence`, `claim_ids
 | PART_OF_TRADITION, INTELLECTUALLY_INFLUENCED_BY | Person → Tradition / Person | later | INTERPRETIVE or HISTORICAL_LITERATURE only |
 | PREDECESSOR_OF, SUCCESSOR_OF, INSTITUTIONAL_SUCCESSOR | Institution/Unit → Institution/Unit | later (Events) | institutional history |
 | PARTICIPATED_IN_EVENT | any → Event | later | |
+
+| RESOLVES_TO | PersonMention → Person | identity decision | `status` (DETERMINISTIC / MANUAL_CONFIRMED / HIGH_CONFIDENCE_AUTO), `method`, `decision_source`; stored in the mention record, projected in Neo4j |
+| MENTIONED_IN | PersonMention → any | what the observing page said | `relation`, `role`; claims about unresolved mentions live only here, never as canonical relations |
 
 Generic `CONNECTED_TO` does not exist.
 

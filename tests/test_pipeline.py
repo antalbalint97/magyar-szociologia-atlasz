@@ -96,11 +96,41 @@ def test_derived_topics_are_marked_and_point_to_evidence(release):
             assert src["predicate"] == "stated_research_area" and src["epistemic_status"] == "OBSERVED"
 
 
-def test_unlinked_names_stay_separate_people(release):
+def mentions(out):
+    return load(out, "entities/PersonMention.jsonl")
+
+
+def test_unlinked_names_are_mentions_not_people(release):
+    # ADR-0006: a name without identity evidence is a PersonMention, never a Person
     _, out, _ = release
-    ppl = people(out)
-    assert "Bajomi Anna Zsófia" in ppl
-    assert len(ppl["Bajomi Anna Zsófia"]["source_refs"]) == 1
+    assert "Bajomi Anna Zsófia" not in people(out)
+    bajomi = [m for m in mentions(out) if m["stated_name"] == "Bajomi Anna Zsófia"]
+    assert bajomi and all(m["resolution"]["status"] == "UNRESOLVED" for m in bajomi)
+    assert all(m["linked_profile_url"] is None and m["context"] for m in bajomi)
+
+
+def test_every_person_has_identity_evidence(release):
+    _, out, _ = release
+    assert all(p["identity_evidence"] for p in people(out).values())
+
+
+def test_linked_mentions_resolve_deterministically_to_the_profile(release):
+    _, out, _ = release
+    k = people(out)["Koltai Júlia"]
+    linked = [m for m in mentions(out) if m["resolution"].get("person_id") == k["canonical_id"]]
+    assert linked  # the listing page links her profile
+    for m in linked:
+        assert m["resolution"]["status"] == "DETERMINISTIC" and m["resolution"]["method"] == "profile_url"
+        assert m["linked_profile_url"] in k["profile_urls"]
+        assert m["source_url"] not in k["profile_urls"]  # her own page is the identity, not a mention
+
+
+def test_manifest_reports_raw_and_canonical_person_counts(release):
+    _, out, _ = release
+    c = json.loads((out / "manifest.json").read_text())["counts"]
+    assert c["persons"]["canonical"] == len(people(out))
+    assert c["person_mentions"]["total"] == len(mentions(out))
+    assert c["person_mentions"]["resolved"] + c["person_mentions"]["unresolved"] == c["person_mentions"]["total"]
 
 
 def test_project_dates_are_explicit_on_participation(release):
@@ -109,7 +139,14 @@ def test_project_dates_are_explicit_on_participation(release):
     assert (proj["start"], proj["end"], proj["grant_id"]) == ("2024-01-01", "2027-12-31", "NKFIH 146987")
     pi = [r for r in load(out, "relations.jsonl")
           if r["type"] == "PRINCIPAL_INVESTIGATOR_OF" and r["target_id"] == proj["canonical_id"]]
-    assert len(pi) == 1 and pi[0]["temporal_basis"] == "EXPLICIT" and pi[0]["valid_from"] == "2024-01-01"
+    # the lead is named without a profile link: a mention, so no canonical PI edge yet
+    assert pi == []
+    lead = [(m, cx) for m in mentions(out) for cx in m["context"]
+            if cx["relation"] == "PRINCIPAL_INVESTIGATOR_OF" and cx["target_id"] == proj["canonical_id"]]
+    assert len(lead) == 1
+    m, cx = lead[0]
+    assert m["resolution"]["status"] == "UNRESOLVED"
+    assert cx["valid_from"] == "2024-01-01"
 
 
 def test_rebuild_is_deterministic(release):
@@ -119,6 +156,10 @@ def test_rebuild_is_deterministic(release):
         a = (out / name).read_text()
         b = (out2 / name).read_text()
         assert a == b, name
+    # mention ids, context and decisions are stable; only the decision timestamp moves
+    def strip(rows):
+        return [{**r, "resolution": {**r["resolution"], "decided_at": None}} for r in rows]
+    assert strip(mentions(out)) == strip(mentions(out2))
 
 
 def test_disputed_claim_rejection_removes_it(release):

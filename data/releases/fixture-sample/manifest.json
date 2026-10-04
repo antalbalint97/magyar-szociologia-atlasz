@@ -1,50 +1,76 @@
 {
   "release_id": "fixture-sample",
   "dataset_kind": "fixture",
-  "generated_at": "2026-10-04T14:16:32+00:00",
+  "generated_at": "2026-10-04T16:26:28+00:00",
   "schema_version": "0.1.0",
   "software_version": "0.1.0",
   "sources": [
     "tk_kisebbsegkutato",
+    "tk_politikatudomany",
     "tk_recens",
     "tk_szociologia"
   ],
   "parser_versions": {
     "curated": "curated/0.1.0",
     "derive.taxonomy": "taxonomy_keyword_map/0.1.0",
-    "tk.listing": "tk/0.1.0",
-    "tk.profile": "tk/0.1.0",
-    "tk.project": "tk/0.1.0",
-    "tk.unit": "tk/0.1.0"
+    "tk.listing": "tk/0.2.1",
+    "tk.profile": "tk/0.2.1",
+    "tk.project": "tk/0.2.1",
+    "tk.project_listing": "tk/0.2.1",
+    "tk.unit": "tk/0.2.1"
   },
-  "documents": 9,
-  "claims": 538,
+  "documents": 21,
+  "claims": 998,
   "entities": {
     "Institution": 15,
-    "OrganisationalUnit": 33,
+    "OrganisationalUnit": 37,
     "ResearchGroup": 2,
     "ResearchTopic": 34,
     "Method": 19,
-    "Person": 22,
-    "Project": 8
+    "Person": 11,
+    "Project": 79,
+    "PersonMention": 57
+  },
+  "counts": {
+    "persons": {
+      "canonical": 11,
+      "profile_backed": 11,
+      "externally_resolved": 0,
+      "historical": 0,
+      "with_mtmt": 8,
+      "with_orcid": 0
+    },
+    "person_mentions": {
+      "total": 57,
+      "resolved": 6,
+      "unresolved": 51,
+      "by_status": {
+        "DETERMINISTIC": 6,
+        "UNRESOLVED": 51
+      },
+      "unresolved_distinct_records": 48,
+      "unresolved_distinct_names": 48,
+      "claims_only_on_unresolved_mentions": 113
+    },
+    "person_like_records": 59
   },
   "relations": {
-    "AFFILIATED_WITH": 8,
+    "AFFILIATED_WITH": 11,
     "BROADER": 2,
-    "HOSTED_BY": 1,
-    "LEADS": 1,
-    "MEMBER_OF": 12,
-    "PARTICIPATES_IN": 12,
-    "PART_OF": 39,
-    "PRINCIPAL_INVESTIGATOR_OF": 1,
-    "WORKS_ON_TOPIC": 23
+    "HOSTED_BY": 2,
+    "MEMBER_OF": 8,
+    "PARTICIPATES_IN": 68,
+    "PART_OF": 43,
+    "PRINCIPAL_INVESTIGATOR_OF": 17,
+    "USES_METHOD": 16,
+    "WORKS_ON_TOPIC": 85
   },
   "source_retrieval_window": {
     "from": "2026-10-04T00:00:00+00:00",
     "until": "2026-10-04T00:00:00+00:00"
   },
   "quality": {
-    "warning": 6,
+    "warning": 8,
     "info": 7
   }
 }

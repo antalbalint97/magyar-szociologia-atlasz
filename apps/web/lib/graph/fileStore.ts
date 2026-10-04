@@ -2,9 +2,10 @@
 // static deployments and whenever Neo4j is not running. Server-side only.
 import { readFile, readdir } from "node:fs/promises";
 import path from "node:path";
+import { toMention } from "./mentions.ts";
 import { score } from "./search.ts";
 import type {
-  Edge, Entity, EntitySummary, Evidence, GraphStore, Neighbourhood, ReleaseInfo,
+  Edge, Entity, EntitySummary, Evidence, GraphStore, Mention, Neighbourhood, ReleaseInfo,
 } from "./types.ts";
 
 type Row = Record<string, any>;
@@ -61,6 +62,8 @@ interface Loaded {
   byNode: Map<string, Edge[]>;
   claims: Map<string, Row>;
   docs: Map<string, Row>;
+  mentions: Map<string, Mention>;
+  mentionsByPerson: Map<string, Mention[]>;
 }
 
 export class FileStore implements GraphStore {
@@ -71,9 +74,20 @@ export class FileStore implements GraphStore {
     this.loaded ??= (async () => {
       const manifest = JSON.parse(await readFile(path.join(this.dir, "manifest.json"), "utf-8"));
       const entities = new Map<string, Entity>();
+      const mentions = new Map<string, Mention>();
+      const mentionsByPerson = new Map<string, Mention[]>();
       for (const f of await readdir(path.join(this.dir, "entities"))) {
         const type = f.replace(/\.jsonl$/, "");
-        for (const r of await jsonl(path.join(this.dir, "entities", f))) entities.set(r.canonical_id, toEntity(type, r));
+        for (const r of await jsonl(path.join(this.dir, "entities", f))) {
+          entities.set(r.canonical_id, toEntity(type, r));
+          if (type !== "PersonMention") continue;
+          const m = toMention(r);
+          mentions.set(m.id, m);
+          if (m.personId) {
+            if (!mentionsByPerson.has(m.personId)) mentionsByPerson.set(m.personId, []);
+            mentionsByPerson.get(m.personId)!.push(m);
+          }
+        }
       }
       const edges = (await jsonl(path.join(this.dir, "relations.jsonl"))).map(toEdge);
       const byNode = new Map<string, Edge[]>();
@@ -92,7 +106,7 @@ export class FileStore implements GraphStore {
           generatedAt: manifest.generated_at,
           sources: manifest.sources ?? [],
         },
-        entities, edges, byNode, claims, docs,
+        entities, edges, byNode, claims, docs, mentions, mentionsByPerson,
       };
     })();
     return this.loaded;
@@ -103,13 +117,23 @@ export class FileStore implements GraphStore {
   }
 
   async search(query: string, limit = 25): Promise<EntitySummary[]> {
-    const { entities } = await this.load();
-    return [...entities.values()]
-      .map((e) => ({ e, s: score(query, [e.label, ...e.alternateNames, String(e.fields.name_hu ?? "")]) }))
+    const { entities, mentions } = await this.load();
+    // unresolved mentions are searchable (ranked below identities); resolved ones are reached via their Person
+    const pool: { e: EntitySummary; s: number }[] = [
+      ...[...entities.values()].map((e) => ({
+        e: { id: e.id, type: e.type, label: e.label, alternateNames: e.alternateNames },
+        s: score(query, [e.label, ...e.alternateNames, String(e.fields.name_hu ?? "")]),
+      })),
+      ...[...mentions.values()].filter((m) => m.status === "UNRESOLVED").map((m) => ({
+        e: { id: m.id, type: "PersonMention", label: m.statedName, alternateNames: [] },
+        s: score(query, [m.statedName]) * 0.9,
+      })),
+    ];
+    return pool
       .filter((x) => x.s > 0)
       .sort((a, b) => b.s - a.s || a.e.label.localeCompare(b.e.label, "hu"))
       .slice(0, limit)
-      .map(({ e }) => ({ id: e.id, type: e.type, label: e.label, alternateNames: e.alternateNames }));
+      .map(({ e }) => e);
   }
 
   async entity(id: string) {
@@ -142,6 +166,14 @@ export class FileStore implements GraphStore {
     const nodes = [...seen].map((n) => entities.get(n)!).filter(Boolean)
       .map((e) => ({ id: e.id, type: e.type, label: e.label, alternateNames: e.alternateNames }));
     return { center, nodes, edges: [...edges.values()] };
+  }
+
+  async mention(id: string): Promise<Mention | null> {
+    return (await this.load()).mentions.get(id) ?? null;
+  }
+
+  async mentionsOf(personId: string): Promise<Mention[]> {
+    return (await this.load()).mentionsByPerson.get(personId) ?? [];
   }
 
   async evidence(claimIds: string[]): Promise<Evidence[]> {

@@ -96,6 +96,9 @@ class CanonicalDataset:
     claims: list[Claim] = field(default_factory=list)
     documents: dict[str, SourceDocument] = field(default_factory=dict)
     issues: list[dict[str, Any]] = field(default_factory=list)
+    mentions: dict[str, Any] = field(default_factory=dict)  # pmn_ id -> PersonMention (ADR-0006)
+    mention_claims_skipped: int = 0  # claims kept only as context of unresolved mentions
+    anchor_refs: set[str] = field(default_factory=set)  # person records carrying identity evidence
 
     def by_type(self, etype: EntityType) -> list[CanonicalEntity]:
         return [e for e in self.entities.values() if e.entity_type is etype]
@@ -128,10 +131,16 @@ def _cid(ref, ref_to_id: dict[str, str]) -> str | None:
     return ref.canonical_id or ref_to_id.get(ref.source_ref)
 
 
+def _unresolved_person(ref, ref_to_id: dict[str, str]) -> bool:
+    """A person record without a canonical id is a mention, not an identity (ADR-0006)."""
+    return ref.entity_type is EntityType.PERSON and _cid(ref, ref_to_id) is None
+
+
 def build_canonical(
     claims: list[Claim],
     documents: list[SourceDocument],
     ref_to_id: dict[str, str],
+    identity_evidence: dict[str, list] | None = None,
 ) -> CanonicalDataset:
     ds = CanonicalDataset(claims=claims, documents={d.document_id: d for d in documents})
     literal: dict[tuple[str, EntityType], dict[str, list[Claim]]] = defaultdict(lambda: defaultdict(list))
@@ -139,6 +148,10 @@ def build_canonical(
     refs_of: dict[str, set[str]] = defaultdict(set)
 
     for c in claims:
+        if _unresolved_person(c.subject, ref_to_id) or (
+                c.object is not None and _unresolved_person(c.object, ref_to_id)):
+            ds.mention_claims_skipped += 1  # kept in the PersonMention's context instead
+            continue
         sid = _cid(c.subject, ref_to_id)
         if sid is None:
             ds.issues.append({"check": "unresolved_subject", "claim_id": c.claim_id})
@@ -230,6 +243,7 @@ def build_canonical(
                     conflicts[fname] = conf
             provenance.setdefault(fname, []).extend(c.claim_id for c in cs)
         if etype is EntityType.PERSON:
+            values["identity_evidence"] = sorted((identity_evidence or {}).get(cid, []))
             pts = position_titles.get(cid, [])
             if pts:
                 values["position_titles"] = list(dict.fromkeys(p for p, _ in pts))

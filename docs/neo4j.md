@@ -62,3 +62,20 @@ All in `src/szocatlas/graph/cypher/queries.cypher`:
 
 Queries 6 and 7 are included to prove the model supports them; they return nothing until
 the corresponding sources are ingested, rather than returning guesses.
+
+
+## Person mentions (ADR-0006)
+
+`:PersonMention` nodes are evidence, not entities, and deliberately lack the `:Entity`
+label. A mention is one person-like record observed on one page (a linked or unlinked
+name on a listing, unit or project page).
+
+* `(:PersonMention)-[:RESOLVES_TO {status, method, decision_source, signals_json}]->(:Person)`
+  exists only for resolved mentions (`DETERMINISTIC`, `MANUAL_CONFIRMED`, later
+  `HIGH_CONFIDENCE_AUTO`).
+* `(:PersonMention)-[:MENTIONED_IN {relation, role, snippet, claim_ids}]->(target)` records
+  what the page said about the person (e.g. a participant role in a project).
+* Unresolved mentions have `resolution_status = 'UNRESOLVED'` and no `RESOLVES_TO`.
+
+Structural queries match `(:Person)` and never traverse mentions. Provenance queries walk
+`SourceDocument ← Claim`, `PersonMention -[:RESOLVES_TO]-> Person` (queries 11–13).

@@ -32,11 +32,12 @@ import yaml
 from pydantic import BaseModel, Field
 
 from ..models.entities import ID_PREFIX
-from ..models.enums import EntityType, MatchStatus
+from ..models.enums import EntityType, IdentityAnchor, MatchStatus
 from ..models.provenance import Claim, SourceRecord
 from ..normalize.names import name_key, order_free_key
 
 HARD_IDS = ("mtmt_id", "orcid")
+HARD_ID_ANCHOR = {"mtmt_id": IdentityAnchor.MTMT, "orcid": IdentityAnchor.ORCID}
 
 
 class MatchDecision(BaseModel):
@@ -260,6 +261,11 @@ class IdentityMap:
                     }
         return ref_to_id
 
+    def retire(self, refs: list[str]) -> None:
+        """Forget assignments of records that no longer map to a canonical entity."""
+        for ref in refs:
+            self.rows.pop(ref, None)
+
     def save(self) -> None:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         with open(self.path, "w", encoding="utf-8") as fh:
@@ -293,7 +299,30 @@ def resolve(
     clusters: dict[str, list[SourceEntity]] = defaultdict(list)
     for ref, e in ents.items():
         clusters[uf.find(ref)].append(e)
-    return identity.assign(clusters), decisions
+    # A person cluster becomes a canonical Person only with identity evidence; its other
+    # records are mentions of it. Clusters without evidence stay mentions (ADR-0006).
+    anchors = identity_anchors(records, claims)
+    keep = {k: ms for k, ms in clusters.items()
+            if ms[0].entity_type is not EntityType.PERSON or any(m.ref in anchors for m in ms)}
+    identity.retire([m.ref for k, ms in clusters.items() if k not in keep for m in ms])
+    return identity.assign(keep), decisions
+
+
+def identity_anchors(records: list[SourceRecord], claims: list[Claim]) -> dict[str, set[IdentityAnchor]]:
+    """Person source ref -> the identity evidence it carries (ADR-0006).
+
+    A record from the person's own page (``identity_anchor``) or a stated hard identifier
+    anchors an identity. A name on someone else's page does not.
+    """
+    out: dict[str, set[IdentityAnchor]] = defaultdict(set)
+    for r in records:
+        if r.ref.entity_type is EntityType.PERSON and r.ref.source_ref and r.identity_anchor:
+            out[r.ref.source_ref].add(IdentityAnchor(r.identity_anchor))
+    for c in claims:
+        if (c.subject.entity_type is EntityType.PERSON and c.subject.source_ref and c.object is None
+                and c.predicate in HARD_ID_ANCHOR and c.value):
+            out[c.subject.source_ref].add(HARD_ID_ANCHOR[c.predicate])
+    return out
 
 
 def write_review_queue(decisions: list[MatchDecision], path: Path) -> int:

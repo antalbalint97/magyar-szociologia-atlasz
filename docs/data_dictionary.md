@@ -81,6 +81,7 @@ A source-local entity stub produced by a parser, before resolution.
 | `label` | `str` | yes |
 | `document_id` | `str` | yes |
 | `hints` | `dict[str, Any]` |  |
+| `identity_anchor` | `str \| None` |  |
 
 ## Relation
 
@@ -107,7 +108,7 @@ A canonical edge. Aggregates every claim that asserts the same edge.
 
 ## Person (`Person`, id prefix `per_`)
 
-
+A canonical identity. Exists only with identity evidence (ADR-0006).
 
 | field | type | required |
 |---|---|---|
@@ -119,6 +120,7 @@ A canonical edge. Aggregates every claim that asserts the same edge.
 | `first_observed_at` | `datetime \| None` |  |
 | `last_verified_at` | `datetime \| None` |  |
 | `canonical_name` | `str` | yes |
+| `identity_evidence` | `list[IdentityAnchor]` |  |
 | `alternate_names` | `list[str]` |  |
 | `titles` | `list[str]` |  |
 | `orcid` | `str \| None` |  |
@@ -337,14 +339,41 @@ An analytical hypothesis, never a fact. Every member edge needs evidence.
 | `date` | `str \| None` |  |
 | `description` | `str \| None` |  |
 
+## PersonMention (`PersonMention`, id prefix `pmn_`)
+
+Evidence: a person-like record observed in one source page (ADR-0006).
+
+| field | type | required |
+|---|---|---|
+| `canonical_id` | `str` | yes |
+| `label` | `str` | yes |
+| `provenance` | `dict[str, list[str]]` |  |
+| `conflicts` | `dict[str, list[ConflictingValue]]` |  |
+| `source_refs` | `list[str]` |  |
+| `first_observed_at` | `datetime \| None` |  |
+| `last_verified_at` | `datetime \| None` |  |
+| `stated_name` | `str` | yes |
+| `normalized_name` | `str` | yes |
+| `source_ref` | `str` | yes |
+| `source_id` | `str` | yes |
+| `source_url` | `str` | yes |
+| `document_ids` | `list[str]` |  |
+| `linked_profile_url` | `str \| None` |  |
+| `stated_identifiers` | `dict[str, str]` |  |
+| `context` | `list[MentionContext]` |  |
+| `resolution` | `MentionResolution` | yes |
+| `candidate_person_ids` | `list[str]` |  |
+
 ## Enumerations
 
 * **AssertionType**: `SELF_DECLARED`, `INSTITUTIONAL`, `BIBLIOMETRIC`, `TOPIC_SIMILARITY`, `RESEARCH_GROUP_MEMBERSHIP`, `GENEALOGICAL`, `ANALYST_CODED`, `HISTORICAL_LITERATURE`
-* **EntityType**: `Person`, `Institution`, `OrganisationalUnit`, `ResearchGroup`, `Project`, `Publication`, `Journal`, `ResearchTopic`, `Method`, `IntellectualTradition`, `Event`
+* **EntityType**: `Person`, `Institution`, `OrganisationalUnit`, `ResearchGroup`, `Project`, `Publication`, `Journal`, `ResearchTopic`, `Method`, `IntellectualTradition`, `Event`, `PersonMention`
 * **EpistemicStatus**: `OBSERVED`, `DERIVED`, `INFERRED`, `INTERPRETIVE`
 * **ExtractionMethod**: `html_parser`, `structured_api`, `taxonomy_keyword_map`, `manual_entry`, `llm_assisted`
+* **IdentityAnchor**: `institutional_profile`, `mtmt`, `orcid`, `manual`
 * **InstitutionType**: `university`, `faculty`, `research_centre`, `research_institute`, `academy`, `research_network`, `independent_organisation`, `association`, `government_agency`, `funder`
 * **MatchStatus**: `possible_match`, `confirmed_match`, `rejected_match`
+* **MentionResolutionStatus**: `DETERMINISTIC`, `MANUAL_CONFIRMED`, `HIGH_CONFIDENCE_AUTO`, `UNRESOLVED`
 * **RelationType**: `AFFILIATED_WITH`, `WORKED_AT`, `LEADS`, `MEMBER_OF`, `FOUNDED`, `STUDIED_AT`, `EDITOR_OF`, `COAUTHOR_WITH`, `CO_PROJECT`, `SUPERVISED_BY`, `SUPERVISES`, `COLLABORATES_WITH`, `INTELLECTUALLY_INFLUENCED_BY`, `PARTICIPATES_IN`, `PRINCIPAL_INVESTIGATOR_OF`, `AUTHORED`, `PUBLISHED_IN`, `CITES`, `WORKS_ON_TOPIC`, `USES_METHOD`, `PART_OF_TRADITION`, `PART_OF`, `HOSTED_BY`, `FUNDED_BY`, `PREDECESSOR_OF`, `SUCCESSOR_OF`, `INSTITUTIONAL_SUCCESSOR`, `PARTICIPATED_IN_EVENT`, `BROADER`
 * **ReviewStatus**: `UNREVIEWED`, `CONFIRMED`, `DISPUTED`, `REJECTED`
 * **SourceType**: `institutional_profile`, `institutional_listing`, `unit_page`, `project_page`, `registry`, `archive_snapshot`, `publication`, `cv`, `literature`, `manual`, `taxonomy`

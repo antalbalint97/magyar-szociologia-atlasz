@@ -177,3 +177,6 @@ class SourceRecord(Strict):
     label: str
     document_id: str
     hints: dict[str, Any] = Field(default_factory=dict)  # e.g. mtmt_id, orcid, email_domain
+    # Set when the record comes from the entity's own page (e.g. "institutional_profile"):
+    # the record then anchors a canonical identity; otherwise it is a mention (ADR-0006).
+    identity_anchor: str | None = None

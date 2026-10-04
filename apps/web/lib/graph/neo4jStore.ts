@@ -1,13 +1,14 @@
 // Neo4j backend. Runs only on the server (route handlers / server components);
 // credentials come from env vars and are never sent to the browser.
 import neo4j, { type Driver } from "neo4j-driver";
+import { toMention } from "./mentions.ts";
 import { fold } from "./search.ts";
 import type {
-  Edge, Entity, EntitySummary, Evidence, GraphStore, Neighbourhood, ReleaseInfo,
+  Edge, Entity, EntitySummary, Evidence, GraphStore, Mention, Neighbourhood, ReleaseInfo,
 } from "./types.ts";
 
 const NON_FIELDS = new Set(["canonical_id", "label", "provenance_json", "conflicts_json", "search_text",
-  "release_id", "entity_type", "has_conflicts", "source_refs"]);
+  "release_id", "entity_type", "has_conflicts", "source_refs", "context_json", "resolution_json"]);
 
 function plain(v: any): any {
   if (neo4j.isInt(v)) return v.toNumber();
@@ -74,8 +75,10 @@ export class Neo4jStore implements GraphStore {
     const terms = fold(query).split(" ").filter(Boolean).map((t) => `${t}~ OR ${t}*`).join(" AND ");
     if (!terms) return [];
     const rows = await this.q(
-      "CALL db.index.fulltext.queryNodes('entity_search', $terms) YIELD node, score " +
-      "RETURN node LIMIT $limit", { terms, limit: neo4j.int(limit) });
+      "CALL db.index.fulltext.queryNodes('entity_search', $terms) YIELD node, score RETURN node, score " +
+      "UNION CALL db.index.fulltext.queryNodes('mention_search', $terms) YIELD node, score " +
+      "WITH node, score WHERE node.resolution_status = 'UNRESOLVED' " +
+      "RETURN node, score * 0.5 AS score ORDER BY score DESC LIMIT $limit", { terms, limit: neo4j.int(limit) });
     return rows.map((r) => {
       const p = r.get("node").properties;
       return { id: p.canonical_id, type: p.entity_type, label: p.label, alternateNames: p.alternate_names ?? [] };
@@ -83,13 +86,27 @@ export class Neo4jStore implements GraphStore {
   }
 
   async entity(id: string) {
-    const [r] = await this.q("MATCH (n:Entity {canonical_id: $id}) RETURN n", { id });
+    const [r] = await this.q(
+      "MATCH (n {canonical_id: $id}) WHERE n:Entity OR n:PersonMention RETURN n", { id });
     return r ? nodeToEntity(r.get("n").properties) : null;
+  }
+
+  async mention(id: string): Promise<Mention | null> {
+    const [r] = await this.q("MATCH (m:PersonMention {canonical_id: $id}) RETURN m", { id });
+    return r ? toMention(r.get("m").properties) : null;
+  }
+
+  async mentionsOf(personId: string): Promise<Mention[]> {
+    const rows = await this.q(
+      "MATCH (m:PersonMention)-[:RESOLVES_TO]->(:Person {canonical_id: $id}) RETURN m ORDER BY m.source_url",
+      { id: personId });
+    return rows.map((r) => toMention(r.get("m").properties));
   }
 
   async neighbourhood(id: string, depth: 1 | 2): Promise<Neighbourhood | null> {
     const center = await this.entity(id);
     if (!center) return null;
+    if (center.type === "PersonMention") return { center, nodes: [center], edges: [] };
     const hop2 = depth === 2
       ? "UNION MATCH (c:Entity {canonical_id: $id})-[:MEMBER_OF|AFFILIATED_WITH|LEADS|PARTICIPATES_IN]->(h)" +
         "<-[r:MEMBER_OF|AFFILIATED_WITH|LEADS|PARTICIPATES_IN]-(o:Person) RETURN o AS a, r, h AS b, startNode(r) = o AS fwd"

@@ -19,6 +19,7 @@ class EntityType(StrEnum):
     METHOD = "Method"
     TRADITION = "IntellectualTradition"
     EVENT = "Event"
+    PERSON_MENTION = "PersonMention"  # evidence: a person-like record observed in one page (ADR-0006)
 
 
 class RelationType(StrEnum):
@@ -116,6 +117,24 @@ class ReviewStatus(StrEnum):
     CONFIRMED = "CONFIRMED"
     DISPUTED = "DISPUTED"
     REJECTED = "REJECTED"
+
+
+class IdentityAnchor(StrEnum):
+    """Evidence that makes a Person an identity rather than a name string (ADR-0006)."""
+
+    INSTITUTIONAL_PROFILE = "institutional_profile"  # the person's own profile page was fetched
+    MTMT = "mtmt"
+    ORCID = "orcid"
+    MANUAL = "manual"  # a reviewer established the identity
+
+
+class MentionResolutionStatus(StrEnum):
+    """How a PersonMention is tied to a canonical Person (ADR-0006)."""
+
+    DETERMINISTIC = "DETERMINISTIC"  # exact profile URL, or stated hard id + compatible name
+    MANUAL_CONFIRMED = "MANUAL_CONFIRMED"  # same_as in review/manual_overrides.yaml
+    HIGH_CONFIDENCE_AUTO = "HIGH_CONFIDENCE_AUTO"  # reserved for documented evidence rules (#5)
+    UNRESOLVED = "UNRESOLVED"
 
 
 class MatchStatus(StrEnum):
