@@ -24,7 +24,7 @@ from bs4 import BeautifulSoup, NavigableString, Tag
 from ...normalize.names import clean_display_name, normalise_whitespace
 from ...normalize.urls import canonical_url, mtmt_id, orcid_id, scholar_id
 
-PARSER_VERSION = "tk/0.2.1"
+PARSER_VERSION = "tk/0.2.2"
 
 PROFILE_PATH_RE = re.compile(r"^/kutato/(?!pdf/)([a-z0-9][a-z0-9-]*)/?$")
 CV_PATH_RE = re.compile(r"^/kutato/pdf/(\d+)$")
@@ -100,8 +100,8 @@ AFFIL_SUFFIX_RE = re.compile(r"\s*\(([^()]*)\)\s*$")
 # section label, a column header, a role, a period, a bare grant id or a bare funder name.
 # Anything that might be a project, programme, network or infrastructure is kept (#9).
 PROJECT_SECTION_LABEL_RE = re.compile(
-    r"^((jelenleg |korábbi |futó |aktuális |lezárt |lezárult |befejezett |folyamatban lévő )?"
-    r"(kutatási )?(projektek?|kutatások|kutatási projektek?)|cím ?/ ?téma|intézmény|időtartam|"
+    r"^((jelenleg |korábbi |futó |aktuális |lezárt |lezárult |befejezett |folyamatban lévő )*"
+    r"(kutatási )?(projekt(ek)?|kutatás(ok)?)|cím ?/ ?téma|intézmény|időtartam|"
     r"szerep|finanszírozó|támogató|résztvevők|résztvevő kutatók|(a )?kutatás résztvevői|projekt résztvevői)\s*:?$",
     re.I,
 )
@@ -109,7 +109,7 @@ _ROLE = (
     r"(kutatásvezető|projektvezető|témavezető|szakmai vezető|vezető kutató|társkutató|"
     r"alprojekt-?vezető|wp[ -]?vezető|résztvevő( kutató)?|(szenior |senior |junior )?kutató|munkatárs|"
     r"tag|(projekt ?)?koordinátor|(nyertes )?társpályázó|konzorciumi partner|national coordinator|"
-    r"principal investigator|researcher|team member)"
+    r"(fejezet)?szerző|principal investigator|researcher|team member)"
 )
 ROLE_LINE_RE = re.compile(rf"^{_ROLE}(\s*[,/]\s*{_ROLE})*\.?$", re.I)
 _FUNDER = r"(NKFIH|NKFI|OTKA|ERC|H2020|Horizon 2020|Horizon Europe|EFOP|GINOP|TÁMOP|TKP|KEHOP|VEKOP)"

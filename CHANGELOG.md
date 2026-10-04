@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.2 (2026-10-04) — remaining section labels from the #8 rebuild
+
+* TK parser 0.2.2. Found by re-measuring release `2026-10-tk` with 0.2.1: the section
+  label pattern read `projektek?` as "projekte" + optional "k", so singular labels
+  ("Futó kutatási projekt:", "Lezárult kutatási projekt:") slipped through, and stacked
+  qualifiers ("Jelenleg futó projektek") did not match. Link text "Fejezetszerző"
+  (chapter author) is a role, not a project.
+
 ## 0.2.1 (2026-10-04) — profile project lists without pseudo-projects (#8)
 
 * TK parser 0.2.1. A profile's "Projektek" section no longer turns metadata lines into

@@ -285,9 +285,12 @@ def test_link_whose_text_is_a_url_is_not_a_title(fixture_html, aliases):
 def test_is_project_metadata_is_conservative():
     meta = ["Korábbi projektek:", "Futó projektek:", "Projektek", "Kutatásvezető", "Projektvezető",
             "Kutatás résztvevői", "Résztvevők", "2022-2024", "2022–2024", "2024", "2021-",
-            "NKFIH. K147329", "119603 jelű", "OTKA PD kutatás – kutatásvezető"]
+            "NKFIH. K147329", "119603 jelű", "OTKA PD kutatás – kutatásvezető",
+            # singular and stacked section labels, chapter-author link text (seen in release 2026-10-tk)
+            "Futó kutatási projekt:", "Lezárult kutatási projekt:", "Jelenleg futó projektek", "Fejezetszerző"]
     titles = ["NATCONSUMERS", "Magyar Ifjúság 2016", "ESS Magyarország", "ELKH Zászlóshajó projekt",
               "NKFIH K 124384 Rétegződés és mobilitás", "OTKA – „A magyar központi közigazgatás”",
-              "Választáskutatás, 2018.", "MTA Kutatócsoport", "Krízis és Innováció", "ISSP 2017"]
+              "Választáskutatás, 2018.", "MTA Kutatócsoport", "Krízis és Innováció", "ISSP 2017",
+              "Comparative Agendas Project", "Adaptációs mechanizmusok", "Kutatási projektek értékelése"]
     assert [t for t in meta if not P.is_project_metadata(t)] == []
     assert [t for t in titles if P.is_project_metadata(t)] == []
