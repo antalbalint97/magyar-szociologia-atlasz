@@ -1,7 +1,7 @@
 {
   "release_id": "fixture-sample",
   "dataset_kind": "fixture",
-  "generated_at": "2026-10-04T16:39:53+00:00",
+  "generated_at": "2026-10-04T18:34:11+00:00",
   "schema_version": "0.1.0",
   "software_version": "0.1.0",
   "sources": [
@@ -13,11 +13,11 @@
   "parser_versions": {
     "curated": "curated/0.1.0",
     "derive.taxonomy": "taxonomy_keyword_map/0.1.0",
-    "tk.listing": "tk/0.2.2",
-    "tk.profile": "tk/0.2.2",
-    "tk.project": "tk/0.2.2",
-    "tk.project_listing": "tk/0.2.2",
-    "tk.unit": "tk/0.2.2"
+    "tk.listing": "tk/0.3.0",
+    "tk.profile": "tk/0.3.0",
+    "tk.project": "tk/0.3.0",
+    "tk.project_listing": "tk/0.3.0",
+    "tk.unit": "tk/0.3.0"
   },
   "documents": 21,
   "claims": 998,
@@ -42,17 +42,91 @@
     },
     "person_mentions": {
       "total": 57,
-      "resolved": 6,
-      "unresolved": 51,
+      "resolved": 7,
+      "unresolved": 50,
       "by_status": {
         "DETERMINISTIC": 6,
-        "UNRESOLVED": 51
+        "HIGH_CONFIDENCE_AUTO": 1,
+        "UNRESOLVED": 50
       },
-      "unresolved_distinct_records": 48,
-      "unresolved_distinct_names": 48,
-      "claims_only_on_unresolved_mentions": 113
+      "unresolved_distinct_records": 47,
+      "unresolved_distinct_names": 47,
+      "claims_only_on_unresolved_mentions": 111
     },
     "person_like_records": 59
+  },
+  "mention_resolution": {
+    "total": 57,
+    "resolved": 7,
+    "not_resolved": 50,
+    "resolution_rate": 0.123,
+    "by_status": {
+      "DETERMINISTIC": 6,
+      "HIGH_CONFIDENCE_AUTO": 1,
+      "UNRESOLVED": 50
+    },
+    "resolved_by_method": {
+      "own_profile_project": 1,
+      "profile_url": 6
+    },
+    "review_required": 0,
+    "no_candidate": 50,
+    "with_multiple_viable_candidates": 0,
+    "manually_resolved": 0,
+    "rejected_candidates": 0,
+    "not_resolved_sharing_a_person_name": 0,
+    "persons_with_most_unresolved_same_name_mentions": [],
+    "not_resolved_reasons": {
+      "no canonical Person with a compatible name or the linked profile slug": 50
+    },
+    "by_source": {
+      "tk_kisebbsegkutato": {
+        "DETERMINISTIC": 1,
+        "UNRESOLVED": 13,
+        "resolved": 1,
+        "total": 14,
+        "resolution_rate": 0.071
+      },
+      "tk_recens": {
+        "DETERMINISTIC": 4,
+        "UNRESOLVED": 12,
+        "resolved": 4,
+        "total": 16,
+        "resolution_rate": 0.25
+      },
+      "tk_szociologia": {
+        "DETERMINISTIC": 1,
+        "HIGH_CONFIDENCE_AUTO": 1,
+        "UNRESOLVED": 25,
+        "resolved": 2,
+        "total": 27,
+        "resolution_rate": 0.074
+      }
+    },
+    "by_page_type": {
+      "institutional_listing": {
+        "DETERMINISTIC": 4,
+        "UNRESOLVED": 23,
+        "resolved": 4,
+        "total": 27,
+        "resolution_rate": 0.148
+      },
+      "project_page": {
+        "HIGH_CONFIDENCE_AUTO": 1,
+        "UNRESOLVED": 4,
+        "resolved": 1,
+        "total": 5,
+        "resolution_rate": 0.2
+      },
+      "unit_page": {
+        "DETERMINISTIC": 2,
+        "UNRESOLVED": 23,
+        "resolved": 2,
+        "total": 25,
+        "resolution_rate": 0.08
+      }
+    },
+    "source_rate_spread": null
   },
   "relations": {
     "AFFILIATED_WITH": 11,
@@ -70,7 +144,7 @@
     "until": "2026-10-04T00:00:00+00:00"
   },
   "quality": {
-    "warning": 8,
-    "info": 7
+    "warning": 10,
+    "info": 8
   }
 }

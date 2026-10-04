@@ -70,12 +70,14 @@ the corresponding sources are ingested, rather than returning guesses.
 label. A mention is one person-like record observed on one page (a linked or unlinked
 name on a listing, unit or project page).
 
-* `(:PersonMention)-[:RESOLVES_TO {status, method, decision_source, signals_json}]->(:Person)`
-  exists only for resolved mentions (`DETERMINISTIC`, `MANUAL_CONFIRMED`, later
-  `HIGH_CONFIDENCE_AUTO`).
+* `(:PersonMention)-[:RESOLVES_TO {status, method, signals, negative_signals, evidence_json,
+  decision_source, resolver_version, decided_at}]->(:Person)` exists only for resolved
+  mentions (`DETERMINISTIC`, `MANUAL_CONFIRMED`, `HIGH_CONFIDENCE_AUTO`; ADR-0007). Filter
+  on `status` to exclude rule-based decisions from a sensitivity analysis.
 * `(:PersonMention)-[:MENTIONED_IN {relation, role, snippet, claim_ids}]->(target)` records
   what the page said about the person (e.g. a participant role in a project).
-* Unresolved mentions have `resolution_status = 'UNRESOLVED'` and no `RESOLVES_TO`.
+* Mentions that are not resolved have `resolution_status` `REVIEW_REQUIRED` (candidates in
+  `candidates_json`, with their evidence) or `UNRESOLVED` (no candidate), and no `RESOLVES_TO`.
 
 Structural queries match `(:Person)` and never traverse mentions. Provenance queries walk
 `SourceDocument ← Claim`, `PersonMention -[:RESOLVES_TO]-> Person` (queries 11–13).

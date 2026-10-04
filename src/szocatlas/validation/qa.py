@@ -25,6 +25,7 @@ from ..models.enums import EntityType, EpistemicStatus, MatchStatus, MentionReso
 from ..normalize.names import name_key, order_free_key
 from ..resolution.matcher import MatchDecision
 from ..sources.tk.parser import is_project_metadata
+from .mention_stats import mention_stats
 
 AFFILIATION_TYPES = {RelationType.AFFILIATED_WITH, RelationType.MEMBER_OF, RelationType.LEADS,
                      RelationType.WORKED_AT}
@@ -129,10 +130,13 @@ def run_checks(ds: CanonicalDataset, decisions: list[MatchDecision], seeds_path:
                          units_without_parent))
 
     # identity
-    pending = [d for d in decisions if d.status is MatchStatus.POSSIBLE and d.entity_type is EntityType.PERSON]
+    # pairs of identity-anchored records only; mention ambiguity is identity.unresolved_mentions
+    anchored = getattr(ds, "anchor_refs", None)
+    pending = [d for d in decisions if d.status is MatchStatus.POSSIBLE and d.entity_type is EntityType.PERSON
+               and (not anchored or (d.left in anchored and d.right in anchored))]
     if pending:
         F.append(Finding("identity.possible_duplicates", "warning",
-                         f"{len(pending)} possible person matches await review (review/unresolved_people.yaml)",
+                         f"{len(pending)} possible duplicate Persons await review (review/unresolved_people.yaml)",
                          detail={"pairs": [[d.left_label, d.right_label, d.method] for d in pending[:20]]}))
     labels = defaultdict(list)
     for p in ds.by_type(EntityType.PERSON):
@@ -245,18 +249,37 @@ def _mention_checks(ds: CanonicalDataset, claims_by_id: dict) -> list[Finding]:
     if unsupported:
         F.append(Finding("provenance.mention_without_claim", "error",
                          f"{len(unsupported)} mentions have no valid supporting claim", unsupported[:50]))
+    auto = [m for m in mentions if m.resolution.status is MentionResolutionStatus.HIGH_CONFIDENCE_AUTO]
+    unexplained = [m.canonical_id for m in auto
+                   if not m.resolution.method or len(m.resolution.signals) < 2 or not m.resolution.resolver_version]
+    if unexplained:
+        F.append(Finding("identity.auto_resolution_unexplained", "error",
+                         f"{len(unexplained)} automatic resolutions lack a rule, two signals or a resolver version",
+                         unexplained[:50]))
+    blocked = [m.canonical_id for m in auto if set(m.resolution.negative_signals) & {
+        "LINKS_OTHER_PROFILE", "LINK_NAME_MISMATCH", "MULTIPLE_CANDIDATES", "SAME_NAME_MULTIPLE_PERSONS",
+        "CONFLICTING_HARD_ID", "MANUAL_NOT_SAME_AS"}]
+    if blocked:
+        F.append(Finding("identity.auto_resolution_despite_contradiction", "error",
+                         f"{len(blocked)} automatic resolutions carry a blocking negative signal", blocked[:50]))
     if mentions:
-        unresolved = [m for m in mentions if m.resolution.status is MentionResolutionStatus.UNRESOLVED]
-        person_keys = defaultdict(list)
-        for p in persons.values():
-            for n in [p.label, *getattr(p, "alternate_names", [])]:
-                person_keys[order_free_key(n)].append(p.canonical_id)
-        same_name = Counter(m.normalized_name for m in unresolved if person_keys.get(order_free_key(m.stated_name)))
-        F.append(Finding("identity.unresolved_mentions", "warning" if unresolved else "info",
-                         f"{len(unresolved)} of {len(mentions)} person mentions are not resolved to an identity "
-                         f"({len(same_name)} distinct names also carried by a canonical person; see #5)",
-                         detail={"by_status": dict(Counter(m.resolution.status.value for m in mentions)),
-                                 "same_name_as_a_person": dict(same_name.most_common(30))}))
+        st = mention_stats(ds)
+        F.append(Finding("identity.mention_resolution", "info",
+                         f"{st['resolved']} of {st['total']} person mentions resolved ({st['resolution_rate']:.1%}); "
+                         f"{st['review_required']} need review, {st['no_candidate']} have no candidate Person",
+                         detail={k: st[k] for k in ("by_status", "resolved_by_method", "by_source", "by_page_type",
+                                                    "not_resolved_reasons")}))
+        if st["source_rate_spread"] is not None and st["source_rate_spread"] > 0.2:
+            F.append(Finding("identity.resolution_uneven_by_source", "warning",
+                             f"mention resolution rates differ by {st['source_rate_spread']:.0%} between source "
+                             "sites; network density may reflect markup quality, not collaboration",
+                             detail={k: v["resolution_rate"] for k, v in st["by_source"].items()}))
+        if st["not_resolved_sharing_a_person_name"]:
+            F.append(Finding("identity.unresolved_mentions", "warning",
+                             f"{st['not_resolved']} of {st['total']} person mentions are not resolved; "
+                             f"{st['not_resolved_sharing_a_person_name']} share a canonical Person's name "
+                             "(review/mention_review.yaml)",
+                             detail={"top_persons": st["persons_with_most_unresolved_same_name_mentions"]}))
     return F
 
 
@@ -295,16 +318,19 @@ def _seed_coverage(ds: CanonicalDataset, path: Path) -> list[Finding]:
                              and r.type is RelationType.WORKS_ON_TOPIC})
             methods = sorted({units.get(r.target_id) for r in ds.relations if r.source_id == p.canonical_id
                               and r.type is RelationType.USES_METHOD})
-            resolved = sum(1 for m in ds.mentions.values() if m.resolution.person_id == p.canonical_id)
+            resolved = Counter(m.resolution.method for m in ds.mentions.values()
+                               if m.resolution.person_id == p.canonical_id)
             out.append(Finding("seeds.present", "info", f"{s['name']} -> {p.canonical_id}",
                                [p.canonical_id], {"affiliations": aff, "topics": topics, "methods": methods,
-                                                  "resolved_mentions": resolved}))
-        unresolved = [m.source_url for m in ds.mentions.values() if m.resolution.person_id is None
+                                                  "resolved_mentions": sum(resolved.values()),
+                                                  "resolved_by_method": dict(sorted(resolved.items()))}))
+        unresolved = [m for m in ds.mentions.values() if m.resolution.person_id is None
                       and order_free_key(m.stated_name) == order_free_key(s["name"])]
         if unresolved:
             out.append(Finding("seeds.unresolved_mentions", "info",
                                f"{s['name']}: {len(unresolved)} same-name mentions not resolved to the profile",
-                               detail={"pages": sorted(unresolved)}))
+                               detail={"pages": sorted({m.source_url for m in unresolved}),
+                                       "reasons": dict(Counter(m.resolution.reason for m in unresolved))}))
     return out
 
 

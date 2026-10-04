@@ -52,7 +52,17 @@ export interface Neighbourhood {
 }
 
 // ADR-0006: a person-like record observed on one page. Evidence, not an identity.
-export type MentionStatus = "DETERMINISTIC" | "MANUAL_CONFIRMED" | "HIGH_CONFIDENCE_AUTO" | "UNRESOLVED";
+export type MentionStatus =
+  | "DETERMINISTIC" | "MANUAL_CONFIRMED" | "HIGH_CONFIDENCE_AUTO" | "REVIEW_REQUIRED" | "UNRESOLVED";
+
+// A canonical Person a mention might refer to, with the evidence for and against (ADR-0007).
+export interface MentionCandidate {
+  personId: string;
+  nameMatch: string;
+  signals: string[];
+  negativeSignals: string[];
+  rejected: boolean;
+}
 
 export interface MentionContext {
   relation: string;
@@ -73,7 +83,10 @@ export interface Mention {
   personId: string | null;
   method: string | null;
   decisionSource: string | null;
-  candidates: string[];
+  signals: string[];
+  negativeSignals: string[];
+  reason: string | null; // why it is not resolved
+  candidates: MentionCandidate[];
   context: MentionContext[];
   claimIds: string[];
 }

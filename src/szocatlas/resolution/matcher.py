@@ -325,8 +325,12 @@ def identity_anchors(records: list[SourceRecord], claims: list[Claim]) -> dict[s
     return out
 
 
-def write_review_queue(decisions: list[MatchDecision], path: Path) -> int:
-    pending = [d for d in decisions if d.status is MatchStatus.POSSIBLE and d.entity_type is EntityType.PERSON]
+def write_review_queue(decisions: list[MatchDecision], path: Path, only_refs: set[str] | None = None) -> int:
+    """Possible person-person matches. With ``only_refs``, only pairs of identity-anchored
+    records (two profiles that may be one person); name mentions are reviewed per mention
+    in review/mention_review.yaml instead (#5)."""
+    pending = [d for d in decisions if d.status is MatchStatus.POSSIBLE and d.entity_type is EntityType.PERSON
+               and (only_refs is None or (d.left in only_refs and d.right in only_refs))]
     payload = {
         "_comment": (
             "Generated. Do not edit: record decisions in review/manual_overrides.yaml "
@@ -335,7 +339,7 @@ def write_review_queue(decisions: list[MatchDecision], path: Path) -> int:
         "possible_matches": [
             {"refs": [d.left, d.right], "labels": [d.left_label, d.right_label],
              "method": d.method, "score": d.score, "signals": d.signals}
-            for d in sorted(pending, key=lambda d: -d.score)
+            for d in sorted(pending, key=lambda d: (-d.score, d.left, d.right))
         ],
     }
     path.parent.mkdir(parents=True, exist_ok=True)

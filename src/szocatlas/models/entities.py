@@ -109,21 +109,42 @@ class MentionContext(BaseModel):
 
 
 class MentionResolution(BaseModel):
-    """The identity decision for a mention; projected as (:PersonMention)-[:RESOLVES_TO]->(:Person)."""
+    """The identity decision for a mention; projected as (:PersonMention)-[:RESOLVES_TO]->(:Person).
+
+    ``signals`` names the evidence the decision used (signal codes, docs/methodology.md §3);
+    ``evidence`` carries the details a reviewer needs to check them (urls, alias status,
+    matched project or unit). There is no free-floating confidence number.
+    """
 
     model_config = ConfigDict(extra="forbid")
     status: MentionResolutionStatus
     person_id: str | None = None
-    method: str | None = None  # rule that fired, e.g. "profile_url", "manual:same_as"
-    signals: dict[str, Any] = Field(default_factory=dict)  # evidence actually used
-    decision_source: str | None = None  # rule id / override file
-    decided_at: datetime | None = None
+    method: str | None = None  # rule that fired, e.g. "profile_url", "unit_member_unique", "manual:same_as"
+    signals: list[str] = Field(default_factory=list)
+    negative_signals: list[str] = Field(default_factory=list)  # contradictions seen (block auto rules)
+    evidence: dict[str, Any] = Field(default_factory=dict)
+    reason: str | None = None  # why it is not resolved (REVIEW_REQUIRED / UNRESOLVED)
+    decision_source: str | None = None  # rule document / override file
+    resolver_version: str | None = None
+    decided_at: datetime | None = None  # set for manual decisions only; automatic ones are build-independent
 
     @model_validator(mode="after")
     def _target(self) -> MentionResolution:
-        if (self.status is MentionResolutionStatus.UNRESOLVED) != (self.person_id is None):
+        if self.status.resolved != (self.person_id is not None):
             raise ValueError("a resolved mention needs person_id; an unresolved one must not have it")
         return self
+
+
+class MentionCandidate(BaseModel):
+    """A canonical Person this mention might refer to, with the evidence for and against."""
+
+    model_config = ConfigDict(extra="forbid")
+    person_id: str
+    name_match: str  # NAME_EXACT | SAME_NORMALIZED_NAME | ALTERNATE_NAME_MATCH | NAME_ORDER_VARIANT
+    #                  | NAME_INITIALS_COMPATIBLE | SLUG_ONLY
+    signals: list[str] = Field(default_factory=list)
+    negative_signals: list[str] = Field(default_factory=list)
+    rejected: bool = False  # manual not_same_as
 
 
 class PersonMention(CanonicalEntity):
@@ -143,8 +164,9 @@ class PersonMention(CanonicalEntity):
     linked_profile_url: str | None = None
     stated_identifiers: dict[str, str] = Field(default_factory=dict)
     context: list[MentionContext] = Field(default_factory=list)
+    stated_profile_urls: list[str] = Field(default_factory=list)  # link targets as written (before host aliasing)
     resolution: MentionResolution
-    candidate_person_ids: list[str] = Field(default_factory=list)  # review candidates, never resolved
+    candidates: list[MentionCandidate] = Field(default_factory=list)  # never a resolution by themselves
 
 
 class Institution(CanonicalEntity):

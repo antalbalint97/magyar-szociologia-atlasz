@@ -51,7 +51,7 @@ LABELS: dict[str, list[str]] = {
 NESTED = {"provenance", "conflicts"}
 MENTION_FILE = EntityType.PERSON_MENTION.value
 MENTION_REL_TYPES = ("RESOLVES_TO", "MENTIONED_IN")  # evidence layer only, never in relations.jsonl
-MENTION_NESTED = NESTED | {"context", "resolution", "stated_identifiers"}
+MENTION_NESTED = NESTED | {"context", "resolution", "stated_identifiers", "candidates"}
 BATCH = 500
 
 
@@ -123,6 +123,7 @@ def mention_rows(release: Path) -> tuple[list[dict], list[dict], list[dict]]:
         props["provenance_json"] = json.dumps(row.get("provenance", {}), ensure_ascii=False, sort_keys=True)
         props["context_json"] = json.dumps(row.get("context", []), ensure_ascii=False, sort_keys=True)
         props["resolution_json"] = json.dumps(res, ensure_ascii=False, sort_keys=True, default=str)
+        props["candidates_json"] = json.dumps(row.get("candidates", []), ensure_ascii=False, sort_keys=True)
         props["entity_type"] = MENTION_FILE
         props["search_text"] = strip_accents(row.get("stated_name", "")).lower()
         nodes.append({"canonical_id": row["canonical_id"], "props": props})
@@ -131,8 +132,11 @@ def mention_rows(release: Path) -> tuple[list[dict], list[dict], list[dict]]:
                              "props": {"status": res["status"], "method": res.get("method"),
                                        "decision_source": res.get("decision_source"),
                                        "decided_at": _prop(res.get("decided_at")),
-                                       "signals_json": json.dumps(res.get("signals", {}), ensure_ascii=False,
-                                                                  sort_keys=True)}})
+                                       "resolver_version": res.get("resolver_version"),
+                                       "signals": res.get("signals", []),
+                                       "negative_signals": res.get("negative_signals", []),
+                                       "evidence_json": json.dumps(res.get("evidence", {}), ensure_ascii=False,
+                                                                   sort_keys=True)}})
         for cx in row.get("context", []):
             if not cx.get("target_id"):
                 continue

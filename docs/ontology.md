@@ -113,7 +113,7 @@ All edges carry: `epistemic_status`, `assertion_types`, `confidence`, `claim_ids
 | PREDECESSOR_OF, SUCCESSOR_OF, INSTITUTIONAL_SUCCESSOR | Institution/Unit → Institution/Unit | later (Events) | institutional history |
 | PARTICIPATED_IN_EVENT | any → Event | later | |
 
-| RESOLVES_TO | PersonMention → Person | identity decision | `status` (DETERMINISTIC / MANUAL_CONFIRMED / HIGH_CONFIDENCE_AUTO), `method`, `decision_source`; stored in the mention record, projected in Neo4j |
+| RESOLVES_TO | PersonMention → Person | identity decision | `status` (DETERMINISTIC / MANUAL_CONFIRMED / HIGH_CONFIDENCE_AUTO), `method` (rule), `signals`, `negative_signals`, `decision_source`, `resolver_version` (ADR-0007); stored in the mention record, projected in Neo4j. Candidates of unresolved mentions are stored on the mention, never as edges |
 | MENTIONED_IN | PersonMention → any | what the observing page said | `relation`, `role`; claims about unresolved mentions live only here, never as canonical relations |
 
 Generic `CONNECTED_TO` does not exist.

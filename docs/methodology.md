@@ -29,7 +29,7 @@ Implemented in `src/szocatlas/resolution/matcher.py`.
 | exact / accent-folded name | blocking only |
 | order-free name key ("Júlia Koltai" ~ "Koltai Júlia") | blocking only |
 | MTMT author id, ORCID | hard identifiers: agree + compatible name → merge; disagree → never merge |
-| same institution family, same profile slug, same e-mail domain | soft signals that rank `possible_match`es for review |
+| same institution family, same profile slug, same e-mail domain | soft signals that rank `possible_match`es between anchored records for review (mention rules: below) |
 | unlinked name mention (e.g. "Külső szakértő: X") | always review, never auto-merged |
 | publication overlap, topic overlap | later; soft signals only |
 
@@ -42,18 +42,26 @@ and a rejection blocks transitive merges through a third record.
 
 A canonical Person needs an identity anchor (own institutional profile, MTMT, ORCID or a
 manual decision). Every other person-like observation is a `PersonMention`, and the
-question entity resolution answers is whether a mention `RESOLVES_TO` a Person. As of
-#4 only two rules resolve a mention: the page links to the Person's exact profile URL,
-or it states the Person's MTMT/ORCID with a compatible name. Everything else is
-`UNRESOLVED` and contributes nothing to the analytical graph.
+question entity resolution answers is whether a mention `RESOLVES_TO` a Person
+(`src/szocatlas/resolution/mentions.py`, ADR-0007, #5).
 
-Signal classes for evidence-based mention resolution (#5; proposed, not implemented):
+Candidate generation (same name key, token order, compatible initials, same profile
+slug) is separate from the decision. A decision is one of:
 
-| Class | Signals | May resolve on its own? |
+| Class | Signals | Resolves? |
 |---|---|---|
-| Deterministic | exact canonical profile URL (after host-alias normalisation); MTMT or ORCID stated on the page + compatible name; manual `same_as` | yes (`DETERMINISTIC` / `MANUAL_CONFIRMED`) |
-| Strong contextual | same `/kutato/<slug>` on another TK host + same name; full name match + the observing page belongs to the Person's own unit or institution family; the Person's own profile lists the same project (profile ↔ project page reciprocity); a unique full name among all anchored Persons *and* same institution family | only as `HIGH_CONFIDENCE_AUTO`, only under a documented rule that combines at least two strong signals, and never across a disagreeing hard id |
-| Weak | name similarity alone, initials, order-free name key, topic overlap, co-occurrence with the Person's collaborators, an LLM judgement | never; ranks `candidate_person_ids` for review only |
+| Certain | profile link on the canonical host or a verified alias; MTMT/ORCID stated on the page + compatible name; manual `same_as` | yes: `DETERMINISTIC` / `MANUAL_CONFIRMED` |
+| Strong | full-name match; profile slug on an inferred alias or another host of the institution family; the Person's own profile lists the project; member of the page's department; page on the Person's institute site; name unique in the institution family | only through a named rule that combines at least two of them, with one viable candidate and no contradiction: `HIGH_CONFIDENCE_AUTO` |
+| Weak | name order variant, initials, same institution family | never; they make and rank candidates for review |
+| Negative | link to another profile, link with another name, several viable candidates, conflicting hard id, manual `not_same_as`; common surname and different institute as cautions | block automatic rules |
+
+The rules (`slug-inferred-alias`, `slug-family-host`, `own-profile-project`,
+`unit-member-unique`, `institute-unique-name`) and their domain assumptions are in
+ADR-0007 and `config/resolution.yaml`. Context comes only from certain evidence, so
+automatic decisions never chain. Mentions with candidates but no decision are
+`REVIEW_REQUIRED` and listed with their evidence in `review/mention_review.yaml`;
+mentions without any candidate are `UNRESOLVED`. Neither contributes to the analytical
+graph. There is no confidence score: each decision names its rule and signals.
 
 An LLM may propose a candidate or summarise evidence, but its output is never an observed
 fact and never a resolution decision by itself.
@@ -63,7 +71,10 @@ Org units and projects: identical normalised name/title on the same site = same 
 
 Host aliases (`szociologia.tk.mta.hu`, `szociologia.tk.hu` → `szociologia.tk.elte.hu`)
 are URL normalisation declared in the registry, not entity resolution: they are the same
-page under historical hostnames.
+page under historical hostnames. An alias is *verified* when a 301 to the same path was
+checked (`verified_host_aliases`, #14) and *inferred* otherwise. The parser keeps the URL
+as written (`stated_url`), so a profile link that exists only through an inferred alias
+is never a certain identity decision (ADR-0007).
 
 ## 4. Topics and methods
 

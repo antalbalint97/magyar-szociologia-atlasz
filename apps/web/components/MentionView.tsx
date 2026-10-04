@@ -1,15 +1,27 @@
 import Link from "next/link";
 import type { Evidence, GraphStore, Mention } from "@/lib/graph";
+import { RESOLVED_MENTION } from "@/lib/graph/mentions";
 
-// ADR-0006: a mention page shows what one source page said about a person-like name and
-// the identity decision behind it. It never shows a biography or an unestablished identity.
+// ADR-0006/0007: a mention page shows what one source page said about a person-like name and
+// the identity decision behind it, with the evidence for and against each candidate. It never
+// shows a biography or an unestablished identity.
 
 const STATUS_HU: Record<string, string> = {
   DETERMINISTIC: "azonosítva (profil-link vagy azonosító)",
   MANUAL_CONFIRMED: "kézzel megerősítve",
-  HIGH_CONFIDENCE_AUTO: "automatikusan azonosítva",
+  HIGH_CONFIDENCE_AUTO: "automatikusan azonosítva (szabály)",
+  REVIEW_REQUIRED: "azonosítatlan, ellenőrzésre vár",
   UNRESOLVED: "azonosítatlan említés",
 };
+
+function Signals({ pos, neg }: { pos: string[]; neg: string[] }) {
+  return (
+    <span style={{ fontSize: 13 }}>
+      {pos.map((s) => <code key={s} style={{ marginRight: 4 }}>{s}</code>)}
+      {neg.map((s) => <code key={s} style={{ marginRight: 4, color: "var(--derived)" }}>−{s}</code>)}
+    </span>
+  );
+}
 
 const REL_HU: Record<string, string> = {
   PARTICIPATES_IN: "résztvevő", PRINCIPAL_INVESTIGATOR_OF: "projektvezető", LEADS: "vezető",
@@ -21,10 +33,11 @@ export function statusLabel(m: Mention) {
 }
 
 export default async function MentionView({ m, g }: { m: Mention; g: GraphStore }) {
-  const ids = [...new Set([m.personId, ...m.candidates, ...m.context.map((c) => c.targetId)].filter(Boolean))] as string[];
+  const ids = [...new Set([m.personId, ...m.candidates.map((c) => c.personId), ...m.context.map((c) => c.targetId)]
+    .filter(Boolean))] as string[];
   const labels = new Map((await Promise.all(ids.map((i) => g.entity(i)))).filter(Boolean).map((e) => [e!.id, e!.label]));
   const evidence: Evidence[] = await g.evidence(m.claimIds);
-  const resolved = m.status !== "UNRESOLVED" && m.personId;
+  const resolved = RESOLVED_MENTION.has(m.status) && m.personId;
   return (
     <>
       <div className="type">Említés a forrásban</div>
@@ -38,16 +51,29 @@ export default async function MentionView({ m, g }: { m: Mention; g: GraphStore 
               <div>Ugyanaz a személy: <Link href={`/entity/${m.personId}`}>{labels.get(m.personId!) ?? m.personId}</Link></div>
             ) : (
               <p className="muted">
-                Ez a név egy forrásoldalon szerepel, de nincs olyan bizonyíték (saját profil, MTMT, ORCID vagy kézi
-                döntés), amely egy azonosított személyhez kötné. Nem számít személynek a hálózatban.
+                Ez a név egy forrásoldalon szerepel, de a bizonyítékok nem elegendők ahhoz, hogy egy azonosított
+                személyhez kössük (profil-link, azonosító, dokumentált szabály vagy kézi döntés). Nem számít
+                személynek a hálózatban.
               </p>
             )}
             {m.method && <div><span className="muted">Módszer:</span> <code>{m.method}</code></div>}
+            {(m.signals.length > 0 || m.negativeSignals.length > 0) && (
+              <div><span className="muted">Bizonyítékok:</span> <Signals pos={m.signals} neg={m.negativeSignals} /></div>
+            )}
+            {m.reason && <div><span className="muted">Miért nem automatikus:</span> {m.reason}</div>}
             {m.decisionSource && <div><span className="muted">Döntés forrása:</span> <code>{m.decisionSource}</code></div>}
             {m.candidates.length > 0 && (
               <div style={{ marginTop: 6 }}>
-                <span className="muted">Lehetséges egyezések (nem megerősített):</span>
-                <ul>{m.candidates.map((c) => <li key={c}><Link href={`/entity/${c}`}>{labels.get(c) ?? c}</Link></li>)}</ul>
+                <span className="muted">Jelöltek (egy jelölt önmagában nem azonosítás):</span>
+                <ul>
+                  {m.candidates.map((c) => (
+                    <li key={c.personId}>
+                      <Link href={`/entity/${c.personId}`}>{labels.get(c.personId) ?? c.personId}</Link>
+                      {c.rejected && <span className="muted"> (kézzel elutasítva)</span>}
+                      <div><Signals pos={c.signals} neg={c.negativeSignals} /></div>
+                    </li>
+                  ))}
+                </ul>
               </div>
             )}
           </section>

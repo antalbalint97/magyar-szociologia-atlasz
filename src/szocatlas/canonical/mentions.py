@@ -3,28 +3,34 @@
 A PersonMention is one person-like source record observed in one page other than the
 person's own profile: a linked name on a listing, unit or project page, or an unlinked
 name in a participant list. It carries what the page said (stated name, linked profile
-URL, the relations the page asserts) and the identity decision that ties it, or does
-not tie it, to a canonical Person.
+URL as written, the relations the page asserts) and the identity decision that ties it,
+or does not tie it, to a canonical Person.
 
 Mention ids are ``pmn_`` + a hash of (source record ref, observing page URL), so the
 same observation keeps its id across re-crawls and rebuilds.
+
+This module makes only the *certain* decisions (ADR-0006): exact profile URL on the
+canonical host or a verified alias, a stated hard id, a manual decision. Everything else
+leaves here as pending (UNRESOLVED) for the evidence resolver (resolution/mentions.py, #5).
 """
 
 from __future__ import annotations
 
 from collections import Counter, defaultdict
 from dataclasses import dataclass, field
-from datetime import datetime
 from urllib.parse import urlsplit
 
 from ..models.entities import ID_PREFIX, MentionContext, MentionResolution, PersonMention
 from ..models.enums import EntityType, IdentityAnchor, MatchStatus, MentionResolutionStatus, RelationType
 from ..models.provenance import Claim, SourceDocument, SourceRecord, stable_hash
 from ..normalize.names import name_key
+from ..registry import Registry
 from ..resolution.matcher import HARD_IDS, MatchDecision
 
 RULE_DOC = "docs/adr/0006-person-mentions-vs-canonical-persons.md"
+RESOLVER_DOC = "docs/adr/0007-evidence-based-mention-resolution.md"
 OVERRIDES = "review/manual_overrides.yaml"
+Side = tuple[str, str]  # (claim_id, "subject" | "object")
 
 
 def mention_id(source_ref: str, page_url: str) -> str:
@@ -41,8 +47,16 @@ class _Obs:
     ref: str
     url: str
     labels: list[str] = field(default_factory=list)
+    stated_urls: set[str] = field(default_factory=set)
     document_ids: set[str] = field(default_factory=set)
     claims: list[tuple[Claim, str]] = field(default_factory=list)  # (claim, "out" | "in")
+
+
+@dataclass
+class MentionBuild:
+    mentions: dict[str, PersonMention]
+    claim_mention: dict[Side, str]  # person side of a claim -> the mention it was observed as
+    own_claims: dict[Side, str]  # person side observed on the person's own profile -> person id
 
 
 def build_mentions(
@@ -52,8 +66,8 @@ def build_mentions(
     ref_to_id: dict[str, str],
     decisions: list[MatchDecision],
     anchors: dict[str, set[IdentityAnchor]],
-    decided_at: datetime,
-) -> dict[str, PersonMention]:
+    registry: Registry | None = None,
+) -> MentionBuild:
     # pages that are a person's own profile: observations there are the identity, not mentions
     own: dict[str, set[str]] = defaultdict(set)
     for r in records:
@@ -61,6 +75,7 @@ def build_mentions(
             own[r.ref.source_ref].add(documents[r.document_id].canonical_url)
 
     obs: dict[tuple[str, str], _Obs] = {}
+    own_claims: dict[Side, str] = {}
 
     def observe(ref: str, document_id: str) -> _Obs | None:
         doc = documents.get(document_id)
@@ -72,25 +87,32 @@ def build_mentions(
 
     for r in records:
         if r.ref.entity_type is EntityType.PERSON and r.ref.source_ref:
-            if (o := observe(r.ref.source_ref, r.document_id)) and r.label not in o.labels:
-                o.labels.append(r.label)
+            if o := observe(r.ref.source_ref, r.document_id):
+                if r.label not in o.labels:
+                    o.labels.append(r.label)
+                if r.hints.get("stated_url"):
+                    o.stated_urls.add(str(r.hints["stated_url"]))
+    claim_obs: dict[Side, tuple[str, str]] = {}
     for c in claims:
-        for side, ref in (("out", c.subject), ("in", c.object)):
-            if ref is not None and ref.entity_type is EntityType.PERSON and ref.source_ref:
-                if o := observe(ref.source_ref, c.evidence.document_id):
-                    o.claims.append((c, side))
+        for side, pos, ref in (("out", "subject", c.subject), ("in", "object", c.object)):
+            if ref is None or ref.entity_type is not EntityType.PERSON:
+                continue
+            if not ref.source_ref:
+                continue  # curated claim naming a canonical id directly
+            if o := observe(ref.source_ref, c.evidence.document_id):
+                o.claims.append((c, side))
+                claim_obs[(c.claim_id, pos)] = (o.ref, o.url)
+            elif ref.source_ref in ref_to_id:
+                own_claims[(c.claim_id, pos)] = ref_to_id[ref.source_ref]
 
     confirmed: dict[str, list[MatchDecision]] = defaultdict(list)
-    possible: dict[str, list[MatchDecision]] = defaultdict(list)
     for d in decisions:
-        if d.entity_type is not EntityType.PERSON:
-            continue
-        bucket = confirmed if d.status is MatchStatus.CONFIRMED else possible if d.status is MatchStatus.POSSIBLE else None
-        if bucket is not None:
-            bucket[d.left].append(d)
-            bucket[d.right].append(d)
+        if d.entity_type is EntityType.PERSON and d.status is MatchStatus.CONFIRMED:
+            confirmed[d.left].append(d)
+            confirmed[d.right].append(d)
 
     out: dict[str, PersonMention] = {}
+    key_to_id: dict[tuple[str, str], str] = {}
     for (ref, url), o in sorted(obs.items()):
         names = [c for c, side in o.claims if side == "out" and c.object is None and c.predicate == "name"]
         stated = Counter(str(c.value) for c in names).most_common(1)[0][0] if names else (o.labels or [""])[0]
@@ -106,8 +128,8 @@ def build_mentions(
         if ids:
             provenance["stated_identifiers"] = sorted({c.claim_id for c, side in o.claims
                                                        if side == "out" and c.predicate in ids})
-        pid = ref_to_id.get(ref)
         out_id = mention_id(ref, url)
+        key_to_id[(ref, url)] = out_id
         out[out_id] = PersonMention(
             canonical_id=out_id,
             label=stated,
@@ -122,13 +144,13 @@ def build_mentions(
             source_url=url,
             document_ids=sorted(o.document_ids),
             linked_profile_url=_ref_url(ref),
+            stated_profile_urls=sorted(o.stated_urls),
             stated_identifiers=ids,
             context=context,
-            resolution=_resolution(ref, pid, anchors, confirmed, decided_at),
-            candidate_person_ids=sorted({ref_to_id[x] for d in possible.get(ref, [])
-                                         for x in (d.left, d.right) if x != ref and x in ref_to_id} - {pid}),
+            resolution=_certain(ref, sorted(o.stated_urls), ref_to_id.get(ref), anchors, confirmed, registry),
         )
-    return out
+    claim_mention = {side: key_to_id[k] for side, k in claim_obs.items() if k in key_to_id}
+    return MentionBuild(out, claim_mention, own_claims)
 
 
 def _context(o: _Obs, ref_to_id: dict[str, str]) -> list[MentionContext]:
@@ -137,9 +159,11 @@ def _context(o: _Obs, ref_to_id: dict[str, str]) -> list[MentionContext]:
         if c.object is None:
             continue
         other = c.object if side == "out" else c.subject
-        grouped[(c.predicate, side, other.canonical_id or ref_to_id.get(other.source_ref or ""),
-                 None if (other.canonical_id or ref_to_id.get(other.source_ref or "")) else other.source_ref)
-                ].append(c)
+        tid = other.canonical_id or ref_to_id.get(other.source_ref or "")
+        # another person-like record is never a resolved target here: it is a mention itself
+        if other.entity_type is EntityType.PERSON:
+            tid = None
+        grouped[(c.predicate, side, tid, None if tid else other.source_ref)].append(c)
     out = []
     for (pred, side, tid, tref), cs in sorted(grouped.items(), key=lambda kv: tuple(str(x) for x in kv[0])):
         try:
@@ -160,32 +184,41 @@ def _context(o: _Obs, ref_to_id: dict[str, str]) -> list[MentionContext]:
     return out
 
 
-def _resolution(ref: str, pid: str | None, anchors: dict[str, set[IdentityAnchor]],
-                confirmed: dict[str, list[MatchDecision]], decided_at: datetime) -> MentionResolution:
+def pending(reason: str = "pending evidence resolution") -> MentionResolution:
+    return MentionResolution(status=MentionResolutionStatus.UNRESOLVED, reason=reason, decision_source=RESOLVER_DOC)
+
+
+def _certain(ref: str, stated_urls: list[str], pid: str | None, anchors: dict[str, set[IdentityAnchor]],
+             confirmed: dict[str, list[MatchDecision]], registry: Registry | None) -> MentionResolution:
     if pid is None:
-        return MentionResolution(status=MentionResolutionStatus.UNRESOLVED, decided_at=decided_at,
-                                 decision_source=RULE_DOC)
-    if ref in anchors:
-        # the page links to the person's own canonical profile URL (or states a hard id)
-        url = _ref_url(ref)
-        return MentionResolution(
-            status=MentionResolutionStatus.DETERMINISTIC, person_id=pid, decided_at=decided_at,
-            method="profile_url" if url else "hard_id",
-            signals={"linked_profile_url": url} if url else {"anchors": sorted(anchors[ref])},
-            decision_source=f"{RULE_DOC}#resolution-decision",
-        )
+        return pending()
     ds = confirmed.get(ref, [])
     manual = next((d for d in ds if d.method.startswith("manual")), None)
     if manual is not None:
         return MentionResolution(status=MentionResolutionStatus.MANUAL_CONFIRMED, person_id=pid,
-                                 method=manual.method, signals={"pair": [manual.left, manual.right]},
-                                 decision_source=OVERRIDES, decided_at=decided_at)
+                                 method=manual.method, signals=["MANUAL_SAME_AS"],
+                                 evidence={"pair": [manual.left, manual.right]}, decision_source=OVERRIDES)
+    url = _ref_url(ref)
+    if url and ref in anchors:
+        # the page links the person's own canonical profile; how it wrote the link matters (#14)
+        hosts = {(urlsplit(u).hostname or "").lower() for u in stated_urls}
+        status = {h: registry.alias_status(h) for h in sorted(hosts)} if registry else {}
+        if not stated_urls or any(s in ("canonical", "verified") for s in status.values()):
+            signal = "PROFILE_URL_EXACT" if not status or "canonical" in status.values() \
+                else "PROFILE_URL_VERIFIED_ALIAS"
+            return MentionResolution(
+                status=MentionResolutionStatus.DETERMINISTIC, person_id=pid, method="profile_url",
+                signals=[signal], evidence={"linked_profile_url": url, "stated_urls": stated_urls,
+                                            "host_alias_status": status},
+                decision_source=f"{RULE_DOC}#resolution-decision")
+        return pending("profile link only through an inferred host alias")
+    if ref in anchors and anchors[ref] & {IdentityAnchor.MTMT, IdentityAnchor.ORCID}:
+        return MentionResolution(status=MentionResolutionStatus.DETERMINISTIC, person_id=pid, method="hard_id",
+                                 signals=["HARD_ID_MATCH"], evidence={"anchors": sorted(anchors[ref])},
+                                 decision_source=f"{RULE_DOC}#resolution-decision")
     hard = next((d for d in ds if d.method == "auto:hard_id+name"), None)
     if hard is not None:
         return MentionResolution(status=MentionResolutionStatus.DETERMINISTIC, person_id=pid,
-                                 method=hard.method, signals=dict(hard.signals),
-                                 decision_source=f"{RULE_DOC}#resolution-decision", decided_at=decided_at)
-    d = ds[0] if ds else None
-    return MentionResolution(status=MentionResolutionStatus.HIGH_CONFIDENCE_AUTO, person_id=pid,
-                             method=d.method if d else "cluster", signals=dict(d.signals) if d else {},
-                             decision_source="szocatlas.resolution.matcher", decided_at=decided_at)
+                                 method=hard.method, signals=["HARD_ID_MATCH"], evidence=dict(hard.signals),
+                                 decision_source=f"{RULE_DOC}#resolution-decision")
+    return pending("clustered without a certain rule")

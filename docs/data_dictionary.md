@@ -361,8 +361,9 @@ Evidence: a person-like record observed in one source page (ADR-0006).
 | `linked_profile_url` | `str \| None` |  |
 | `stated_identifiers` | `dict[str, str]` |  |
 | `context` | `list[MentionContext]` |  |
+| `stated_profile_urls` | `list[str]` |  |
 | `resolution` | `MentionResolution` | yes |
-| `candidate_person_ids` | `list[str]` |  |
+| `candidates` | `list[MentionCandidate]` |  |
 
 ## Enumerations
 
@@ -373,7 +374,7 @@ Evidence: a person-like record observed in one source page (ADR-0006).
 * **IdentityAnchor**: `institutional_profile`, `mtmt`, `orcid`, `manual`
 * **InstitutionType**: `university`, `faculty`, `research_centre`, `research_institute`, `academy`, `research_network`, `independent_organisation`, `association`, `government_agency`, `funder`
 * **MatchStatus**: `possible_match`, `confirmed_match`, `rejected_match`
-* **MentionResolutionStatus**: `DETERMINISTIC`, `MANUAL_CONFIRMED`, `HIGH_CONFIDENCE_AUTO`, `UNRESOLVED`
+* **MentionResolutionStatus**: `DETERMINISTIC`, `MANUAL_CONFIRMED`, `HIGH_CONFIDENCE_AUTO`, `REVIEW_REQUIRED`, `UNRESOLVED`
 * **RelationType**: `AFFILIATED_WITH`, `WORKED_AT`, `LEADS`, `MEMBER_OF`, `FOUNDED`, `STUDIED_AT`, `EDITOR_OF`, `COAUTHOR_WITH`, `CO_PROJECT`, `SUPERVISED_BY`, `SUPERVISES`, `COLLABORATES_WITH`, `INTELLECTUALLY_INFLUENCED_BY`, `PARTICIPATES_IN`, `PRINCIPAL_INVESTIGATOR_OF`, `AUTHORED`, `PUBLISHED_IN`, `CITES`, `WORKS_ON_TOPIC`, `USES_METHOD`, `PART_OF_TRADITION`, `PART_OF`, `HOSTED_BY`, `FUNDED_BY`, `PREDECESSOR_OF`, `SUCCESSOR_OF`, `INSTITUTIONAL_SUCCESSOR`, `PARTICIPATED_IN_EVENT`, `BROADER`
 * **ReviewStatus**: `UNREVIEWED`, `CONFIRMED`, `DISPUTED`, `REJECTED`
 * **SourceType**: `institutional_profile`, `institutional_listing`, `unit_page`, `project_page`, `registry`, `archive_snapshot`, `publication`, `cv`, `literature`, `manual`, `taxonomy`

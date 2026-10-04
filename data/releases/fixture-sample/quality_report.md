@@ -1,39 +1,16 @@
 # Data-quality report: fixture-sample
 
-- generated_at: 2026-10-04T16:39:53+00:00
+- generated_at: 2026-10-04T18:34:11+00:00
 - dataset_kind: **fixture**
 - schema_version: 0.1.0
 - sources: tk_kisebbsegkutato, tk_politikatudomany, tk_recens, tk_szociologia
-- parsers: curated=curated/0.1.0, derive.taxonomy=taxonomy_keyword_map/0.1.0, tk.listing=tk/0.2.2, tk.profile=tk/0.2.2, tk.project=tk/0.2.2, tk.project_listing=tk/0.2.2, tk.unit=tk/0.2.2
+- parsers: curated=curated/0.1.0, derive.taxonomy=taxonomy_keyword_map/0.1.0, tk.listing=tk/0.3.0, tk.profile=tk/0.3.0, tk.project=tk/0.3.0, tk.project_listing=tk/0.3.0, tk.unit=tk/0.3.0
 
 | severity | count |
 |---|---|
 | error | 0 |
-| warning | 8 |
-| info | 7 |
-
-## [warning] identity.possible_duplicates
-
-1 possible person matches await review (review/unresolved_people.yaml)
-
-```yaml
-pairs:
-- - Albert Fruzsina
-  - Albert Fruzsina
-  - auto:same_name
-```
-
-## [warning] identity.unresolved_mentions
-
-51 of 57 person mentions are not resolved to an identity (1 distinct names also carried by a canonical person; see #5)
-
-```yaml
-by_status:
-  UNRESOLVED: 51
-  DETERMINISTIC: 6
-same_name_as_a_person:
-  albert fruzsina: 1
-```
+| warning | 10 |
+| info | 8 |
 
 ## [warning] provenance.synthetic_documents
 
@@ -83,6 +60,99 @@ expect: Spatial inequality, Roma, locality.
 mentioned_on: []
 ```
 
+## [warning] seeds.missing
+
+QA seed not in dataset as a person: Messing Vera
+
+```yaml
+expect: Many project mentions across SZI pages; resolution must restore them only with evidence.
+mentioned_on:
+- https://szociologia.tk.elte.hu/kategoria/futo-kutatasok
+```
+
+## [warning] seeds.missing
+
+QA seed not in dataset as a person: Kovách Imre
+
+```yaml
+expect: Project lead on SZI pages; resolution must restore observed PI edges.
+mentioned_on: []
+```
+
+## [warning] seeds.missing
+
+QA seed not in dataset as a person: Gerő Márton
+
+```yaml
+expect: No MTMT id; identity rests on the institutional profile only.
+mentioned_on:
+- https://szociologia.tk.elte.hu/kategoria/futo-kutatasok
+```
+
+## [warning] seeds.missing
+
+QA seed not in dataset as a person: Papp Z. Attila
+
+```yaml
+expect: Middle initial in the name; initials alone must never resolve a mention.
+mentioned_on: []
+```
+
+## [info] identity.mention_resolution
+
+7 of 57 person mentions resolved (12.3%); 0 need review, 50 have no candidate Person
+
+```yaml
+by_status:
+  DETERMINISTIC: 6
+  HIGH_CONFIDENCE_AUTO: 1
+  UNRESOLVED: 50
+resolved_by_method:
+  own_profile_project: 1
+  profile_url: 6
+by_source:
+  tk_kisebbsegkutato:
+    DETERMINISTIC: 1
+    UNRESOLVED: 13
+    resolved: 1
+    total: 14
+    resolution_rate: 0.071
+  tk_recens:
+    DETERMINISTIC: 4
+    UNRESOLVED: 12
+    resolved: 4
+    total: 16
+    resolution_rate: 0.25
+  tk_szociologia:
+    DETERMINISTIC: 1
+    HIGH_CONFIDENCE_AUTO: 1
+    UNRESOLVED: 25
+    resolved: 2
+    total: 27
+    resolution_rate: 0.074
+by_page_type:
+  institutional_listing:
+    DETERMINISTIC: 4
+    UNRESOLVED: 23
+    resolved: 4
+    total: 27
+    resolution_rate: 0.148
+  project_page:
+    HIGH_CONFIDENCE_AUTO: 1
+    UNRESOLVED: 4
+    resolved: 1
+    total: 5
+    resolution_rate: 0.2
+  unit_page:
+    DETERMINISTIC: 2
+    UNRESOLVED: 23
+    resolved: 2
+    total: 25
+    resolution_rate: 0.08
+not_resolved_reasons:
+  no canonical Person with a compatible name or the linked profile slug: 50
+```
+
 ## [info] seeds.present
 
 Koltai Júlia -> per_965aaf3d0d
@@ -93,6 +163,8 @@ affiliations:
 topics: []
 methods: []
 resolved_mentions: 1
+resolved_by_method:
+  profile_url: 1
 ```
 
 ## [info] seeds.present
@@ -110,6 +182,8 @@ methods:
 - Computational text analysis
 - Quantitative methods
 resolved_mentions: 2
+resolved_by_method:
+  profile_url: 2
 ```
 
 ## [info] seeds.present
@@ -133,6 +207,8 @@ topics:
 - Solidarity and civil society
 methods: []
 resolved_mentions: 1
+resolved_by_method:
+  profile_url: 1
 ```
 
 ## [info] stats.entities
@@ -163,8 +239,9 @@ DERIVED: 101
 person mentions by resolution status
 
 ```yaml
-UNRESOLVED: 51
+UNRESOLVED: 50
 DETERMINISTIC: 6
+HIGH_CONFIDENCE_AUTO: 1
 ```
 
 ## [info] stats.relations

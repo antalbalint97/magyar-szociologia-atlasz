@@ -8,7 +8,7 @@ import type {
 } from "./types.ts";
 
 const NON_FIELDS = new Set(["canonical_id", "label", "provenance_json", "conflicts_json", "search_text",
-  "release_id", "entity_type", "has_conflicts", "source_refs", "context_json", "resolution_json"]);
+  "release_id", "entity_type", "has_conflicts", "source_refs", "context_json", "resolution_json", "candidates_json"]);
 
 function plain(v: any): any {
   if (neo4j.isInt(v)) return v.toNumber();
@@ -77,7 +77,7 @@ export class Neo4jStore implements GraphStore {
     const rows = await this.q(
       "CALL db.index.fulltext.queryNodes('entity_search', $terms) YIELD node, score RETURN node, score " +
       "UNION CALL db.index.fulltext.queryNodes('mention_search', $terms) YIELD node, score " +
-      "WITH node, score WHERE node.resolution_status = 'UNRESOLVED' " +
+      "WITH node, score WHERE node.resolution_status IN ['REVIEW_REQUIRED', 'UNRESOLVED'] " +
       "RETURN node, score * 0.5 AS score ORDER BY score DESC LIMIT $limit", { terms, limit: neo4j.int(limit) });
     return rows.map((r) => {
       const p = r.get("node").properties;

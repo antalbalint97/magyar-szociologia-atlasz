@@ -2,7 +2,7 @@
 // static deployments and whenever Neo4j is not running. Server-side only.
 import { readFile, readdir } from "node:fs/promises";
 import path from "node:path";
-import { toMention } from "./mentions.ts";
+import { RESOLVED_MENTION, toMention } from "./mentions.ts";
 import { score } from "./search.ts";
 import type {
   Edge, Entity, EntitySummary, Evidence, GraphStore, Mention, Neighbourhood, ReleaseInfo,
@@ -124,7 +124,7 @@ export class FileStore implements GraphStore {
         e: { id: e.id, type: e.type, label: e.label, alternateNames: e.alternateNames },
         s: score(query, [e.label, ...e.alternateNames, String(e.fields.name_hu ?? "")]),
       })),
-      ...[...mentions.values()].filter((m) => m.status === "UNRESOLVED").map((m) => ({
+      ...[...mentions.values()].filter((m) => !RESOLVED_MENTION.has(m.status)).map((m) => ({
         e: { id: m.id, type: "PersonMention", label: m.statedName, alternateNames: [] },
         s: score(query, [m.statedName]) * 0.9,
       })),

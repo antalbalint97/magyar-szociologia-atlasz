@@ -131,10 +131,16 @@ class IdentityAnchor(StrEnum):
 class MentionResolutionStatus(StrEnum):
     """How a PersonMention is tied to a canonical Person (ADR-0006)."""
 
-    DETERMINISTIC = "DETERMINISTIC"  # exact profile URL, or stated hard id + compatible name
-    MANUAL_CONFIRMED = "MANUAL_CONFIRMED"  # same_as in review/manual_overrides.yaml
-    HIGH_CONFIDENCE_AUTO = "HIGH_CONFIDENCE_AUTO"  # reserved for documented evidence rules (#5)
-    UNRESOLVED = "UNRESOLVED"
+    DETERMINISTIC = "DETERMINISTIC"  # exact profile URL (canonical or verified alias host), or hard id + name
+    MANUAL_CONFIRMED = "MANUAL_CONFIRMED"  # mention_decisions / same_as in review/manual_overrides.yaml
+    HIGH_CONFIDENCE_AUTO = "HIGH_CONFIDENCE_AUTO"  # a documented rule of >=2 strong signals (#5)
+    REVIEW_REQUIRED = "REVIEW_REQUIRED"  # candidates exist, evidence is insufficient or contradictory
+    UNRESOLVED = "UNRESOLVED"  # no candidate identity at all
+
+    @property
+    def resolved(self) -> bool:
+        return self in (MentionResolutionStatus.DETERMINISTIC, MentionResolutionStatus.MANUAL_CONFIRMED,
+                        MentionResolutionStatus.HIGH_CONFIDENCE_AUTO)
 
 
 class MatchStatus(StrEnum):

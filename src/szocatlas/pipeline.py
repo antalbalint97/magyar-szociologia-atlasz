@@ -21,10 +21,19 @@ from .canonical.build import build_canonical
 from .canonical.mentions import build_mentions
 from .canonical.curated import Taxonomy, derive_classifications, registry_claims
 from .fetch import FixtureFetcher, PoliteFetcher, RawStore, ReplayFetcher, dump_jsonl
-from .models.enums import EntityType, IdentityAnchor, MentionResolutionStatus, ReviewStatus
+from .models.enums import EntityType, IdentityAnchor, ReviewStatus
 from .models.provenance import Claim, SourceDocument, SourceRecord
 from .registry import DEFAULT_REGISTRY, REPO_ROOT, Registry, load_registry
 from .resolution.matcher import IdentityMap, Overrides, identity_anchors, resolve, write_review_queue
+from .resolution.mentions import (
+    MentionDecision,
+    ResolutionConfig,
+    claim_persons,
+    load_mention_decisions,
+    resolve_mentions,
+)
+from .resolution.review import write_mention_review
+from .validation.mention_stats import mention_stats
 from .sources.base import ParseResult, SourceAdapter
 from .sources.tk.adapter import TKAdapter
 from .validation.qa import render_markdown, run_checks
@@ -177,19 +186,15 @@ def build(release_id: str, *, source_ids: list[str] | None = None, paths: Paths 
     ref_to_id, decisions = resolve(combined.records, claim_list, overrides, identity)
     if persist_identity:
         identity.save()
-    write_review_queue(decisions, paths.review / "unresolved_people.yaml")
+    anchors = identity_anchors(combined.records, claim_list)
+    # person-to-person ambiguity between identities; mention ambiguity goes to mention_review.yaml
+    write_review_queue(decisions, paths.review / "unresolved_people.yaml", only_refs=set(anchors))
 
     documents = list({d.document_id: d for d in combined.documents}.values())
-    anchors = identity_anchors(combined.records, claim_list)
-    evidence: dict[str, set] = defaultdict(set)
-    for ref, kinds in anchors.items():
-        if ref in ref_to_id:
-            evidence[ref_to_id[ref]] |= kinds
-    ds = build_canonical(claim_list, documents, ref_to_id, {k: sorted(v) for k, v in evidence.items()})
-    ds.anchor_refs = set(anchors)
-    built_at = datetime.now(UTC)
-    ds.mentions = build_mentions(combined.records, claim_list, ds.documents, ref_to_id, decisions,
-                                 anchors, built_at)
+    ds = canonicalize(combined.records, claim_list, documents, ref_to_id, decisions, anchors, registry,
+                      ResolutionConfig.load(paths.config / "resolution.yaml"),
+                      load_mention_decisions(paths.review / "manual_overrides.yaml"))
+    write_mention_review(ds, paths.review / "mention_review.yaml")
 
     synthetic = any(d.synthetic for d in documents)
     parser_versions = dict(sorted({c.parser: c.parser_version for c in claim_list}.items()))
@@ -206,6 +211,7 @@ def build(release_id: str, *, source_ids: list[str] | None = None, paths: Paths 
         "entities": dict(Counter(e.entity_type.value for e in ds.entities.values()))
         | ({"PersonMention": len(ds.mentions)} if ds.mentions else {}),
         "counts": person_counts(ds),
+        "mention_resolution": mention_stats(ds),
         "relations": dict(Counter(r.type.value for r in ds.relations)),
         "source_retrieval_window": _window(documents),
     }
@@ -243,8 +249,7 @@ def person_counts(ds) -> dict[str, Any]:
         else:
             evidence["other_evidence"] += 1
     status = Counter(m.resolution.status.value for m in ds.mentions.values())
-    unresolved = [m for m in ds.mentions.values()
-                  if m.resolution.status is MentionResolutionStatus.UNRESOLVED]
+    unresolved = [m for m in ds.mentions.values() if not m.resolution.status.resolved]
     return {
         "persons": {
             "canonical": len(persons),
@@ -273,3 +278,24 @@ def _window(documents: list[SourceDocument]) -> dict[str, str] | None:
     if not web:
         return None
     return {"from": min(web).isoformat(), "until": max(web).isoformat()}
+
+
+def canonicalize(records, claims, documents, ref_to_id, decisions, anchors, registry, config: ResolutionConfig,
+                 mention_decisions: list[MentionDecision]):
+    """Claims + identity -> canonical dataset with person mentions (ADR-0006, ADR-0007)."""
+    evidence: dict[str, set] = defaultdict(set)
+    for ref, kinds in anchors.items():
+        if ref in ref_to_id:
+            evidence[ref_to_id[ref]] |= kinds
+    ev = {k: sorted(v) for k, v in evidence.items()}
+    mb = build_mentions(records, claims, {d.document_id: d for d in documents}, ref_to_id, decisions, anchors,
+                        registry)
+    # pass 1: certain evidence only (own profiles, certain mention decisions), the context #5 rules may use
+    certain = build_canonical(claims, documents, ref_to_id, ev,
+                              claim_persons(mb.mentions, mb.claim_mention, mb.own_claims, certain_only=True))
+    resolve_mentions(mb.mentions, certain, registry, config, ref_to_id, mention_decisions)
+    # pass 2: project claims of every resolved mention onto its Person
+    ds = build_canonical(claims, documents, ref_to_id, ev, claim_persons(mb.mentions, mb.claim_mention, mb.own_claims))
+    ds.anchor_refs = set(anchors)
+    ds.mentions = mb.mentions
+    return ds

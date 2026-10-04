@@ -1,5 +1,24 @@
 # Changelog
 
+## Unreleased (Milestone 2 branch)
+
+* Person mentions vs canonical Persons (#4, ADR-0006): a Person needs an identity anchor;
+  every other person-like observation is a `PersonMention` that may `RESOLVES_TO` one.
+* Evidence-based mention resolution (#5, ADR-0007): candidate generation separate from
+  the decision; named rules that need a full-name match plus another strong signal
+  (`slug-inferred-alias`, `slug-family-host`, `own-profile-project`,
+  `unit-member-unique`, `institute-unique-name`); blocking negative evidence; new status
+  `REVIEW_REQUIRED`; candidates stored with their positive and negative signals;
+  `review/mention_review.yaml`; manual `mention_decisions` (`same_as`, `not_same_as`)
+  that outrank every automatic decision. Resolver config in `config/resolution.yaml`.
+* TK parser 0.3.0: person links keep the URL as written (`stated_url`) next to the
+  alias-normalised one, so a link that exists only through an inferred host alias is no
+  longer a certain identity decision. Verified host aliases (301 checked) are declared
+  in `config/sources.yaml` (#14).
+* Manifest and QA: per-source and per-page-type resolution rates, a warning when rates
+  differ by more than 20 points, errors for unexplained or contradicted automatic
+  decisions. `review/unresolved_people.yaml` lists only pairs of identity-anchored records.
+
 ## 0.2.2 (2026-10-04) — remaining section labels from the #8 rebuild
 
 * TK parser 0.2.2. Found by re-measuring release `2026-10-tk` with 0.2.1: the section

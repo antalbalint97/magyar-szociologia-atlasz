@@ -131,28 +131,37 @@ def _cid(ref, ref_to_id: dict[str, str]) -> str | None:
     return ref.canonical_id or ref_to_id.get(ref.source_ref)
 
 
-def _unresolved_person(ref, ref_to_id: dict[str, str]) -> bool:
-    """A person record without a canonical id is a mention, not an identity (ADR-0006)."""
-    return ref.entity_type is EntityType.PERSON and _cid(ref, ref_to_id) is None
-
-
 def build_canonical(
     claims: list[Claim],
     documents: list[SourceDocument],
     ref_to_id: dict[str, str],
     identity_evidence: dict[str, list] | None = None,
+    person_claims: dict[tuple[str, str], str] | None = None,
 ) -> CanonicalDataset:
+    """Project claims onto canonical entities.
+
+    ``person_claims`` decides person sides claim by claim (ADR-0006/0007): a person
+    observed on a page counts only through its own profile or a resolved mention, so the
+    same source record can resolve on one page and stay a mention on another. Without
+    it, person records resolve through ``ref_to_id`` (fixtures and unit tests).
+    """
     ds = CanonicalDataset(claims=claims, documents={d.document_id: d for d in documents})
     literal: dict[tuple[str, EntityType], dict[str, list[Claim]]] = defaultdict(lambda: defaultdict(list))
     edges: dict[tuple[str, str, str], list[Claim]] = defaultdict(list)
     refs_of: dict[str, set[str]] = defaultdict(set)
 
+    def resolve_side(ref, claim_id: str, pos: str) -> str | None:
+        if ref.entity_type is EntityType.PERSON and person_claims is not None and not ref.canonical_id:
+            return person_claims.get((claim_id, pos))
+        return _cid(ref, ref_to_id)
+
     for c in claims:
-        if _unresolved_person(c.subject, ref_to_id) or (
-                c.object is not None and _unresolved_person(c.object, ref_to_id)):
-            ds.mention_claims_skipped += 1  # kept in the PersonMention's context instead
+        sid = resolve_side(c.subject, c.claim_id, "subject")
+        oid = resolve_side(c.object, c.claim_id, "object") if c.object is not None else None
+        if (c.subject.entity_type is EntityType.PERSON and sid is None) or (
+                c.object is not None and c.object.entity_type is EntityType.PERSON and oid is None):
+            ds.mention_claims_skipped += 1  # a person side that is only a mention: kept in its context
             continue
-        sid = _cid(c.subject, ref_to_id)
         if sid is None:
             ds.issues.append({"check": "unresolved_subject", "claim_id": c.claim_id})
             continue
@@ -161,7 +170,6 @@ def build_canonical(
         if c.object is None:
             literal[(sid, c.subject.entity_type)][c.predicate].append(c)
             continue
-        oid = _cid(c.object, ref_to_id)
         if oid is None:
             ds.issues.append({"check": "unresolved_object", "claim_id": c.claim_id})
             continue
