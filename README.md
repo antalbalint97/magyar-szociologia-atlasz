@@ -11,6 +11,9 @@ traceable to a public source. Phase 1 targets a defensible snapshot of the field
 > test pages**: it demonstrates the data model and is not a statement about the field.
 > The first real snapshot needs a run with network access to the source sites (see
 > "Run ingestion").
+>
+> Current state, milestone and blockers: [docs/status.md](docs/status.md). Work is
+> tracked in GitHub Issues ([CONTRIBUTING.md](CONTRIBUTING.md)).
 
 ## Layout
 
