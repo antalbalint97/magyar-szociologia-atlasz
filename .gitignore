@@ -1,0 +1,23 @@
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+.env
+.env.*
+!.env.example
+
+# Pipeline working data. Raw snapshots and staged records are reproducible from
+# sources.yaml + the CLI; releases are published separately (see docs/reproducibility.md).
+data/raw/*
+data/staged/*
+data/canonical/*
+data/releases/*
+!data/**/.gitkeep
+!data/releases/fixture-sample/
+
+# Frontend
+apps/web/node_modules/
+apps/web/.next/
+apps/web/next-env.d.ts
