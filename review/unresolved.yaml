@@ -18,3 +18,14 @@ items:
       while Albert Fruzsina's profile biography (observed 2026-10-04) describes her
       as head of the same department. Probably a stale biography; both claims are
       kept. The biography is stored as text only and not parsed into a LEADS edge.
+  - id: nki_rename
+    type: uncertain_institutional_succession
+    question: >
+      KSH NKI's site says the institute was renamed in 2025. Capture the official Hungarian
+      name and date from a snapshot and encode as an Event + alternate name.
+  - id: doktori_hu_permission
+    type: source_access
+    question: >
+      doktori.hu disallows AI crawlers in robots.txt. Supervision genealogy needs either
+      written permission / a data agreement with the National Doctoral Council or manual
+      transcription with citations.

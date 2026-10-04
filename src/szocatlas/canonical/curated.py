@@ -101,7 +101,9 @@ def registry_claims(registry: Registry, path: Path) -> ParseResult:
             c.append(_claim(doc, ref, "PART_OF", obj=institution_ref(inst.parent),
                             snippet=f"parent: {inst.parent}", locator=loc, temporal_basis=TemporalBasis.OBSERVED_AT))
     for s in registry.sources:
-        if not s.unit_name:
+        # Only institutional websites describe an organisational unit; journals,
+        # registries and archives get their own entity types when their adapters exist.
+        if not s.unit_name or not s.institution or s.source_type != "institutional_website":
             continue
         ref = local_ref(s.source_id, EntityType.ORG_UNIT, "site")
         if s.unit_type == "research_group":

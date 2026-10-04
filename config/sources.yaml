@@ -41,6 +41,125 @@ institutions:
       homes (MTA, then the ELKH / HUN-REN research network). Succession dates are NOT
       encoded until sourced; see review/unresolved.yaml#tk_succession.
 
+  - key: elte_tatk
+    canonical_name: ELTE Társadalomtudományi Kar
+    english_name: ELTE Faculty of Social Sciences
+    alternate_names: [ELTE TáTK]
+    institution_type: faculty
+    city: Budapest
+    website: https://tatk.elte.hu/
+    parent: elte
+    verify_url: https://tatk.elte.hu/en/units/faculty-of-social-sciences
+
+  - key: elte_krtk
+    canonical_name: ELTE Közgazdaság- és Regionális Tudományi Kutatóközpont
+    english_name: ELTE Centre for Economic and Regional Studies
+    alternate_names: [KRTK]
+    institution_type: research_centre
+    city: Budapest
+    website: https://krtk.elte.hu/
+    parent: elte
+    verify_url: https://krtk.elte.hu/szervezet/
+
+  - key: tarki
+    canonical_name: TÁRKI Társadalomkutatási Intézet Zrt.
+    english_name: TÁRKI Social Research Institute
+    alternate_names: [TÁRKI]
+    institution_type: independent_organisation
+    city: Budapest
+    website: https://tarki.hu/
+    verify_url: https://tarki.hu/rolunk
+
+  - key: corvinus
+    canonical_name: Budapesti Corvinus Egyetem
+    english_name: Corvinus University of Budapest
+    institution_type: university
+    city: Budapest
+    website: https://www.uni-corvinus.hu/
+    verify_url: https://www.uni-corvinus.hu/fooldal/egyetemunkrol/intezetek/tarsadalom-es-politikatudomanyi-intezet/
+
+  - key: pte
+    canonical_name: Pécsi Tudományegyetem
+    english_name: University of Pécs
+    alternate_names: [PTE]
+    institution_type: university
+    city: Pécs
+    website: https://pte.hu/
+    verify_url: https://btk.pte.hu/
+
+  - key: pte_btk
+    canonical_name: PTE Bölcsészet- és Társadalomtudományi Kar
+    english_name: University of Pécs Faculty of Humanities and Social Sciences
+    institution_type: faculty
+    city: Pécs
+    website: https://btk.pte.hu/
+    parent: pte
+    verify_url: https://btk.pte.hu/hu/intezetek-tanszekek
+
+  - key: unideb
+    canonical_name: Debreceni Egyetem
+    english_name: University of Debrecen
+    institution_type: university
+    city: Debrecen
+    website: https://unideb.hu/
+    verify_url: https://btk.unideb.hu/intezetek-kozpontok
+
+  - key: szte
+    canonical_name: Szegedi Tudományegyetem
+    english_name: University of Szeged
+    institution_type: university
+    city: Szeged
+    website: https://u-szeged.hu/
+    verify_url: https://arts.u-szeged.hu/karunkrol/intezetek-tanszekek
+
+  - key: unimiskolc
+    canonical_name: Miskolci Egyetem
+    english_name: University of Miskolc
+    institution_type: university
+    city: Miskolc
+    website: https://uni-miskolc.hu/
+    verify_url: https://atti.uni-miskolc.hu/bemutatkozas.htm
+
+  - key: ppke
+    canonical_name: Pázmány Péter Katolikus Egyetem
+    english_name: Pázmány Péter Catholic University
+    alternate_names: [PPKE]
+    institution_type: university
+    city: Budapest
+    website: https://ppke.hu/
+    verify_url: https://btk.ppke.hu/szociologiai-intezet
+
+  - key: ksh_nki
+    canonical_name: KSH Népességtudományi Kutatóintézet
+    english_name: Hungarian Demographic Research Institute
+    alternate_names: [NKI]
+    institution_type: research_institute
+    city: Budapest
+    website: https://demografia.hu/
+    verify_url: https://demografia.hu/hu/intezetunk/ismertetes
+    notes: >
+      The institute's own page (observed 2026-10-04 via a text rendering) says it was renamed
+      in 2025 ("Quantitative Social and Economic Research Institute"). The Hungarian new name
+      and date are not yet captured from a snapshot; see review/unresolved.yaml#nki_rename.
+
+  - key: mszt
+    canonical_name: Magyar Szociológiai Társaság
+    english_name: Hungarian Sociological Association
+    alternate_names: [MSZT]
+    institution_type: association
+    city: Budapest
+    website: https://szociologia.hu/
+    verify_url: https://szociologia.hu/az-mszt-es-tisztsegviseloi
+
+  - key: mta
+    canonical_name: Magyar Tudományos Akadémia
+    english_name: Hungarian Academy of Sciences
+    alternate_names: [MTA]
+    institution_type: academy
+    city: Budapest
+    website: https://mta.hu/
+    verify_url: https://mta.hu/ix-osztaly
+
 sources:
   # ---------------------------------------------------------------- TK ecosystem
   # All TK institute sites observed so far share one CMS: researcher listings at
@@ -156,5 +275,43 @@ sources:
   - {source_id: tk_mokk, institution: elte_tk, unit_name: Módszertani Képzések, unit_type: programme, base_url: "https://mokk.tk.hu/"}
   - {source_id: tk_csaladtudomany, institution: elte_tk, unit_name: Családtudomány, unit_type: programme, base_url: "https://csaladtudomany.tk.hu/"}
   - {source_id: tk_klimacentrum, institution: elte_tk, unit_name: Klímacentrum, unit_type: research_centre, base_url: "https://klimacentrum.tk.hu"}
-  - {source_id: journal_intersections, institution: elte_tk, unit_name: "Intersections. East European Journal of Society and Politics", source_type: journal, base_url: "https://intersections.tk.hu", notes: "Journal published by TK. Editorial board -> EDITOR_OF edges."}
+  - {source_id: journal_intersections, institution: elte_tk, unit_name: "Intersections. East European Journal of Society and Politics", source_type: journal, base_url: "https://intersections.tk.hu/", notes: "Journal published by TK. Editorial board -> EDITOR_OF edges."}
   - {source_id: tk_openarchive, institution: elte_tk, unit_name: TK Open Archive, source_type: repository, base_url: "https://openarchive.tk.mta.hu", notes: "EPrints repository; per-division and per-creator views. Candidate publication source."}
+
+  # ------------------------------------------------- other institutions (no adapter yet)
+  # Entry points observed 2026-10-04 through a text-rendering reader (not raw snapshots).
+  # verified: true = the page loaded; false = seen only in search results or links.
+  # Full per-source notes: docs/sources.md.
+  - {source_id: elte_tatk_sociology, institution: elte_tatk, unit_name: ELTE TáTK Szociológia Intézet, unit_english_name: Institute of Sociology, unit_type: institute, base_url: "https://tatk.elte.hu/en/units/institute-of-sociology", verified: true, notes: "~25 staff in one list; department page /en/units/department-of-sociology; profiles /en/staff/<slug>. tatk.elte.hu robots.txt was unreachable from the reader: confirm before crawling."}
+  - {source_id: elte_tatk_empirical, institution: elte_tatk, unit_name: ELTE TáTK Empirikus Tanulmányok Intézet, unit_english_name: Institute of Empirical Studies, unit_type: institute, base_url: "https://tatk.elte.hu/en/units/institute-of-empirical-studies", verified: true, notes: "Departments of Statistics and of Social Research Methodology; 29 people inline."}
+  - {source_id: elte_krtk_rki, institution: elte_krtk, unit_name: KRTK Regionális Kutatások Intézete, unit_english_name: Institute for Regional Studies, unit_type: institute, base_url: "https://rki.krtk.hu/", verified: true, notes: "WordPress; robots open; sitemaps for kutatok (403 profiles), projektek, szervezeti_egysegek. Category korabbi-munkatarsak lists FORMER staff (historical evidence). Regional departments in Pécs, Budapest, Győr, Kecskemét, Békéscsaba. Best-structured candidate for the next adapter."}
+  - {source_id: elte_krtk_kti, institution: elte_krtk, unit_name: KRTK Közgazdaság-tudományi Intézet, unit_english_name: Institute of Economics, unit_type: institute, base_url: "https://kti.krtk.hu/", scope: adjacent, notes: "Staff URLs unconfirmed (intermittent timeouts). Include researchers on inequality, education, Roma, labour, networks."}
+  - {source_id: elte_krtk_vgi, institution: elte_krtk, unit_name: KRTK Világgazdasági Intézet, unit_english_name: Institute of World Economics, unit_type: institute, base_url: "http://www.vki.hu/", scope: adjacent, notes: "Timed out; low priority."}
+  - {source_id: elte_krtk_adatbank, institution: elte_krtk, unit_name: KRTK Adatbank, unit_english_name: KRTK Data Bank, unit_type: infrastructure, base_url: "https://krtk.elte.hu/adatbank/", verified: true}
+  - {source_id: tarki_web, institution: tarki, base_url: "https://tarki.hu/", verified: true, notes: "Drupal; staff on /rolunk (3 groups) with flat-slug profiles; projects at /kutatasok (?page=0..6) name 'Kutatásvezető' and team. robots: standard Drupal, no AI blocks."}
+  - {source_id: tarki_adatbank, institution: tarki, source_type: data_archive, base_url: "https://adatbank.tarki.hu/en/", verified: true, notes: "CESSDA member, 800+ datasets; study metadata likely lists PIs (DDI)."}
+  - {source_id: corvinus_sociology, institution: corvinus, unit_name: Corvinus Szociológia Tanszék, unit_english_name: Department of Sociology, unit_type: department, base_url: "https://www.uni-corvinus.hu/fooldal/egyetemunkrol/tanszekek/szociologia-tanszek/", verified: true, notes: "Inside the Társadalom- és Politikatudományi Intézet (no separate 'Szociológia és Társadalompolitika Intézet' any more). Staff page lists PhD students WITH supervisors (genealogy evidence) and MTMT/Scholar links; profiles /elerhetosegek/<slug>."}
+  - {source_id: corvinus_tpi, institution: corvinus, unit_name: Corvinus Társadalom- és Politikatudományi Intézet, unit_english_name: Institute of Social and Political Sciences, unit_type: institute, base_url: "https://www.uni-corvinus.hu/fooldal/egyetemunkrol/intezetek/tarsadalom-es-politikatudomanyi-intezet/", verified: true}
+  - {source_id: corvinus_etk, institution: corvinus, unit_name: Corvinus Empirikus Társadalomkutató Központ, unit_type: research_centre, base_url: "https://www.uni-corvinus.hu/fooldal/kutatas/kutatokozpontok/empirikus-tarsadalomkutato-kozpont/"}
+  - {source_id: pte_sociology, institution: pte_btk, unit_name: PTE BTK Szociológia Tanszék, unit_english_name: Department of Sociology, unit_type: department, base_url: "https://btk.pte.hu/hu/szociologia", verified: true, notes: "15 staff at /hu/szociologia/oktatoink linking to faculty directory profiles /hu/munkatarsak/<slug>; Település és Társadalom research group; Demography and Sociology doctoral school."}
+  - {source_id: pte_romology, institution: pte_btk, unit_name: PTE BTK Romológia és Nevelésszociológia Tanszék, unit_english_name: Department of Romology and Sociology of Education, unit_type: department, base_url: "https://btk.pte.hu/hu/nevtud/romologia-es-nevelesszociologia-tanszek", verified: true, notes: "In the Neveléstudományi Intézet; staff page /hu/node/15595 (9 people, no profile links). Model as potentially distinct from Budapest Roma-research networks (brief §3)."}
+  - {source_id: pte_romology_centre, institution: pte_btk, unit_name: PTE Romológiai Kutatóközpont, unit_type: research_centre, base_url: "https://btk.pte.hu/hu/tudomany/kutatokozpontok/romologiai-kutatokozpont"}
+  - {source_id: unideb_sociology, institution: unideb, unit_name: DE Szociológia és Szociálpolitika Tanszék, unit_english_name: Department of Sociology and Social Policy, unit_type: department, base_url: "https://szociologia.unideb.hu/", verified: true, notes: "Research workshops (InnoDE, employment policy, youth sociology) with named leaders. btk.unideb.hu robots.txt blocks the Scrapy UA and /phonebook/department/*; phonebook appears JS-rendered."}
+  - {source_id: unideb_cherd, institution: unideb, unit_name: Center for Higher Education Research and Development (CHERD), unit_type: research_centre, base_url: "http://cherd.unideb.hu/", notes: "Sociology of (higher) education."}
+  - {source_id: szte_sociology, institution: szte, unit_name: SZTE BTK Szociológia Tanszék, unit_english_name: Department of Sociology, unit_type: department, base_url: "https://arts.u-szeged.hu/szociologia-tanszek", verified: true, notes: "12 staff with research areas; each links an MTMT record (hard identifier). Szeged Studies long-running project. u-szeged.hu robots: Crawl-delay 1."}
+  - {source_id: miskolc_atti, institution: unimiskolc, unit_name: Miskolci Egyetem Alkalmazott Társadalomtudományok Intézete, unit_english_name: Institute of Applied Social Sciences, unit_type: institute, base_url: "https://atti.uni-miskolc.hu/", verified: true, notes: "Static .htm site; oktatok.htm with MTMT links and CV PDFs; Romakutató Központ described on kutatasok.htm. robots.txt 404."}
+  - {source_id: ppke_sociology, institution: ppke, unit_name: PPKE BTK Szociológiai Intézet, unit_english_name: Institute of Sociology, unit_type: institute, base_url: "https://btk.ppke.hu/szociologiai-intezet", verified: true, notes: "16 staff in two departments; flat-slug profiles with MTMT links; research groups incl. Társadalomtörténeti and Kulturális emlékezet. No sociology-of-religion unit found (only psychology of religion)."}
+  - {source_id: ksh_nki_web, institution: ksh_nki, base_url: "https://demografia.hu/", notes: "robots.txt returned HTTP 429 after a few requests: use a long delay. Staff page /hu/intezetunk/munkatarsak unconfirmed.", crawl_policy: {min_delay_seconds: 15}}
+  - {source_id: mszt_web, institution: mszt, base_url: "https://szociologia.hu/", verified: true, notes: "16 sections (szakosztályok) with leaders; award laureate pages (Erdei, Polányi, Némedi, Angelusz, Szalai Júlia prizes). robots open."}
+
+  # ------------------------------------------------- journals
+  - {source_id: journal_szociologiai_szemle, institution: mszt, source_type: journal, base_url: "https://ojs.mtak.hu/index.php/szocszemle", verified: true, notes: "OJS; editorial team at /about/editorialTeam; OAI endpoint to confirm."}
+  - {source_id: journal_socio_hu, institution: elte_tk, source_type: journal, base_url: "https://socio.hu/", verified: true, notes: "OJS; editorial board at /index.php/so/editorial-board."}
+  - {source_id: journal_replika, source_type: journal, base_url: "https://replika.hu/", verified: true, notes: "Custom site; /szerkesztoseg."}
+  - {source_id: journal_metszetek, institution: unideb, source_type: journal, base_url: "https://ojs.lib.unideb.hu/metszetek", verified: true}
+  - {source_id: journal_esely, source_type: journal, base_url: "https://www.esely.org/", notes: "Seen in search only; TOCs as PDFs; also on EPA/REAL-J."}
+
+  # ------------------------------------------------- national registries
+  - {source_id: mtmt, source_type: registry, base_url: "https://m2.mtmt.hu/", verified: true, notes: "Public JSON API /api/author/<mtid>?format=json without login: names, degrees, DATED affiliation history. Primary source for hard identifiers and historical affiliations. robots.txt 404."}
+  - {source_id: doktori_hu, source_type: registry, base_url: "https://www.doktori.hu/", verified: true, notes: "Key genealogy source (supervision with dates, dissertations, doctoral schools: ELTE SZDI 53, PTE 197, Corvinus SZKDI 233). robots.txt disallows GPTBot, Google-Extended, CCBot and ClaudeBot entirely. DO NOT crawl automatically: ask the National Doctoral Council for permission or a data agreement first."}
+  - {source_id: mta_ix, institution: mta, base_url: "https://mta.hu/ix-osztaly", verified: true, notes: "Section IX member lists; Sociology Scientific Committee page unconfirmed; Lendület winners mostly in PDFs."}

@@ -1,6 +1,6 @@
 # Data-quality report: fixture-sample
 
-- generated_at: 2026-10-04T14:06:53+00:00
+- generated_at: 2026-10-04T14:16:32+00:00
 - dataset_kind: **fixture**
 - schema_version: 0.1.0
 - sources: tk_kisebbsegkutato, tk_recens, tk_szociologia
@@ -108,8 +108,8 @@ methods: []
 entity counts
 
 ```yaml
-Institution: 2
-OrganisationalUnit: 18
+Institution: 15
+OrganisationalUnit: 33
 ResearchGroup: 2
 ResearchTopic: 34
 Method: 19
@@ -122,7 +122,7 @@ Project: 8
 relations by epistemic status
 
 ```yaml
-OBSERVED: 58
+OBSERVED: 76
 DERIVED: 23
 ```
 
@@ -137,7 +137,7 @@ HOSTED_BY: 1
 LEADS: 1
 MEMBER_OF: 12
 PARTICIPATES_IN: 12
-PART_OF: 21
+PART_OF: 39
 PRINCIPAL_INVESTIGATOR_OF: 1
 WORKS_ON_TOPIC: 23
 ```

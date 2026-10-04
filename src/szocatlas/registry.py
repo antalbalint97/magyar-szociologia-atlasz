@@ -46,7 +46,7 @@ class InstitutionSeed(BaseModel):
 class SourceEntry(BaseModel):
     model_config = ConfigDict(extra="forbid")
     source_id: str
-    institution: str  # InstitutionSeed.key
+    institution: str | None = None  # InstitutionSeed.key; None for national registries
     unit_name: str | None = None  # the organisational unit this site represents
     unit_english_name: str | None = None
     unit_type: str | None = None
@@ -82,7 +82,7 @@ class Registry(BaseModel):
         if len(set(ids)) != len(ids):
             raise ValueError("duplicate source_id")
         for s in self.sources:
-            if s.institution not in keys:
+            if s.institution and s.institution not in keys:
                 raise ValueError(f"{s.source_id}: unknown institution {s.institution}")
             if s.enabled and not s.adapter:
                 raise ValueError(f"{s.source_id}: enabled source needs an adapter")

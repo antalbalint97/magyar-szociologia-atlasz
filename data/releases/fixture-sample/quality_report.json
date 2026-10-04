@@ -40,8 +40,8 @@
     "message": "entity counts",
     "subjects": [],
     "detail": {
-      "Institution": 2,
-      "OrganisationalUnit": 18,
+      "Institution": 15,
+      "OrganisationalUnit": 33,
       "ResearchGroup": 2,
       "ResearchTopic": 34,
       "Method": 19,
@@ -61,7 +61,7 @@
       "LEADS": 1,
       "MEMBER_OF": 12,
       "PARTICIPATES_IN": 12,
-      "PART_OF": 21,
+      "PART_OF": 39,
       "PRINCIPAL_INVESTIGATOR_OF": 1,
       "WORKS_ON_TOPIC": 23
     }
@@ -72,7 +72,7 @@
     "message": "relations by epistemic status",
     "subjects": [],
     "detail": {
-      "OBSERVED": 58,
+      "OBSERVED": 76,
       "DERIVED": 23
     }
   },

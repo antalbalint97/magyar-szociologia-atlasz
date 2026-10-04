@@ -1,7 +1,7 @@
 {
   "release_id": "fixture-sample",
   "dataset_kind": "fixture",
-  "generated_at": "2026-10-04T14:06:53+00:00",
+  "generated_at": "2026-10-04T14:16:32+00:00",
   "schema_version": "0.1.0",
   "software_version": "0.1.0",
   "sources": [
@@ -18,10 +18,10 @@
     "tk.unit": "tk/0.1.0"
   },
   "documents": 9,
-  "claims": 386,
+  "claims": 538,
   "entities": {
-    "Institution": 2,
-    "OrganisationalUnit": 18,
+    "Institution": 15,
+    "OrganisationalUnit": 33,
     "ResearchGroup": 2,
     "ResearchTopic": 34,
     "Method": 19,
@@ -35,7 +35,7 @@
     "LEADS": 1,
     "MEMBER_OF": 12,
     "PARTICIPATES_IN": 12,
-    "PART_OF": 21,
+    "PART_OF": 39,
     "PRINCIPAL_INVESTIGATOR_OF": 1,
     "WORKS_ON_TOPIC": 23
   },
