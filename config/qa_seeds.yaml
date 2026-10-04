@@ -1,0 +1,22 @@
+# QA seed cases (spec section 25). These are test expectations, not privileged
+# nodes: nothing in the pipeline reads this file except the QA report and tests.
+# `expect` describes what the data model must be able to represent; the QA report
+# shows what the current dataset actually contains for each seed.
+seeds:
+  - name: Koltai Júlia
+    expect: >
+      Present although not listed under the Sociology Institute (CSS-RECENS).
+      Computational methods (network analysis, NLP, digital trace data) as METHOD,
+      stratification / inequality as TOPIC; Lendület DS4 group leadership.
+  - name: Kmetty Zoltán
+    expect: Institutional sociology + network science + computational methods cross-links.
+  - name: Ságvári Bence
+    expect: Computational/digital sociology and research-centre affiliations.
+  - name: Kisfalusi Dorottya
+    expect: Social networks, education and discrimination overlap.
+  - name: Feischmidt Margit
+    expect: Ethnicity / nationalism / Roma research; Minority Studies institute.
+  - name: Durst Judit
+    expect: Roma mobility, ethnography, project links.
+  - name: Virág Tünde
+    expect: Spatial inequality, Roma, locality.

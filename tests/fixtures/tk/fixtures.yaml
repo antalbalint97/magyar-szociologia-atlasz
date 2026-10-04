@@ -1,0 +1,37 @@
+# file -> origin. reconstructed: true means hand-written from an observed text rendering.
+recens_kutatok.html:
+  url: https://recens.tk.elte.hu/kutatok
+  source_id: tk_recens
+  kind: listing
+  observed: 2026-10-04
+  reconstructed: true
+recens_koltai_julia.html:
+  url: https://recens.tk.elte.hu/kutato/koltai-julia
+  source_id: tk_recens
+  kind: person
+  observed: 2026-10-04
+  reconstructed: true
+szi_albert_fruzsina.html:
+  url: https://szociologia.tk.elte.hu/kutato/albert-fruzsina
+  source_id: tk_szociologia
+  kind: person
+  observed: 2026-10-04
+  reconstructed: true
+ki_feischmidt_margit.html:
+  url: https://kisebbsegkutato.tk.elte.hu/kutato/feischmidt-margit
+  source_id: tk_kisebbsegkutato
+  kind: person
+  observed: 2026-10-04
+  reconstructed: true
+szi_unit_csalad.html:
+  url: https://szociologia.tk.elte.hu/csalad-es-tarsas-kapcsolatok
+  source_id: tk_szociologia
+  kind: unit
+  observed: 2026-10-04
+  reconstructed: true
+szi_project_energiaatmenet.html:
+  url: https://szociologia.tk.elte.hu/az-energiaatmenet-terbeli-tarsadalmi-egyenlotlensegei
+  source_id: tk_szociologia
+  kind: project
+  observed: 2026-10-04
+  reconstructed: true

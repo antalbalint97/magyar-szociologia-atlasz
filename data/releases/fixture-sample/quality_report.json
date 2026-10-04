@@ -1,0 +1,178 @@
+[
+  {
+    "check": "provenance.synthetic_documents",
+    "severity": "warning",
+    "message": "6 documents are reconstructed fixtures; this dataset is NOT a publishable release",
+    "subjects": [
+      "doc_22823e53c9258382",
+      "doc_83862ebcce0f6b52",
+      "doc_03432ddd81a615cb",
+      "doc_4b9f0b38411d26e2",
+      "doc_8bbf4da031c7a16f",
+      "doc_32418b0a80b866c2"
+    ],
+    "detail": {}
+  },
+  {
+    "check": "structure.orphan_person",
+    "severity": "warning",
+    "message": "4 people have no affiliation/membership edge",
+    "subjects": [
+      "per_acd20a6bca",
+      "per_79d4a0dda6",
+      "per_fd34cb4e68",
+      "per_b5c4c18c81"
+    ],
+    "detail": {}
+  },
+  {
+    "check": "review.project_label_suspicious",
+    "severity": "warning",
+    "message": "project 'Intersections journal (Editor-in-Chief)' may be a journal/role listed under Projektek",
+    "subjects": [
+      "prj_cf8f3d1b38"
+    ],
+    "detail": {}
+  },
+  {
+    "check": "stats.entities",
+    "severity": "info",
+    "message": "entity counts",
+    "subjects": [],
+    "detail": {
+      "Institution": 2,
+      "OrganisationalUnit": 18,
+      "ResearchGroup": 2,
+      "ResearchTopic": 34,
+      "Method": 19,
+      "Person": 22,
+      "Project": 8
+    }
+  },
+  {
+    "check": "stats.relations",
+    "severity": "info",
+    "message": "relation counts",
+    "subjects": [],
+    "detail": {
+      "AFFILIATED_WITH": 8,
+      "BROADER": 2,
+      "HOSTED_BY": 1,
+      "LEADS": 1,
+      "MEMBER_OF": 12,
+      "PARTICIPATES_IN": 12,
+      "PART_OF": 21,
+      "PRINCIPAL_INVESTIGATOR_OF": 1,
+      "WORKS_ON_TOPIC": 23
+    }
+  },
+  {
+    "check": "stats.epistemic",
+    "severity": "info",
+    "message": "relations by epistemic status",
+    "subjects": [],
+    "detail": {
+      "OBSERVED": 58,
+      "DERIVED": 23
+    }
+  },
+  {
+    "check": "seeds.present",
+    "severity": "info",
+    "message": "Koltai Júlia -> per_965aaf3d0d",
+    "subjects": [
+      "per_965aaf3d0d"
+    ],
+    "detail": {
+      "affiliations": [
+        "TK Számítógépes Társadalomtudomány - CSS-RECENS"
+      ],
+      "topics": [],
+      "methods": []
+    }
+  },
+  {
+    "check": "seeds.present",
+    "severity": "info",
+    "message": "Kmetty Zoltán -> per_4d7bee69df",
+    "subjects": [
+      "per_4d7bee69df"
+    ],
+    "detail": {
+      "affiliations": [
+        "TK Számítógépes Társadalomtudomány - CSS-RECENS"
+      ],
+      "topics": [],
+      "methods": []
+    }
+  },
+  {
+    "check": "seeds.missing",
+    "severity": "warning",
+    "message": "QA seed not in dataset: Ságvári Bence",
+    "subjects": [],
+    "detail": {
+      "expect": "Computational/digital sociology and research-centre affiliations."
+    }
+  },
+  {
+    "check": "seeds.present",
+    "severity": "info",
+    "message": "Kisfalusi Dorottya -> per_ee86a4696a",
+    "subjects": [
+      "per_ee86a4696a"
+    ],
+    "detail": {
+      "affiliations": [
+        "TK Számítógépes Társadalomtudomány - CSS-RECENS"
+      ],
+      "topics": [],
+      "methods": []
+    }
+  },
+  {
+    "check": "seeds.present",
+    "severity": "info",
+    "message": "Feischmidt Margit -> per_6af5f051a0",
+    "subjects": [
+      "per_6af5f051a0"
+    ],
+    "detail": {
+      "affiliations": [
+        "Kisebbségszociológiai és Antropológiai Osztály",
+        "TK Kisebbségkutató Intézet"
+      ],
+      "topics": [
+        "Collective memory",
+        "Ethnicity and interethnic relations",
+        "Migration",
+        "Minorities",
+        "Multiculturalism and recognition politics",
+        "Nationalism and national identity",
+        "Political sociology",
+        "Racism and discrimination",
+        "Roma studies",
+        "Solidarity and civil society"
+      ],
+      "methods": []
+    }
+  },
+  {
+    "check": "seeds.missing",
+    "severity": "warning",
+    "message": "QA seed not in dataset: Durst Judit",
+    "subjects": [],
+    "detail": {
+      "expect": "Roma mobility, ethnography, project links."
+    }
+  },
+  {
+    "check": "seeds.missing",
+    "severity": "warning",
+    "message": "QA seed not in dataset: Virág Tünde",
+    "subjects": [],
+    "detail": {
+      "expect": "Spatial inequality, Roma, locality."
+    }
+  }
+]

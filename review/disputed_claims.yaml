@@ -1,0 +1,8 @@
+# Claims a reviewer disputes or rejects. The claim stays in the dataset with its
+# review_status changed; canonical projection ignores REJECTED claims.
+# - claim_id: clm_...
+#   status: REJECTED | DISPUTED | CONFIRMED
+#   reviewer: <name>
+#   date: 2026-10-04
+#   note: "..."
+decisions: []

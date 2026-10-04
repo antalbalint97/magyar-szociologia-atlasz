@@ -1,0 +1,15 @@
+# Manual identity decisions. Version-controlled; each entry needs reviewer + date.
+# refs are source refs as they appear in review/unresolved_people.yaml.
+#
+# same_as:
+#   - refs: ["tk_recens|https://recens.tk.elte.hu/kutato/x-y", "tk_szociologia|https://szociologia.tk.elte.hu/kutato/x-y"]
+#     reviewer: <name>
+#     date: 2026-10-04
+#     evidence: "Both profiles link the same CV / same MTMT record"
+# not_same_as:
+#   - refs: [...]
+#     reviewer: <name>
+#     date: ...
+#     evidence: "..."
+same_as: []
+not_same_as: []

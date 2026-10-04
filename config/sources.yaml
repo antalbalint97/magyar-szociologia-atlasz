@@ -1,0 +1,160 @@
+# Source registry (ontology v0.1). The only place source URLs are defined.
+#
+# institutions: curated institution seeds. Each becomes MANUAL claims attributed to
+#   this file; verify_url names the page a reviewer should check. Historical names
+#   and succession dates are deliberately left out until a citable source is added
+#   (see review/unresolved.yaml).
+# sources: one entry per crawlable site / registry. `verified: true` means a person
+#   (or a fetch) confirmed the listed paths exist; `false` means inferred from a sibling
+#   site that uses the same CMS and must be confirmed on first run.
+schema_version: "0.1.0"
+
+crawl_defaults:
+  respect_robots: true
+  min_delay_seconds: 3.0
+  max_pages_per_run: 400
+  timeout_seconds: 30
+  max_age_days: 30
+
+institutions:
+  - key: elte
+    canonical_name: Eötvös Loránd Tudományegyetem
+    english_name: Eötvös Loránd University
+    alternate_names: [ELTE]
+    institution_type: university
+    city: Budapest
+    website: https://www.elte.hu
+    verify_url: https://www.elte.hu
+
+  - key: elte_tk
+    canonical_name: ELTE Társadalomtudományi Kutatóközpont
+    english_name: ELTE Centre for Social Sciences
+    alternate_names: [TK, Társadalomtudományi Kutatóközpont]
+    institution_type: research_centre
+    city: Budapest
+    website: https://tk.elte.hu
+    parent: elte
+    verify_url: https://tk.elte.hu/
+    notes: >
+      tk.hu redirects to tk.elte.hu (observed 2026-10-04). Profile links on the sites
+      still use tk.mta.hu and tk.hu hosts, which are evidence of earlier institutional
+      homes (MTA, then the ELKH / HUN-REN research network). Succession dates are NOT
+      encoded until sourced; see review/unresolved.yaml#tk_succession.
+
+sources:
+  # ---------------------------------------------------------------- TK ecosystem
+  # All TK institute sites observed so far share one CMS: researcher listings at
+  # /kutatok (paginated ?page=N, letter filters /kutatok/<letter>) and profiles at
+  # /kutato/<slug>. One adapter ("tk") serves them all, configured per site.
+  - source_id: tk_szociologia
+    institution: elte_tk
+    unit_name: TK Szociológiai Intézet
+    unit_english_name: Institute for Sociology
+    unit_type: institute
+    base_url: https://szociologia.tk.elte.hu
+    host_aliases: [szociologia.tk.hu, szociologia.tk.mta.hu]
+    adapter: tk
+    enabled: true
+    verified: true
+    adapter_config:
+      institute_code: SZI
+      people_listing: /kutatok
+      units:
+        - {path: /csalad-es-tarsas-kapcsolatok, unit_type: research_department}
+        - {path: /tarsadalom-es-kozpolitika-osztaly, unit_type: research_department}
+        - {path: /tarsadalmi-integracio-es-egyenlotlensegek, unit_type: research_department}
+      project_listings:
+        - {path: /kategoria/futo-kutatasok, status_label: futó}
+        - {path: /kategoria/lezart-kutatasok, status_label: lezárt}
+    notes: Datasets link points to openarchive.tk.mta.hu (division SZI).
+
+  - source_id: tk_recens
+    institution: elte_tk
+    unit_name: TK Számítógépes Társadalomtudomány - CSS-RECENS
+    unit_english_name: Computational Social Science - Research Center for Educational and Network Studies (CSS-RECENS)
+    unit_type: research_centre
+    base_url: https://recens.tk.elte.hu
+    host_aliases: [recens.tk.hu, recens.tk.mta.hu]
+    adapter: tk
+    enabled: true
+    verified: true
+    adapter_config:
+      institute_code: Recens
+      people_listing: /kutatok
+      units: []
+      project_listings: []
+    notes: >
+      Koltai Júlia, Kmetty Zoltán, Kisfalusi Dorottya, Janky Béla and Keller Tamás are
+      listed here, not under the Sociology Institute (observed 2026-10-04). English
+      pages under /en/ list research groups incl. the MTA–TK Lendület DS4 group;
+      group pages need a dedicated parser (next step).
+
+  - source_id: tk_kisebbsegkutato
+    institution: elte_tk
+    unit_name: TK Kisebbségkutató Intézet
+    unit_english_name: Institute for Minority Studies
+    unit_type: institute
+    base_url: https://kisebbsegkutato.tk.elte.hu
+    host_aliases: [kisebbsegkutato.tk.hu, kisebbsegkutato.tk.mta.hu]
+    adapter: tk
+    enabled: true
+    verified: true
+    adapter_config:
+      institute_code: KI
+      people_listing: /kutatok
+      units: []
+      project_listings: []
+    notes: >
+      Two departments observed by name (Kisebbségszociológiai és Antropológiai Osztály;
+      Kisebbségtörténeti és Etnopolitikai Osztály); their URLs are not yet confirmed.
+
+  - source_id: tk_politikatudomany
+    institution: elte_tk
+    unit_name: TK Politikatudományi Intézet
+    unit_english_name: Institute for Political Science
+    unit_type: institute
+    base_url: https://politikatudomany.tk.elte.hu
+    host_aliases: [politikatudomany.tk.hu, politikatudomany.tk.mta.hu]
+    adapter: tk
+    enabled: true
+    verified: false
+    scope: adjacent
+    adapter_config:
+      institute_code: PTI
+      people_listing: /kutatok
+      units: []
+      project_listings: []
+
+  - source_id: tk_jog
+    institution: elte_tk
+    unit_name: TK Jogtudományi Intézet
+    unit_english_name: Institute for Legal Studies
+    unit_type: institute
+    base_url: https://jog.tk.elte.hu
+    host_aliases: [jog.tk.hu, jog.tk.mta.hu]
+    adapter: tk
+    enabled: false
+    verified: false
+    scope: adjacent
+    adapter_config:
+      institute_code: JTI
+      people_listing: /kutatok
+    notes: >
+      Include only researchers with socio-legal overlap. Needs a scope filter
+      (stated research areas) before enabling, so the graph does not absorb the
+      whole law institute.
+
+  # TK-hosted programmes and infrastructures on separate sites (different layouts).
+  - {source_id: tk_ess, institution: elte_tk, unit_name: European Social Survey Magyarország, unit_type: infrastructure, base_url: "https://ess.tk.hu/", notes: "ESS Hungary national team. Adapter TBD."}
+  - {source_id: tk_milab, institution: elte_tk, unit_name: Mesterséges Intelligencia Nemzeti Laboratórium (TK), unit_type: laboratory, base_url: "https://milab.tk.hu/hu", notes: "MILAB social-science groups. Adapter TBD."}
+  - {source_id: tk_reprosoc, institution: elte_tk, unit_name: Reprodukciós Döntéseket Vizsgáló Lendület Kutatócsoport, unit_type: research_group, base_url: "https://reprosoc.tk.hu/", notes: "Lendület group site. Adapter TBD."}
+  - {source_id: tk_hpops, institution: elte_tk, unit_name: Lendület-HPOPs Kutatócsoport, unit_type: research_group, base_url: "https://hpops.tk.hu/", notes: "Lendület group site. Adapter TBD."}
+  - {source_id: tk_enl, institution: elte_tk, unit_name: Egészségbiztonság Nemzeti Laboratórium (TK társadalomtudományi kutatócsoport), unit_type: laboratory, base_url: "https://enl.tk.hu/", notes: "National Laboratory for Health Security. Adapter TBD."}
+  - {source_id: tk_mobilitas, institution: elte_tk, unit_name: Mobilitás Kutatási Centrum, unit_type: research_centre, base_url: "https://tk.hun-ren.hu/mobilitas", notes: "Linked from tk.elte.hu under a tk.hun-ren.hu host. Adapter TBD."}
+  - {source_id: tk_gyerekesely, institution: elte_tk, unit_name: Gyerekesély, unit_type: programme, base_url: "http://gyerekesely.tk.hu/", notes: "Child poverty programme (Ferge tradition candidate; do not assert). Adapter TBD."}
+  - {source_id: tk_kdk, institution: elte_tk, unit_name: Kutatási Dokumentációs Központ, unit_type: infrastructure, base_url: "https://kdk.tk.hu/", notes: "Research Documentation Centre: survey data archive, relevant for project/data provenance."}
+  - {source_id: tk_mokk, institution: elte_tk, unit_name: Módszertani Képzések, unit_type: programme, base_url: "https://mokk.tk.hu/"}
+  - {source_id: tk_csaladtudomany, institution: elte_tk, unit_name: Családtudomány, unit_type: programme, base_url: "https://csaladtudomany.tk.hu/"}
+  - {source_id: tk_klimacentrum, institution: elte_tk, unit_name: Klímacentrum, unit_type: research_centre, base_url: "https://klimacentrum.tk.hu"}
+  - {source_id: journal_intersections, institution: elte_tk, unit_name: "Intersections. East European Journal of Society and Politics", source_type: journal, base_url: "https://intersections.tk.hu", notes: "Journal published by TK. Editorial board -> EDITOR_OF edges."}
+  - {source_id: tk_openarchive, institution: elte_tk, unit_name: TK Open Archive, source_type: repository, base_url: "https://openarchive.tk.mta.hu", notes: "EPrints repository; per-division and per-creator views. Candidate publication source."}

@@ -1,0 +1,22 @@
+# Controlled vocabulary of methods (Method). See topics.yaml for matching semantics.
+version: "0.1.0"
+methods:
+  - {key: survey_research, en: Survey research, hu: Survey-kutatás, patterns: ["survey", "kerdoives", "adatfelvetel", "panel"]}
+  - {key: survey_methodology, en: Survey methodology, hu: Survey-módszertan, broader: survey_research, patterns: ["survey modszertan", "survey methodolog", "mintavetel", "sampling"]}
+  - {key: ethnography, en: Ethnography, hu: Etnográfia, patterns: ["etnograf", "ethnograph", "terepmunka", "fieldwork", "resztvevo megfigyel"]}
+  - {key: interviews, en: Interviews, hu: Interjús módszerek, patterns: ["interju", "interview", "eletut", "life.history"]}
+  - {key: qualitative_methods, en: Qualitative methods, hu: Kvalitatív módszerek, patterns: ["kvalitativ", "qualitative"]}
+  - {key: quantitative_methods, en: Quantitative methods, hu: Kvantitatív módszerek, patterns: ["kvantitativ", "quantitative", "statisztik"]}
+  - {key: historical_method, en: Historical and archival research, hu: Történeti és levéltári kutatás, patterns: ["leveltar", "archiv", "torteneti modszer"]}
+  - {key: network_analysis, en: Network analysis, hu: Hálózatelemzés, scope: "The technique. Social networks as a topic is topics.yaml#social_networks.", patterns: ["halozatelemz", "network analys", "halozattudomany", "network science"]}
+  - {key: computational_text_analysis, en: Computational text analysis, hu: Számítógépes szövegelemzés, patterns: ["szovegelemz", "szovegbanyasz", "text mining", "text analys"]}
+  - {key: nlp, en: Natural language processing, hu: Természetesnyelv-feldolgozás, broader: computational_text_analysis, patterns: ["termeszetes ?nyelv", "\\bnlp\\b", "natural language"]}
+  - {key: machine_learning, en: Machine learning, hu: Gépi tanulás, patterns: ["gepi tanulas", "machine learning", "mesterseges intelligencia", "artificial intelligence"]}
+  - {key: digital_trace_data, en: Digital trace and behavioural data, hu: Digitális lenyomat- és viselkedési adatok, patterns: ["digitalis (lenyomat|nyom|viselked)", "digital (trace|footprint|behavio)", "adatdonaci", "data donation", "big data"]}
+  - {key: agent_based_modelling, en: Agent-based modelling, hu: Ágensalapú modellezés, patterns: ["agensalapu", "agent.based", "szimulaci", "simulation"]}
+  - {key: causal_inference, en: Causal inference, hu: Oksági következtetés, patterns: ["oksag", "causal", "kiserlet", "experiment"]}
+  - {key: econometrics, en: Econometrics, hu: Ökonometria, patterns: ["okonometri", "econometric"]}
+  - {key: sequence_analysis, en: Sequence analysis, hu: Szekvenciaelemzés, patterns: ["szekvencia", "sequence analys"]}
+  - {key: qca, en: Qualitative comparative analysis, hu: Kvalitatív összehasonlító elemzés, patterns: ["\\bqca\\b", "qualitative comparative"]}
+  - {key: comparative_methods, en: Comparative (cross-national) research, hu: Összehasonlító kutatás, patterns: ["osszehasonlito", "comparative", "nemzetkozi osszehasonlit"]}
+  - {key: mixed_methods, en: Mixed methods, hu: Kevert módszertan, patterns: ["kevert modszer", "mixed method", "kvantitativ es kvalitativ"]}

@@ -1,0 +1,50 @@
+{
+  "release_id": "fixture-sample",
+  "dataset_kind": "fixture",
+  "generated_at": "2026-10-04T14:06:53+00:00",
+  "schema_version": "0.1.0",
+  "software_version": "0.1.0",
+  "sources": [
+    "tk_kisebbsegkutato",
+    "tk_recens",
+    "tk_szociologia"
+  ],
+  "parser_versions": {
+    "curated": "curated/0.1.0",
+    "derive.taxonomy": "taxonomy_keyword_map/0.1.0",
+    "tk.listing": "tk/0.1.0",
+    "tk.profile": "tk/0.1.0",
+    "tk.project": "tk/0.1.0",
+    "tk.unit": "tk/0.1.0"
+  },
+  "documents": 9,
+  "claims": 386,
+  "entities": {
+    "Institution": 2,
+    "OrganisationalUnit": 18,
+    "ResearchGroup": 2,
+    "ResearchTopic": 34,
+    "Method": 19,
+    "Person": 22,
+    "Project": 8
+  },
+  "relations": {
+    "AFFILIATED_WITH": 8,
+    "BROADER": 2,
+    "HOSTED_BY": 1,
+    "LEADS": 1,
+    "MEMBER_OF": 12,
+    "PARTICIPATES_IN": 12,
+    "PART_OF": 21,
+    "PRINCIPAL_INVESTIGATOR_OF": 1,
+    "WORKS_ON_TOPIC": 23
+  },
+  "source_retrieval_window": {
+    "from": "2026-10-04T00:00:00+00:00",
+    "until": "2026-10-04T00:00:00+00:00"
+  },
+  "quality": {
+    "warning": 6,
+    "info": 7
+  }
+}

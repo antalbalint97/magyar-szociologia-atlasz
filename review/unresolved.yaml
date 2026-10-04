@@ -1,0 +1,20 @@
+# Open research/data questions that need a citable source before they are encoded.
+# Nothing here is asserted in the dataset.
+items:
+  - id: tk_succession
+    type: uncertain_institutional_succession
+    question: >
+      Dates and legal form of TK's moves between the MTA research network, ELKH,
+      HUN-REN and ELTE. Host aliases (tk.mta.hu, tk.hu, tk.hun-ren.hu, tk.elte.hu)
+      show the sequence exists but are not evidence for dates.
+    needed: Founding/transfer documents or official announcements, encoded as Event nodes.
+  - id: tk_department_urls_ki
+    type: missing_source
+    question: Unit page URLs for the two Kisebbségkutató Intézet departments.
+  - id: szi_family_dept_head
+    type: conflicting_claim
+    question: >
+      The Family and Social Relations department page names Szalma Ivett as head,
+      while Albert Fruzsina's profile biography (observed 2026-10-04) describes her
+      as head of the same department. Probably a stale biography; both claims are
+      kept. The biography is stored as text only and not parsed into a LEADS edge.
