@@ -2,6 +2,1267 @@ _comment: 'Generated. Do not edit: record decisions in review/manual_overrides.y
   under same_as / not_same_as with reviewer and date.'
 possible_matches:
 - refs:
+  - tk_recens|https://recens.tk.elte.hu/kutato/stefkovics-adam
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/stefkovics-adam
+  labels:
+  - Stefkovics Ádám
+  - Stefkovics Ádám
+  method: auto:same_name
+  score: 0.85
+  signals:
+    same_institution_family: true
+    same_profile_slug: true
+    same_email_domain: true
+    unlinked_mention: false
+- refs:
+  - tk_recens|https://recens.tk.elte.hu/kutato/koltai-julia
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/koltai-julia
+  labels:
+  - Koltai Júlia
+  - Koltai Júlia
+  method: auto:same_name
+  score: 0.7
+  signals:
+    same_institution_family: true
+    same_profile_slug: true
+    same_email_domain: false
+    unlinked_mention: false
+- refs:
+  - tk_recens|https://recens.tk.elte.hu/kutato/sagvari-bence
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/sagvari-bence
+  labels:
+  - Ságvári Bence
+  - Ságvári Bence
+  method: auto:same_name
+  score: 0.7
+  signals:
+    same_institution_family: true
+    same_profile_slug: true
+    same_email_domain: false
+    unlinked_mention: false
+- refs:
+  - tk_kisebbsegkutato|https://kisebbsegkutato.tk.elte.hu/kutato/durst-judit
+  - tk_szociologia|name-mention:durst-judit@tk_szociologia|https://szociologia.tk.elte.hu/a-tarsadalmi-egyenlotlensegek-ujratermelodese-az-osztalyszerkezet-tetejen
+  labels:
+  - Durst Judit
+  - Durst Judit
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_kisebbsegkutato|https://kisebbsegkutato.tk.elte.hu/kutato/nyiro-zsanna-jozefa
+  - tk_szociologia|name-mention:nyiro-zsanna@tk_szociologia|https://szociologia.tk.elte.hu/a-tarsadalmi-egyenlotlensegek-ujratermelodese-az-osztalyszerkezet-tetejen
+  labels:
+  - Nyírő Zsanna
+  - Nyírő Zsanna
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_kisebbsegkutato|https://kisebbsegkutato.tk.elte.hu/kutato/zsigmond-csilla
+  - tk_szociologia|name-mention:zsigmond-csilla@tk_szociologia|https://szociologia.tk.elte.hu/twin4dem-hun
+  labels:
+  - Zsigmond Csilla
+  - Zsigmond Csilla
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_kisebbsegkutato|https://kisebbsegkutato.tk.elte.hu/kutato/zsigmond-csilla
+  - tk_szociologia|name-mention:zsigmond-csilla@tk_szociologia|https://szociologia.tk.elte.hu/valsagok-kihivasok-es-adaptacio
+  labels:
+  - Zsigmond Csilla
+  - Zsigmond Csilla
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|name-mention:zsigmond-csilla@tk_szociologia|https://szociologia.tk.elte.hu/twin4dem-hun
+  - tk_szociologia|name-mention:zsigmond-csilla@tk_szociologia|https://szociologia.tk.elte.hu/valsagok-kihivasok-es-adaptacio
+  labels:
+  - Zsigmond Csilla
+  - Zsigmond Csilla
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_kisebbsegkutato|https://kisebbsegkutato.tk.elte.hu/kutato/papp-z-attila
+  - tk_szociologia|name-mention:papp-z-attila@tk_szociologia|https://szociologia.tk.elte.hu/valsagok-kihivasok-es-adaptacio
+  labels:
+  - Papp Z. Attila
+  - Papp Z. Attila
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - external:tk.hu|https://tk.hu/kutato/ujlaki-anna
+  - tk_politikatudomany|https://politikatudomany.tk.elte.hu/kutato/ujlaki-anna
+  labels:
+  - Újlaki Anna
+  - Ujlaki Anna
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: false
+    same_profile_slug: true
+    same_email_domain: false
+    unlinked_mention: false
+- refs:
+  - tk_politikatudomany|https://politikatudomany.tk.elte.hu/kutato/szabo-sara
+  - tk_politikatudomany|name-mention:szabo-sara@tk_politikatudomany|https://politikatudomany.tk.elte.hu/nok-energiaszegenyseg-magyarorszag
+  labels:
+  - Szabó Sára
+  - Szabó Sára
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_politikatudomany|https://politikatudomany.tk.elte.hu/kutato/szabo-sara
+  - tk_politikatudomany|name-mention:szabo-sara@tk_politikatudomany|https://politikatudomany.tk.elte.hu/wise
+  labels:
+  - Szabó Sára
+  - Szabó Sára
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_politikatudomany|https://politikatudomany.tk.elte.hu/kutato/szabo-sara
+  - tk_politikatudomany|name-mention:szabo-sara@tk_politikatudomany|https://politikatudomany.tk.elte.hu/magyarorszag-az-energiavalsagban
+  labels:
+  - Szabó Sára
+  - Szabó Sára
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_politikatudomany|name-mention:szabo-sara@tk_politikatudomany|https://politikatudomany.tk.elte.hu/nok-energiaszegenyseg-magyarorszag
+  - tk_politikatudomany|name-mention:szabo-sara@tk_politikatudomany|https://politikatudomany.tk.elte.hu/wise
+  labels:
+  - Szabó Sára
+  - Szabó Sára
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_politikatudomany|name-mention:szabo-sara@tk_politikatudomany|https://politikatudomany.tk.elte.hu/magyarorszag-az-energiavalsagban
+  - tk_politikatudomany|name-mention:szabo-sara@tk_politikatudomany|https://politikatudomany.tk.elte.hu/nok-energiaszegenyseg-magyarorszag
+  labels:
+  - Szabó Sára
+  - Szabó Sára
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_politikatudomany|name-mention:szabo-sara@tk_politikatudomany|https://politikatudomany.tk.elte.hu/magyarorszag-az-energiavalsagban
+  - tk_politikatudomany|name-mention:szabo-sara@tk_politikatudomany|https://politikatudomany.tk.elte.hu/wise
+  labels:
+  - Szabó Sára
+  - Szabó Sára
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - external:tk.mta.hu|https://tk.mta.hu/kutato/oross-daniel
+  - tk_politikatudomany|https://politikatudomany.tk.elte.hu/kutato/oross-daniel
+  labels:
+  - Oross Dániel
+  - Oross Dániel
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: false
+    same_profile_slug: true
+    same_email_domain: false
+    unlinked_mention: false
+- refs:
+  - external:tk.mta.hu|https://tk.mta.hu/kutato/bene-marton
+  - tk_politikatudomany|https://politikatudomany.tk.elte.hu/kutato/bene-marton
+  labels:
+  - Bene Márton
+  - Bene Márton
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: false
+    same_profile_slug: true
+    same_email_domain: false
+    unlinked_mention: false
+- refs:
+  - external:tk.mta.hu|https://tk.mta.hu/kutato/mikecz-daniel
+  - tk_politikatudomany|https://politikatudomany.tk.elte.hu/kutato/mikecz-daniel
+  labels:
+  - Mikecz Dániel
+  - Mikecz Dániel
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: false
+    same_profile_slug: true
+    same_email_domain: false
+    unlinked_mention: false
+- refs:
+  - external:tk.mta.hu|https://tk.mta.hu/kutato/miszlivetz-ferenc
+  - tk_politikatudomany|https://politikatudomany.tk.elte.hu/kutato/miszlivetz-ferenc
+  labels:
+  - Miszlivetz Ferenc
+  - Miszlivetz Ferenc
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: false
+    same_profile_slug: true
+    same_email_domain: false
+    unlinked_mention: false
+- refs:
+  - external:tk.mta.hu|https://tk.mta.hu/kutato/patkos-veronika
+  - tk_politikatudomany|https://politikatudomany.tk.elte.hu/kutato/patkos-veronika
+  labels:
+  - Patkós Veronika
+  - Patkós Veronika
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: false
+    same_profile_slug: true
+    same_email_domain: false
+    unlinked_mention: false
+- refs:
+  - tk_politikatudomany|https://politikatudomany.tk.elte.hu/kutato/robert-peter
+  - tk_szociologia|name-mention:robert-peter@tk_szociologia|https://szociologia.tk.elte.hu/a-tarsadalmi-egyenlotlensegek-ujratermelodese-az-osztalyszerkezet-tetejen
+  labels:
+  - Róbert Péter
+  - Róbert Péter
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_politikatudomany|https://politikatudomany.tk.elte.hu/kutato/szabo-andrea
+  - tk_szociologia|name-mention:szabo-andrea@tk_szociologia|https://szociologia.tk.elte.hu/valsagok-kihivasok-es-adaptacio
+  labels:
+  - Szabó Andrea
+  - Szabó Andrea
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - external:tk.mta.hu|https://tk.mta.hu/kutato/szabo-andrea
+  - tk_politikatudomany|https://politikatudomany.tk.elte.hu/kutato/szabo-andrea
+  labels:
+  - Szabó Andrea
+  - Szabó Andrea
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: false
+    same_profile_slug: true
+    same_email_domain: false
+    unlinked_mention: false
+- refs:
+  - external:tk.mta.hu|https://tk.mta.hu/kutato/szabo-gabriella
+  - tk_politikatudomany|https://politikatudomany.tk.elte.hu/kutato/szabo-gabriella
+  labels:
+  - Szabó Gabriella
+  - Szabó Gabriella
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: false
+    same_profile_slug: true
+    same_email_domain: false
+    unlinked_mention: false
+- refs:
+  - external:tk.mta.hu|https://tk.mta.hu/kutato/valuch-tibor
+  - tk_politikatudomany|https://politikatudomany.tk.elte.hu/kutato/valuch-tibor
+  labels:
+  - Valuch Tibor
+  - Valuch Tibor
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: false
+    same_profile_slug: true
+    same_email_domain: false
+    unlinked_mention: false
+- refs:
+  - tk_politikatudomany|name-mention:balogh-karolina@tk_politikatudomany|https://politikatudomany.tk.elte.hu/gyermekvedelem-az-iskolaban
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/balogh-karolina
+  labels:
+  - Balogh Karolina
+  - Balogh Karolina
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_politikatudomany|name-mention:balogh-karolina@tk_politikatudomany|https://politikatudomany.tk.elte.hu/gyermekvedelem-az-iskolaban
+  - tk_szociologia|name-mention:balogh-karolina@tk_szociologia|https://szociologia.tk.elte.hu/valsagok-kihivasok-es-adaptacio
+  labels:
+  - Balogh Karolina
+  - Balogh Karolina
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_politikatudomany|name-mention:balogh-karolina@tk_politikatudomany|https://politikatudomany.tk.elte.hu/gyermekvedelem-az-iskolaban
+  - tk_szociologia|name-mention:balogh-karolina@tk_szociologia|https://szociologia.tk.elte.hu/az-osztaly-valtozo-jelentosege-osszehasonlito-perspektivaban
+  labels:
+  - Balogh Karolina
+  - Balogh Karolina
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/balogh-karolina
+  - tk_szociologia|name-mention:balogh-karolina@tk_szociologia|https://szociologia.tk.elte.hu/valsagok-kihivasok-es-adaptacio
+  labels:
+  - Balogh Karolina
+  - Balogh Karolina
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/balogh-karolina
+  - tk_szociologia|name-mention:balogh-karolina@tk_szociologia|https://szociologia.tk.elte.hu/az-osztaly-valtozo-jelentosege-osszehasonlito-perspektivaban
+  labels:
+  - Balogh Karolina
+  - Balogh Karolina
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|name-mention:balogh-karolina@tk_szociologia|https://szociologia.tk.elte.hu/az-osztaly-valtozo-jelentosege-osszehasonlito-perspektivaban
+  - tk_szociologia|name-mention:balogh-karolina@tk_szociologia|https://szociologia.tk.elte.hu/valsagok-kihivasok-es-adaptacio
+  labels:
+  - Balogh Karolina
+  - Balogh Karolina
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_politikatudomany|name-mention:herke-boglarka@tk_politikatudomany|https://politikatudomany.tk.elte.hu/gyermekvedelem-az-iskolaban
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/herke-boglarka
+  labels:
+  - Herke Boglárka
+  - Herke Boglárka
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_politikatudomany|name-mention:medgyesi-marton@tk_politikatudomany|https://politikatudomany.tk.elte.hu/gyermekvedelem-az-iskolaban
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/medgyesi-marton
+  labels:
+  - Medgyesi Márton
+  - Medgyesi Márton
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_politikatudomany|name-mention:medgyesi-marton@tk_politikatudomany|https://politikatudomany.tk.elte.hu/gyermekvedelem-az-iskolaban
+  - tk_szociologia|name-mention:medgyesi-marton@tk_szociologia|https://szociologia.tk.elte.hu/fenntarthato-jolet
+  labels:
+  - Medgyesi Márton
+  - Medgyesi Márton
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/medgyesi-marton
+  - tk_szociologia|name-mention:medgyesi-marton@tk_szociologia|https://szociologia.tk.elte.hu/fenntarthato-jolet
+  labels:
+  - Medgyesi Márton
+  - Medgyesi Márton
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_politikatudomany|name-mention:uveges-istvan@tk_politikatudomany|https://politikatudomany.tk.elte.hu/babelglob
+  - tk_politikatudomany|name-mention:uveges-istvan@tk_politikatudomany|https://politikatudomany.tk.elte.hu/v4slant
+  labels:
+  - Üveges István
+  - Üveges István
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_politikatudomany|name-mention:uveges-istvan@tk_politikatudomany|https://politikatudomany.tk.elte.hu/v-shift
+  - tk_politikatudomany|name-mention:uveges-istvan@tk_politikatudomany|https://politikatudomany.tk.elte.hu/v4slant
+  labels:
+  - Üveges István
+  - Üveges István
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_politikatudomany|name-mention:uveges-istvan@tk_politikatudomany|https://politikatudomany.tk.elte.hu/pledge
+  - tk_politikatudomany|name-mention:uveges-istvan@tk_politikatudomany|https://politikatudomany.tk.elte.hu/v4slant
+  labels:
+  - Üveges István
+  - Üveges István
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_politikatudomany|name-mention:uveges-istvan@tk_politikatudomany|https://politikatudomany.tk.elte.hu/babelglob
+  - tk_politikatudomany|name-mention:uveges-istvan@tk_politikatudomany|https://politikatudomany.tk.elte.hu/v-shift
+  labels:
+  - Üveges István
+  - Üveges István
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_politikatudomany|name-mention:uveges-istvan@tk_politikatudomany|https://politikatudomany.tk.elte.hu/babelglob
+  - tk_politikatudomany|name-mention:uveges-istvan@tk_politikatudomany|https://politikatudomany.tk.elte.hu/pledge
+  labels:
+  - Üveges István
+  - Üveges István
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_politikatudomany|name-mention:uveges-istvan@tk_politikatudomany|https://politikatudomany.tk.elte.hu/pledge
+  - tk_politikatudomany|name-mention:uveges-istvan@tk_politikatudomany|https://politikatudomany.tk.elte.hu/v-shift
+  labels:
+  - Üveges István
+  - Üveges István
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_politikatudomany|name-mention:szalma-ivett@tk_politikatudomany|https://politikatudomany.tk.elte.hu/innowelfare
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/szalma-ivett
+  labels:
+  - Szalma Ivett
+  - Szalma Ivett
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_politikatudomany|name-mention:szalma-ivett@tk_politikatudomany|https://politikatudomany.tk.elte.hu/innowelfare
+  - tk_szociologia|name-mention:szalma-ivett@tk_szociologia|https://szociologia.tk.elte.hu/hogyan-tartunk-kapcsolatot-a-kulonelo-csaladtagokkal
+  labels:
+  - Szalma Ivett
+  - Szalma Ivett
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/szalma-ivett
+  - tk_szociologia|name-mention:szalma-ivett@tk_szociologia|https://szociologia.tk.elte.hu/hogyan-tartunk-kapcsolatot-a-kulonelo-csaladtagokkal
+  labels:
+  - Szalma Ivett
+  - Szalma Ivett
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_politikatudomany|name-mention:takacs-judit@tk_politikatudomany|https://politikatudomany.tk.elte.hu/innowelfare
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/takacs-judit
+  labels:
+  - Takács Judit
+  - Takács Judit
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_politikatudomany|name-mention:takacs-judit@tk_politikatudomany|https://politikatudomany.tk.elte.hu/innowelfare
+  - tk_szociologia|name-mention:takacs-judit@tk_szociologia|https://szociologia.tk.elte.hu/a-homoszexualitas-20-szazadi-tarsadalomtortenete
+  labels:
+  - Takács Judit
+  - Takács Judit
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/takacs-judit
+  - tk_szociologia|name-mention:takacs-judit@tk_szociologia|https://szociologia.tk.elte.hu/a-homoszexualitas-20-szazadi-tarsadalomtortenete
+  labels:
+  - Takács Judit
+  - Takács Judit
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_politikatudomany|name-mention:kovacs-viktor@tk_politikatudomany|https://politikatudomany.tk.elte.hu/babelglob
+  - tk_politikatudomany|name-mention:kovacs-viktor@tk_politikatudomany|https://politikatudomany.tk.elte.hu/v-shift
+  labels:
+  - Kovács Viktor
+  - Kovács Viktor
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_politikatudomany|name-mention:kovacs-viktor@tk_politikatudomany|https://politikatudomany.tk.elte.hu/babelglob
+  - tk_politikatudomany|name-mention:kovacs-viktor@tk_politikatudomany|https://politikatudomany.tk.elte.hu/strudel
+  labels:
+  - Kovács Viktor
+  - Kovács Viktor
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_politikatudomany|name-mention:kovacs-viktor@tk_politikatudomany|https://politikatudomany.tk.elte.hu/strudel
+  - tk_politikatudomany|name-mention:kovacs-viktor@tk_politikatudomany|https://politikatudomany.tk.elte.hu/v-shift
+  labels:
+  - Kovács Viktor
+  - Kovács Viktor
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_politikatudomany|name-mention:takacs-anna@tk_politikatudomany|https://politikatudomany.tk.elte.hu/babelglob
+  - tk_politikatudomany|name-mention:takacs-anna@tk_politikatudomany|https://politikatudomany.tk.elte.hu/v-shift
+  labels:
+  - Takács Anna
+  - Takács Anna
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_politikatudomany|name-mention:takacs-anna@tk_politikatudomany|https://politikatudomany.tk.elte.hu/babelglob
+  - tk_politikatudomany|name-mention:takacs-anna@tk_politikatudomany|https://politikatudomany.tk.elte.hu/strudel
+  labels:
+  - Takács Anna
+  - Takács Anna
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_politikatudomany|name-mention:takacs-anna@tk_politikatudomany|https://politikatudomany.tk.elte.hu/strudel
+  - tk_politikatudomany|name-mention:takacs-anna@tk_politikatudomany|https://politikatudomany.tk.elte.hu/v-shift
+  labels:
+  - Takács Anna
+  - Takács Anna
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_politikatudomany|name-mention:lehoczki-richard@tk_politikatudomany|https://politikatudomany.tk.elte.hu/babelglob
+  - tk_politikatudomany|name-mention:lehoczki-richard@tk_politikatudomany|https://politikatudomany.tk.elte.hu/v-shift
+  labels:
+  - Lehoczki Richárd
+  - Lehoczki Richárd
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_politikatudomany|name-mention:baumgartner-zoe@tk_politikatudomany|https://politikatudomany.tk.elte.hu/babelglob
+  - tk_politikatudomany|name-mention:baumgartner-zoe@tk_politikatudomany|https://politikatudomany.tk.elte.hu/v-shift
+  labels:
+  - Baumgartner Zoé
+  - Baumgartner Zoé
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_politikatudomany|name-mention:banoczy-martin@tk_politikatudomany|https://politikatudomany.tk.elte.hu/babelglob
+  - tk_politikatudomany|name-mention:banoczy-martin@tk_politikatudomany|https://politikatudomany.tk.elte.hu/v-shift
+  labels:
+  - Bánóczy Martin
+  - Bánóczy Martin
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_politikatudomany|name-mention:babolcsay-barbara@tk_politikatudomany|https://politikatudomany.tk.elte.hu/babelglob
+  - tk_politikatudomany|name-mention:babolcsay-barbara@tk_politikatudomany|https://politikatudomany.tk.elte.hu/v-shift
+  labels:
+  - Babolcsay Barbara
+  - Babolcsay Barbara
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_politikatudomany|name-mention:gero-marton@tk_politikatudomany|https://politikatudomany.tk.elte.hu/strudel
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/gero-marton
+  labels:
+  - Gerő Márton
+  - Gerő Márton
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_politikatudomany|name-mention:gero-marton@tk_politikatudomany|https://politikatudomany.tk.elte.hu/strudel
+  - tk_szociologia|name-mention:gero-marton@tk_szociologia|https://szociologia.tk.elte.hu/valsagok-kihivasok-es-adaptacio
+  labels:
+  - Gerő Márton
+  - Gerő Márton
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_politikatudomany|name-mention:gero-marton@tk_politikatudomany|https://politikatudomany.tk.elte.hu/strudel
+  - tk_szociologia|name-mention:gero-marton@tk_szociologia|https://szociologia.tk.elte.hu/az-osztaly-valtozo-jelentosege-osszehasonlito-perspektivaban
+  labels:
+  - Gerő Márton
+  - Gerő Márton
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/gero-marton
+  - tk_szociologia|name-mention:gero-marton@tk_szociologia|https://szociologia.tk.elte.hu/valsagok-kihivasok-es-adaptacio
+  labels:
+  - Gerő Márton
+  - Gerő Márton
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/gero-marton
+  - tk_szociologia|name-mention:gero-marton@tk_szociologia|https://szociologia.tk.elte.hu/az-osztaly-valtozo-jelentosege-osszehasonlito-perspektivaban
+  labels:
+  - Gerő Márton
+  - Gerő Márton
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - external:tk.mta.hu|https://tk.mta.hu/kutato/gero-marton
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/gero-marton
+  labels:
+  - Gerő Márton
+  - Gerő Márton
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: false
+    same_profile_slug: true
+    same_email_domain: false
+    unlinked_mention: false
+- refs:
+  - tk_szociologia|name-mention:gero-marton@tk_szociologia|https://szociologia.tk.elte.hu/az-osztaly-valtozo-jelentosege-osszehasonlito-perspektivaban
+  - tk_szociologia|name-mention:gero-marton@tk_szociologia|https://szociologia.tk.elte.hu/valsagok-kihivasok-es-adaptacio
+  labels:
+  - Gerő Márton
+  - Gerő Márton
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_politikatudomany|name-mention:kerenyi-szabina@tk_politikatudomany|https://politikatudomany.tk.elte.hu/strudel
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/kerenyi-szabina
+  labels:
+  - Kerényi Szabina
+  - Kerényi Szabina
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_politikatudomany|name-mention:nagy-laura-emoke@tk_politikatudomany|https://politikatudomany.tk.elte.hu/redirect
+  - tk_politikatudomany|name-mention:nagy-laura-emoke@tk_politikatudomany|https://politikatudomany.tk.elte.hu/szabalyok-szerepek-elegedettseg
+  labels:
+  - Nagy Laura Emőke
+  - Nagy Laura Emőke
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_recens|https://recens.tk.elte.hu/kutato/janky-bela
+  - tk_szociologia|name-mention:janky-bela@tk_szociologia|https://szociologia.tk.elte.hu/joleti-attitudok-magyarazata-altalanos-moralis-elvek
+  labels:
+  - Janky Béla
+  - Janky Béla
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - external:tk.mta.hu|https://tk.mta.hu/kutato/janky-bela
+  - tk_recens|https://recens.tk.elte.hu/kutato/janky-bela
+  labels:
+  - Janky Béla
+  - Janky Béla
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: false
+    same_profile_slug: true
+    same_email_domain: false
+    unlinked_mention: false
+- refs:
+  - external:tk.mta.hu|https://tk.mta.hu/kutato/koltai-julia
+  - tk_recens|https://recens.tk.elte.hu/kutato/koltai-julia
+  labels:
+  - Koltai Júlia
+  - Koltai Júlia
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: false
+    same_profile_slug: true
+    same_email_domain: false
+    unlinked_mention: false
+- refs:
+  - external:tk.mta.hu|https://tk.mta.hu/kutato/koltai-julia
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/koltai-julia
+  labels:
+  - Koltai Júlia
+  - Koltai Júlia
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: false
+    same_profile_slug: true
+    same_email_domain: false
+    unlinked_mention: false
+- refs:
+  - tk_recens|https://recens.tk.elte.hu/kutato/sagvari-bence
+  - tk_szociologia|name-mention:sagvari-bence@tk_szociologia|https://szociologia.tk.elte.hu/sogreen-social-aspects-of-the-green-transition
+  labels:
+  - Ságvári Bence
+  - Ságvári Bence
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_recens|https://recens.tk.elte.hu/kutato/sagvari-bence
+  - tk_szociologia|name-mention:sagvari-bence@tk_szociologia|https://szociologia.tk.elte.hu/infra4nextgen
+  labels:
+  - Ságvári Bence
+  - Ságvári Bence
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_recens|https://recens.tk.elte.hu/kutato/sagvari-bence
+  - tk_szociologia|name-mention:sagvari-bence@tk_szociologia|https://szociologia.tk.elte.hu/egy-online-kozossegi-halozat-eletciklusa-big-data-elemzes
+  labels:
+  - Ságvári Bence
+  - Ságvári Bence
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_recens|https://recens.tk.elte.hu/kutato/sagvari-bence
+  - tk_szociologia|name-mention:sagvari-bence@tk_szociologia|https://szociologia.tk.elte.hu/a-kultura-es-az-ertekek-kapcsolata
+  labels:
+  - Ságvári Bence
+  - Ságvári Bence
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_recens|https://recens.tk.elte.hu/kutato/sagvari-bence
+  - tk_szociologia|name-mention:sagvari-bence@tk_szociologia|https://szociologia.tk.elte.hu/european-social-survey-ess
+  labels:
+  - Ságvári Bence
+  - Ságvári Bence
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - external:tk.mta.hu|https://tk.mta.hu/kutato/sagvari-bence
+  - tk_recens|https://recens.tk.elte.hu/kutato/sagvari-bence
+  labels:
+  - Ságvári Bence
+  - Ságvári Bence
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: false
+    same_profile_slug: true
+    same_email_domain: false
+    unlinked_mention: false
+- refs:
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/sagvari-bence
+  - tk_szociologia|name-mention:sagvari-bence@tk_szociologia|https://szociologia.tk.elte.hu/sogreen-social-aspects-of-the-green-transition
+  labels:
+  - Ságvári Bence
+  - Ságvári Bence
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/sagvari-bence
+  - tk_szociologia|name-mention:sagvari-bence@tk_szociologia|https://szociologia.tk.elte.hu/infra4nextgen
+  labels:
+  - Ságvári Bence
+  - Ságvári Bence
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/sagvari-bence
+  - tk_szociologia|name-mention:sagvari-bence@tk_szociologia|https://szociologia.tk.elte.hu/egy-online-kozossegi-halozat-eletciklusa-big-data-elemzes
+  labels:
+  - Ságvári Bence
+  - Ságvári Bence
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/sagvari-bence
+  - tk_szociologia|name-mention:sagvari-bence@tk_szociologia|https://szociologia.tk.elte.hu/a-kultura-es-az-ertekek-kapcsolata
+  labels:
+  - Ságvári Bence
+  - Ságvári Bence
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/sagvari-bence
+  - tk_szociologia|name-mention:sagvari-bence@tk_szociologia|https://szociologia.tk.elte.hu/european-social-survey-ess
+  labels:
+  - Ságvári Bence
+  - Ságvári Bence
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - external:tk.mta.hu|https://tk.mta.hu/kutato/sagvari-bence
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/sagvari-bence
+  labels:
+  - Ságvári Bence
+  - Ságvári Bence
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: false
+    same_profile_slug: true
+    same_email_domain: false
+    unlinked_mention: false
+- refs:
+  - tk_szociologia|name-mention:sagvari-bence@tk_szociologia|https://szociologia.tk.elte.hu/infra4nextgen
+  - tk_szociologia|name-mention:sagvari-bence@tk_szociologia|https://szociologia.tk.elte.hu/sogreen-social-aspects-of-the-green-transition
+  labels:
+  - Ságvári Bence
+  - Ságvári Bence
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|name-mention:sagvari-bence@tk_szociologia|https://szociologia.tk.elte.hu/egy-online-kozossegi-halozat-eletciklusa-big-data-elemzes
+  - tk_szociologia|name-mention:sagvari-bence@tk_szociologia|https://szociologia.tk.elte.hu/sogreen-social-aspects-of-the-green-transition
+  labels:
+  - Ságvári Bence
+  - Ságvári Bence
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|name-mention:sagvari-bence@tk_szociologia|https://szociologia.tk.elte.hu/a-kultura-es-az-ertekek-kapcsolata
+  - tk_szociologia|name-mention:sagvari-bence@tk_szociologia|https://szociologia.tk.elte.hu/sogreen-social-aspects-of-the-green-transition
+  labels:
+  - Ságvári Bence
+  - Ságvári Bence
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|name-mention:sagvari-bence@tk_szociologia|https://szociologia.tk.elte.hu/european-social-survey-ess
+  - tk_szociologia|name-mention:sagvari-bence@tk_szociologia|https://szociologia.tk.elte.hu/sogreen-social-aspects-of-the-green-transition
+  labels:
+  - Ságvári Bence
+  - Ságvári Bence
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|name-mention:sagvari-bence@tk_szociologia|https://szociologia.tk.elte.hu/egy-online-kozossegi-halozat-eletciklusa-big-data-elemzes
+  - tk_szociologia|name-mention:sagvari-bence@tk_szociologia|https://szociologia.tk.elte.hu/infra4nextgen
+  labels:
+  - Ságvári Bence
+  - Ságvári Bence
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|name-mention:sagvari-bence@tk_szociologia|https://szociologia.tk.elte.hu/a-kultura-es-az-ertekek-kapcsolata
+  - tk_szociologia|name-mention:sagvari-bence@tk_szociologia|https://szociologia.tk.elte.hu/infra4nextgen
+  labels:
+  - Ságvári Bence
+  - Ságvári Bence
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|name-mention:sagvari-bence@tk_szociologia|https://szociologia.tk.elte.hu/european-social-survey-ess
+  - tk_szociologia|name-mention:sagvari-bence@tk_szociologia|https://szociologia.tk.elte.hu/infra4nextgen
+  labels:
+  - Ságvári Bence
+  - Ságvári Bence
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|name-mention:sagvari-bence@tk_szociologia|https://szociologia.tk.elte.hu/a-kultura-es-az-ertekek-kapcsolata
+  - tk_szociologia|name-mention:sagvari-bence@tk_szociologia|https://szociologia.tk.elte.hu/egy-online-kozossegi-halozat-eletciklusa-big-data-elemzes
+  labels:
+  - Ságvári Bence
+  - Ságvári Bence
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|name-mention:sagvari-bence@tk_szociologia|https://szociologia.tk.elte.hu/egy-online-kozossegi-halozat-eletciklusa-big-data-elemzes
+  - tk_szociologia|name-mention:sagvari-bence@tk_szociologia|https://szociologia.tk.elte.hu/european-social-survey-ess
+  labels:
+  - Ságvári Bence
+  - Ságvári Bence
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|name-mention:sagvari-bence@tk_szociologia|https://szociologia.tk.elte.hu/a-kultura-es-az-ertekek-kapcsolata
+  - tk_szociologia|name-mention:sagvari-bence@tk_szociologia|https://szociologia.tk.elte.hu/european-social-survey-ess
+  labels:
+  - Ságvári Bence
+  - Ságvári Bence
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_recens|https://recens.tk.elte.hu/kutato/stefkovics-adam
+  - tk_szociologia|name-mention:stefkovics-adam@tk_szociologia|https://szociologia.tk.elte.hu/infra4nextgen
+  labels:
+  - Stefkovics Ádám
+  - Stefkovics Ádám
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/stefkovics-adam
+  - tk_szociologia|name-mention:stefkovics-adam@tk_szociologia|https://szociologia.tk.elte.hu/infra4nextgen
+  labels:
+  - Stefkovics Ádám
+  - Stefkovics Ádám
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - external:tk.hu|https://tk.hu/kutato/acsady-judit
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/acsady-judit
+  labels:
+  - Acsády Judit
+  - Acsády Judit
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: false
+    same_profile_slug: true
+    same_email_domain: false
+    unlinked_mention: false
+- refs:
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/acsady-judit
+  - tk_szociologia|name-mention:acsady-judit@tk_szociologia|https://szociologia.tk.elte.hu/tarsadalmi-valaszok-az-egeszsegugyi-ellatas-rendkiv
+  labels:
+  - Acsády Judit
+  - Acsády Judit
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
   - tk_szociologia|https://szociologia.tk.elte.hu/kutato/albert-fruzsina
   - tk_szociologia|name-mention:albert-fruzsina@tk_szociologia|https://szociologia.tk.elte.hu/a-vakcinacios-szandek-megertese
   labels:
@@ -11,6 +1272,1878 @@ possible_matches:
   score: 0.55
   signals:
     same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - external:tk.mta.hu|https://tk.mta.hu/kutato/albert-fruzsina
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/albert-fruzsina
+  labels:
+  - Albert Fruzsina
+  - Albert Fruzsina
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: false
+    same_profile_slug: true
+    same_email_domain: false
+    unlinked_mention: false
+- refs:
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/albert-fruzsina
+  - tk_szociologia|name-mention:albert-fruzsina@tk_szociologia|https://szociologia.tk.elte.hu/eletkeretek-a-bortonon-innen-es-tul
+  labels:
+  - Albert Fruzsina
+  - Albert Fruzsina
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|name-mention:albert-fruzsina@tk_szociologia|https://szociologia.tk.elte.hu/a-vakcinacios-szandek-megertese
+  - tk_szociologia|name-mention:albert-fruzsina@tk_szociologia|https://szociologia.tk.elte.hu/eletkeretek-a-bortonon-innen-es-tul
+  labels:
+  - Albert Fruzsina
+  - Albert Fruzsina
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/hajdu-gabor
+  - tk_szociologia|name-mention:hajdu-gabor@tk_szociologia|https://szociologia.tk.elte.hu/a-tarsadalmi-egyenlotlensegek-ujratermelodese-az-osztalyszerkezet-tetejen
+  labels:
+  - Hajdu Gábor
+  - Hajdu Gábor
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/hajdu-gabor
+  - tk_szociologia|name-mention:hajdu-gabor@tk_szociologia|https://szociologia.tk.elte.hu/valsagok-kihivasok-es-adaptacio
+  labels:
+  - Hajdu Gábor
+  - Hajdu Gábor
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/hajdu-gabor
+  - tk_szociologia|name-mention:hajdu-gabor@tk_szociologia|https://szociologia.tk.elte.hu/tarsadalmi-kornyezet-tarsadalmi-egyenlotlensegek-es-szubjektiv
+  labels:
+  - Hajdu Gábor
+  - Hajdu Gábor
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - external:tk.mta.hu|https://tk.mta.hu/kutato/hajdu-gabor
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/hajdu-gabor
+  labels:
+  - Hajdu Gábor
+  - Hajdu Gábor
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: false
+    same_profile_slug: true
+    same_email_domain: false
+    unlinked_mention: false
+- refs:
+  - tk_szociologia|name-mention:hajdu-gabor@tk_szociologia|https://szociologia.tk.elte.hu/a-tarsadalmi-egyenlotlensegek-ujratermelodese-az-osztalyszerkezet-tetejen
+  - tk_szociologia|name-mention:hajdu-gabor@tk_szociologia|https://szociologia.tk.elte.hu/valsagok-kihivasok-es-adaptacio
+  labels:
+  - Hajdu Gábor
+  - Hajdu Gábor
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|name-mention:hajdu-gabor@tk_szociologia|https://szociologia.tk.elte.hu/a-tarsadalmi-egyenlotlensegek-ujratermelodese-az-osztalyszerkezet-tetejen
+  - tk_szociologia|name-mention:hajdu-gabor@tk_szociologia|https://szociologia.tk.elte.hu/tarsadalmi-kornyezet-tarsadalmi-egyenlotlensegek-es-szubjektiv
+  labels:
+  - Hajdu Gábor
+  - Hajdu Gábor
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|name-mention:hajdu-gabor@tk_szociologia|https://szociologia.tk.elte.hu/tarsadalmi-kornyezet-tarsadalmi-egyenlotlensegek-es-szubjektiv
+  - tk_szociologia|name-mention:hajdu-gabor@tk_szociologia|https://szociologia.tk.elte.hu/valsagok-kihivasok-es-adaptacio
+  labels:
+  - Hajdu Gábor
+  - Hajdu Gábor
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/david-beata
+  - tk_szociologia|name-mention:david-beata@tk_szociologia|https://szociologia.tk.elte.hu/valsagok-kihivasok-es-adaptacio
+  labels:
+  - Dávid Beáta
+  - Dávid Beáta
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - external:tk.mta.hu|https://tk.mta.hu/kutato/david-beata
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/david-beata
+  labels:
+  - Dávid Beáta
+  - Dávid Beáta
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: false
+    same_profile_slug: true
+    same_email_domain: false
+    unlinked_mention: false
+- refs:
+  - external:tk.hu|https://tk.hu/kutato/sipos-alexandra
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/sipos-alexandra
+  labels:
+  - Sipos Alexandra
+  - Sipos Alexandra
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: false
+    same_profile_slug: true
+    same_email_domain: false
+    unlinked_mention: false
+- refs:
+  - external:tk.mta.hu|https://tk.mta.hu/kutato/dupcsik-csaba
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/dupcsik-csaba
+  labels:
+  - Dupcsik Csaba
+  - Dupcsik Csaba
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: false
+    same_profile_slug: true
+    same_email_domain: false
+    unlinked_mention: false
+- refs:
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/illessy-miklos
+  - tk_szociologia|name-mention:illessy-miklos@tk_szociologia|https://szociologia.tk.elte.hu/valsagok-kihivasok-es-adaptacio
+  labels:
+  - Illéssy Miklós
+  - Illéssy Miklós
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/arendas-zsuzsanna
+  - tk_szociologia|name-mention:arendas-zsuzsanna@tk_szociologia|https://szociologia.tk.elte.hu/megerkezes-a-varosba
+  labels:
+  - Árendás Zsuzsanna
+  - Árendás Zsuzsanna
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/arendas-zsuzsanna
+  - tk_szociologia|name-mention:arendas-zsuzsanna@tk_szociologia|https://szociologia.tk.elte.hu/exploring-and-educating-cultural-literacy-through-art
+  labels:
+  - Árendás Zsuzsanna
+  - Árendás Zsuzsanna
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/arendas-zsuzsanna
+  - tk_szociologia|name-mention:arendas-zsuzsanna@tk_szociologia|https://szociologia.tk.elte.hu/transnational-family-dynamics-in-europe-cost-action
+  labels:
+  - Árendás Zsuzsanna
+  - Árendás Zsuzsanna
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|name-mention:arendas-zsuzsanna@tk_szociologia|https://szociologia.tk.elte.hu/exploring-and-educating-cultural-literacy-through-art
+  - tk_szociologia|name-mention:arendas-zsuzsanna@tk_szociologia|https://szociologia.tk.elte.hu/megerkezes-a-varosba
+  labels:
+  - Árendás Zsuzsanna
+  - Árendás Zsuzsanna
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|name-mention:arendas-zsuzsanna@tk_szociologia|https://szociologia.tk.elte.hu/megerkezes-a-varosba
+  - tk_szociologia|name-mention:arendas-zsuzsanna@tk_szociologia|https://szociologia.tk.elte.hu/transnational-family-dynamics-in-europe-cost-action
+  labels:
+  - Árendás Zsuzsanna
+  - Árendás Zsuzsanna
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|name-mention:arendas-zsuzsanna@tk_szociologia|https://szociologia.tk.elte.hu/exploring-and-educating-cultural-literacy-through-art
+  - tk_szociologia|name-mention:arendas-zsuzsanna@tk_szociologia|https://szociologia.tk.elte.hu/transnational-family-dynamics-in-europe-cost-action
+  labels:
+  - Árendás Zsuzsanna
+  - Árendás Zsuzsanna
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - external:tk.hu|https://tk.hu/kutato/paksi-veronika
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/paksi-veronika
+  labels:
+  - Paksi Veronika
+  - Paksi Veronika
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: false
+    same_profile_slug: true
+    same_email_domain: false
+    unlinked_mention: false
+- refs:
+  - external:tk.mta.hu|https://tk.mta.hu/kutato/eross-gabor
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/eross-gabor
+  labels:
+  - Erőss Gábor
+  - Erőss Gábor
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: false
+    same_profile_slug: true
+    same_email_domain: false
+    unlinked_mention: false
+- refs:
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/gardos-judit
+  - tk_szociologia|name-mention:gardos-judit@tk_szociologia|https://szociologia.tk.elte.hu/a-20-szazad-hangja
+  labels:
+  - Gárdos Judit
+  - Gárdos Judit
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/szikra-dorottya
+  - tk_szociologia|name-mention:szikra-dorottya@tk_szociologia|https://szociologia.tk.elte.hu/welfareexperiences-hun
+  labels:
+  - Szikra Dorottya
+  - Szikra Dorottya
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - external:tk.hu|https://tk.hu/kutato/tardos-katalin
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/tardos-katalin
+  labels:
+  - Tardos Katalin
+  - Tardos Katalin
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: false
+    same_profile_slug: true
+    same_email_domain: false
+    unlinked_mention: false
+- refs:
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/tardos-katalin
+  - tk_szociologia|name-mention:tardos-katalin@tk_szociologia|https://szociologia.tk.elte.hu/untwist-repoliticize-gender-h2020
+  labels:
+  - Tardos Katalin
+  - Tardos Katalin
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/kovacs-eva-judit
+  - tk_szociologia|name-mention:kovacs-eva@tk_szociologia|https://szociologia.tk.elte.hu/a-csend-hangjai-a-soa-helye-a-zsido-tulelok-es-gyermekeik-generaciojanak-kommunikaciojaban
+  labels:
+  - Kovács Éva Judit
+  - Kovács Éva
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/kovacs-eva-judit
+  - tk_szociologia|name-mention:kovacs-eva@tk_szociologia|https://szociologia.tk.elte.hu/a-20-szazad-hangja
+  labels:
+  - Kovács Éva Judit
+  - Kovács Éva
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|name-mention:kovacs-eva@tk_szociologia|https://szociologia.tk.elte.hu/a-20-szazad-hangja
+  - tk_szociologia|name-mention:kovacs-eva@tk_szociologia|https://szociologia.tk.elte.hu/a-csend-hangjai-a-soa-helye-a-zsido-tulelok-es-gyermekeik-generaciojanak-kommunikaciojaban
+  labels:
+  - Kovács Éva
+  - Kovács Éva
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/zombory-mate
+  - tk_szociologia|name-mention:zombory-mate@tk_szociologia|https://szociologia.tk.elte.hu/a-20-szazad-hangja
+  labels:
+  - Zombory Máté
+  - Zombory Máté
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/messing-vera
+  - tk_szociologia|name-mention:messing-vera@tk_szociologia|https://szociologia.tk.elte.hu/infra4nextgen
+  labels:
+  - Messing Vera
+  - Messing Vera
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/messing-vera
+  - tk_szociologia|name-mention:messing-vera@tk_szociologia|https://szociologia.tk.elte.hu/exploring-and-educating-cultural-literacy-through-art
+  labels:
+  - Messing Vera
+  - Messing Vera
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/messing-vera
+  - tk_szociologia|name-mention:messing-vera@tk_szociologia|https://szociologia.tk.elte.hu/transnational-family-dynamics-in-europe-cost-action
+  labels:
+  - Messing Vera
+  - Messing Vera
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/messing-vera
+  - tk_szociologia|name-mention:messing-vera@tk_szociologia|https://szociologia.tk.elte.hu/a-roma-mediakep-1988-2015
+  labels:
+  - Messing Vera
+  - Messing Vera
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/messing-vera
+  - tk_szociologia|name-mention:messing-vera@tk_szociologia|https://szociologia.tk.elte.hu/european-social-survey-ess
+  labels:
+  - Messing Vera
+  - Messing Vera
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/messing-vera
+  - tk_szociologia|name-mention:messing-vera@tk_szociologia|https://szociologia.tk.elte.hu/essmagyarorszag
+  labels:
+  - Messing Vera
+  - Messing Vera
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|name-mention:messing-vera@tk_szociologia|https://szociologia.tk.elte.hu/exploring-and-educating-cultural-literacy-through-art
+  - tk_szociologia|name-mention:messing-vera@tk_szociologia|https://szociologia.tk.elte.hu/infra4nextgen
+  labels:
+  - Messing Vera
+  - Messing Vera
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|name-mention:messing-vera@tk_szociologia|https://szociologia.tk.elte.hu/infra4nextgen
+  - tk_szociologia|name-mention:messing-vera@tk_szociologia|https://szociologia.tk.elte.hu/transnational-family-dynamics-in-europe-cost-action
+  labels:
+  - Messing Vera
+  - Messing Vera
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|name-mention:messing-vera@tk_szociologia|https://szociologia.tk.elte.hu/a-roma-mediakep-1988-2015
+  - tk_szociologia|name-mention:messing-vera@tk_szociologia|https://szociologia.tk.elte.hu/infra4nextgen
+  labels:
+  - Messing Vera
+  - Messing Vera
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|name-mention:messing-vera@tk_szociologia|https://szociologia.tk.elte.hu/european-social-survey-ess
+  - tk_szociologia|name-mention:messing-vera@tk_szociologia|https://szociologia.tk.elte.hu/infra4nextgen
+  labels:
+  - Messing Vera
+  - Messing Vera
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|name-mention:messing-vera@tk_szociologia|https://szociologia.tk.elte.hu/essmagyarorszag
+  - tk_szociologia|name-mention:messing-vera@tk_szociologia|https://szociologia.tk.elte.hu/infra4nextgen
+  labels:
+  - Messing Vera
+  - Messing Vera
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|name-mention:messing-vera@tk_szociologia|https://szociologia.tk.elte.hu/exploring-and-educating-cultural-literacy-through-art
+  - tk_szociologia|name-mention:messing-vera@tk_szociologia|https://szociologia.tk.elte.hu/transnational-family-dynamics-in-europe-cost-action
+  labels:
+  - Messing Vera
+  - Messing Vera
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|name-mention:messing-vera@tk_szociologia|https://szociologia.tk.elte.hu/a-roma-mediakep-1988-2015
+  - tk_szociologia|name-mention:messing-vera@tk_szociologia|https://szociologia.tk.elte.hu/exploring-and-educating-cultural-literacy-through-art
+  labels:
+  - Messing Vera
+  - Messing Vera
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|name-mention:messing-vera@tk_szociologia|https://szociologia.tk.elte.hu/european-social-survey-ess
+  - tk_szociologia|name-mention:messing-vera@tk_szociologia|https://szociologia.tk.elte.hu/exploring-and-educating-cultural-literacy-through-art
+  labels:
+  - Messing Vera
+  - Messing Vera
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|name-mention:messing-vera@tk_szociologia|https://szociologia.tk.elte.hu/essmagyarorszag
+  - tk_szociologia|name-mention:messing-vera@tk_szociologia|https://szociologia.tk.elte.hu/exploring-and-educating-cultural-literacy-through-art
+  labels:
+  - Messing Vera
+  - Messing Vera
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|name-mention:messing-vera@tk_szociologia|https://szociologia.tk.elte.hu/a-roma-mediakep-1988-2015
+  - tk_szociologia|name-mention:messing-vera@tk_szociologia|https://szociologia.tk.elte.hu/transnational-family-dynamics-in-europe-cost-action
+  labels:
+  - Messing Vera
+  - Messing Vera
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|name-mention:messing-vera@tk_szociologia|https://szociologia.tk.elte.hu/european-social-survey-ess
+  - tk_szociologia|name-mention:messing-vera@tk_szociologia|https://szociologia.tk.elte.hu/transnational-family-dynamics-in-europe-cost-action
+  labels:
+  - Messing Vera
+  - Messing Vera
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|name-mention:messing-vera@tk_szociologia|https://szociologia.tk.elte.hu/essmagyarorszag
+  - tk_szociologia|name-mention:messing-vera@tk_szociologia|https://szociologia.tk.elte.hu/transnational-family-dynamics-in-europe-cost-action
+  labels:
+  - Messing Vera
+  - Messing Vera
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|name-mention:messing-vera@tk_szociologia|https://szociologia.tk.elte.hu/a-roma-mediakep-1988-2015
+  - tk_szociologia|name-mention:messing-vera@tk_szociologia|https://szociologia.tk.elte.hu/european-social-survey-ess
+  labels:
+  - Messing Vera
+  - Messing Vera
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|name-mention:messing-vera@tk_szociologia|https://szociologia.tk.elte.hu/a-roma-mediakep-1988-2015
+  - tk_szociologia|name-mention:messing-vera@tk_szociologia|https://szociologia.tk.elte.hu/essmagyarorszag
+  labels:
+  - Messing Vera
+  - Messing Vera
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|name-mention:messing-vera@tk_szociologia|https://szociologia.tk.elte.hu/essmagyarorszag
+  - tk_szociologia|name-mention:messing-vera@tk_szociologia|https://szociologia.tk.elte.hu/european-social-survey-ess
+  labels:
+  - Messing Vera
+  - Messing Vera
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/huszar-akos
+  - tk_szociologia|name-mention:huszar-akos@tk_szociologia|https://szociologia.tk.elte.hu/valsagok-kihivasok-es-adaptacio
+  labels:
+  - Huszár Ákos
+  - Huszár Ákos
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/csizmady-adrienne
+  - tk_szociologia|name-mention:csizmady-adrienne@tk_szociologia|https://szociologia.tk.elte.hu/valsagok-kihivasok-es-adaptacio
+  labels:
+  - Csizmady Adrienne
+  - Csizmady Adrienne
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/csizmady-adrienne
+  - tk_szociologia|name-mention:csizmady-adrienne@tk_szociologia|https://szociologia.tk.elte.hu/a-varostervezes-szociologiaja-varostervezes-es-tarsadalom
+  labels:
+  - Csizmady Adrienne
+  - Csizmady Adrienne
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/csizmady-adrienne
+  - tk_szociologia|name-mention:csizmady-adrienne@tk_szociologia|https://szociologia.tk.elte.hu/smart-technologiak-lehetosegei-korlatai
+  labels:
+  - Csizmady Adrienne
+  - Csizmady Adrienne
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/csizmady-adrienne
+  - tk_szociologia|name-mention:csizmady-adrienne@tk_szociologia|https://szociologia.tk.elte.hu/lakashitellel-eladosodott-csaladok
+  labels:
+  - Csizmady Adrienne
+  - Csizmady Adrienne
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|name-mention:csizmady-adrienne@tk_szociologia|https://szociologia.tk.elte.hu/a-varostervezes-szociologiaja-varostervezes-es-tarsadalom
+  - tk_szociologia|name-mention:csizmady-adrienne@tk_szociologia|https://szociologia.tk.elte.hu/valsagok-kihivasok-es-adaptacio
+  labels:
+  - Csizmady Adrienne
+  - Csizmady Adrienne
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|name-mention:csizmady-adrienne@tk_szociologia|https://szociologia.tk.elte.hu/smart-technologiak-lehetosegei-korlatai
+  - tk_szociologia|name-mention:csizmady-adrienne@tk_szociologia|https://szociologia.tk.elte.hu/valsagok-kihivasok-es-adaptacio
+  labels:
+  - Csizmady Adrienne
+  - Csizmady Adrienne
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|name-mention:csizmady-adrienne@tk_szociologia|https://szociologia.tk.elte.hu/lakashitellel-eladosodott-csaladok
+  - tk_szociologia|name-mention:csizmady-adrienne@tk_szociologia|https://szociologia.tk.elte.hu/valsagok-kihivasok-es-adaptacio
+  labels:
+  - Csizmady Adrienne
+  - Csizmady Adrienne
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|name-mention:csizmady-adrienne@tk_szociologia|https://szociologia.tk.elte.hu/a-varostervezes-szociologiaja-varostervezes-es-tarsadalom
+  - tk_szociologia|name-mention:csizmady-adrienne@tk_szociologia|https://szociologia.tk.elte.hu/smart-technologiak-lehetosegei-korlatai
+  labels:
+  - Csizmady Adrienne
+  - Csizmady Adrienne
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|name-mention:csizmady-adrienne@tk_szociologia|https://szociologia.tk.elte.hu/a-varostervezes-szociologiaja-varostervezes-es-tarsadalom
+  - tk_szociologia|name-mention:csizmady-adrienne@tk_szociologia|https://szociologia.tk.elte.hu/lakashitellel-eladosodott-csaladok
+  labels:
+  - Csizmady Adrienne
+  - Csizmady Adrienne
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|name-mention:csizmady-adrienne@tk_szociologia|https://szociologia.tk.elte.hu/lakashitellel-eladosodott-csaladok
+  - tk_szociologia|name-mention:csizmady-adrienne@tk_szociologia|https://szociologia.tk.elte.hu/smart-technologiak-lehetosegei-korlatai
+  labels:
+  - Csizmady Adrienne
+  - Csizmady Adrienne
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/koszeghy-lea
+  - tk_szociologia|name-mention:koszeghy-lea@tk_szociologia|https://szociologia.tk.elte.hu/valsagok-kihivasok-es-adaptacio
+  labels:
+  - Kőszeghy Lea
+  - Kőszeghy Lea
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/koszeghy-lea
+  - tk_szociologia|name-mention:koszeghy-lea@tk_szociologia|https://szociologia.tk.elte.hu/smart-technologiak-lehetosegei-korlatai
+  labels:
+  - Kőszeghy Lea
+  - Kőszeghy Lea
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|name-mention:koszeghy-lea@tk_szociologia|https://szociologia.tk.elte.hu/smart-technologiak-lehetosegei-korlatai
+  - tk_szociologia|name-mention:koszeghy-lea@tk_szociologia|https://szociologia.tk.elte.hu/valsagok-kihivasok-es-adaptacio
+  labels:
+  - Kőszeghy Lea
+  - Kőszeghy Lea
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/csurgo-bernadett
+  - tk_szociologia|name-mention:csurgo-bernadett@tk_szociologia|https://szociologia.tk.elte.hu/valsagok-kihivasok-es-adaptacio
+  labels:
+  - Csurgó Bernadett
+  - Csurgó Bernadett
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/csurgo-bernadett
+  - tk_szociologia|name-mention:csurgo-bernadett@tk_szociologia|https://szociologia.tk.elte.hu/kulturalis-orokseg-es-fenntarthato-videkfejlodes
+  labels:
+  - Csurgó Bernadett
+  - Csurgó Bernadett
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - external:tk.mta.hu|https://tk.mta.hu/kutato/csurgo-bernadett
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/csurgo-bernadett
+  labels:
+  - Csurgó Bernadett
+  - Csurgó Bernadett
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: false
+    same_profile_slug: true
+    same_email_domain: false
+    unlinked_mention: false
+- refs:
+  - tk_szociologia|name-mention:csurgo-bernadett@tk_szociologia|https://szociologia.tk.elte.hu/kulturalis-orokseg-es-fenntarthato-videkfejlodes
+  - tk_szociologia|name-mention:csurgo-bernadett@tk_szociologia|https://szociologia.tk.elte.hu/valsagok-kihivasok-es-adaptacio
+  labels:
+  - Csurgó Bernadett
+  - Csurgó Bernadett
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - external:tk.mta.hu|https://tk.mta.hu/kutato/kovach-imre
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/kovach-imre
+  labels:
+  - Kovách Imre
+  - Kovách Imre
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: false
+    same_profile_slug: true
+    same_email_domain: false
+    unlinked_mention: false
+- refs:
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/kovach-imre
+  - tk_szociologia|name-mention:kovach-imre@tk_szociologia|https://szociologia.tk.elte.hu/cpra-agrieva
+  labels:
+  - Kovách Imre
+  - Kovách Imre
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/kovach-imre
+  - tk_szociologia|name-mention:kovach-imre@tk_szociologia|https://szociologia.tk.elte.hu/cpra-control-post
+  labels:
+  - Kovách Imre
+  - Kovách Imre
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/kovach-imre
+  - tk_szociologia|name-mention:kovach-imre@tk_szociologia|https://szociologia.tk.elte.hu/living-from-their-land
+  labels:
+  - Kovách Imre
+  - Kovách Imre
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/kovach-imre
+  - tk_szociologia|name-mention:kovach-imre@tk_szociologia|https://szociologia.tk.elte.hu/integracios-es-dezintegracios-folyamatok
+  labels:
+  - Kovách Imre
+  - Kovách Imre
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|name-mention:kovach-imre@tk_szociologia|https://szociologia.tk.elte.hu/cpra-agrieva
+  - tk_szociologia|name-mention:kovach-imre@tk_szociologia|https://szociologia.tk.elte.hu/cpra-control-post
+  labels:
+  - Kovách Imre
+  - Kovách Imre
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|name-mention:kovach-imre@tk_szociologia|https://szociologia.tk.elte.hu/cpra-agrieva
+  - tk_szociologia|name-mention:kovach-imre@tk_szociologia|https://szociologia.tk.elte.hu/living-from-their-land
+  labels:
+  - Kovách Imre
+  - Kovách Imre
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|name-mention:kovach-imre@tk_szociologia|https://szociologia.tk.elte.hu/cpra-agrieva
+  - tk_szociologia|name-mention:kovach-imre@tk_szociologia|https://szociologia.tk.elte.hu/integracios-es-dezintegracios-folyamatok
+  labels:
+  - Kovách Imre
+  - Kovách Imre
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|name-mention:kovach-imre@tk_szociologia|https://szociologia.tk.elte.hu/cpra-control-post
+  - tk_szociologia|name-mention:kovach-imre@tk_szociologia|https://szociologia.tk.elte.hu/living-from-their-land
+  labels:
+  - Kovách Imre
+  - Kovách Imre
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|name-mention:kovach-imre@tk_szociologia|https://szociologia.tk.elte.hu/cpra-control-post
+  - tk_szociologia|name-mention:kovach-imre@tk_szociologia|https://szociologia.tk.elte.hu/integracios-es-dezintegracios-folyamatok
+  labels:
+  - Kovách Imre
+  - Kovách Imre
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|name-mention:kovach-imre@tk_szociologia|https://szociologia.tk.elte.hu/integracios-es-dezintegracios-folyamatok
+  - tk_szociologia|name-mention:kovach-imre@tk_szociologia|https://szociologia.tk.elte.hu/living-from-their-land
+  labels:
+  - Kovách Imre
+  - Kovách Imre
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/kristof-luca
+  - tk_szociologia|name-mention:kristof-luca@tk_szociologia|https://szociologia.tk.elte.hu/valsagok-kihivasok-es-adaptacio
+  labels:
+  - Kristóf Luca
+  - Kristóf Luca
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - external:tk.mta.hu|https://tk.mta.hu/kutato/kristof-luca
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/kristof-luca
+  labels:
+  - Kristóf Luca
+  - Kristóf Luca
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: false
+    same_profile_slug: true
+    same_email_domain: false
+    unlinked_mention: false
+- refs:
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/gyori-agnes
+  - tk_szociologia|name-mention:gyori-agnes@tk_szociologia|https://szociologia.tk.elte.hu/valsagok-kihivasok-es-adaptacio
+  labels:
+  - Győri Ágnes
+  - Győri Ágnes
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/gyori-agnes
+  - tk_szociologia|name-mention:gyori-agnes@tk_szociologia|https://szociologia.tk.elte.hu/az-osztaly-valtozo-jelentosege-osszehasonlito-perspektivaban
+  labels:
+  - Győri Ágnes
+  - Győri Ágnes
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/gyori-agnes
+  - tk_szociologia|name-mention:gyori-agnes@tk_szociologia|https://szociologia.tk.elte.hu/az-iskolai-egeszsegneveles-fejlesztese-egeszsegmuveltseg-egeszsegmagatartas-es-gyermekjollet
+  labels:
+  - Győri Ágnes
+  - Győri Ágnes
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|name-mention:gyori-agnes@tk_szociologia|https://szociologia.tk.elte.hu/az-osztaly-valtozo-jelentosege-osszehasonlito-perspektivaban
+  - tk_szociologia|name-mention:gyori-agnes@tk_szociologia|https://szociologia.tk.elte.hu/valsagok-kihivasok-es-adaptacio
+  labels:
+  - Győri Ágnes
+  - Győri Ágnes
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|name-mention:gyori-agnes@tk_szociologia|https://szociologia.tk.elte.hu/az-iskolai-egeszsegneveles-fejlesztese-egeszsegmuveltseg-egeszsegmagatartas-es-gyermekjollet
+  - tk_szociologia|name-mention:gyori-agnes@tk_szociologia|https://szociologia.tk.elte.hu/valsagok-kihivasok-es-adaptacio
+  labels:
+  - Győri Ágnes
+  - Győri Ágnes
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|name-mention:gyori-agnes@tk_szociologia|https://szociologia.tk.elte.hu/az-iskolai-egeszsegneveles-fejlesztese-egeszsegmuveltseg-egeszsegmagatartas-es-gyermekjollet
+  - tk_szociologia|name-mention:gyori-agnes@tk_szociologia|https://szociologia.tk.elte.hu/az-osztaly-valtozo-jelentosege-osszehasonlito-perspektivaban
+  labels:
+  - Győri Ágnes
+  - Győri Ágnes
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/megyesi-boldizsar
+  - tk_szociologia|name-mention:megyesi-boldizsar@tk_szociologia|https://szociologia.tk.elte.hu/az-agrar-es-videkfejlesztesi-politikak-hatasa-a-helyi-elel
+  labels:
+  - Megyesi Boldizsár
+  - Megyesi Boldizsár
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - external:tk.mta.hu|https://tk.mta.hu/kutato/megyesi-boldizsar
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/megyesi-boldizsar
+  labels:
+  - Megyesi Boldizsár
+  - Megyesi Boldizsár
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: false
+    same_profile_slug: true
+    same_email_domain: false
+    unlinked_mention: false
+- refs:
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/horzsa-gergely
+  - tk_szociologia|name-mention:horzsa-gergely@tk_szociologia|https://szociologia.tk.elte.hu/infra4nextgen
+  labels:
+  - Horzsa Gergely
+  - Horzsa Gergely
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/horzsa-gergely
+  - tk_szociologia|name-mention:horzsa-gergely@tk_szociologia|https://szociologia.tk.elte.hu/valsagok-kihivasok-es-adaptacio
+  labels:
+  - Horzsa Gergely
+  - Horzsa Gergely
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|name-mention:horzsa-gergely@tk_szociologia|https://szociologia.tk.elte.hu/infra4nextgen
+  - tk_szociologia|name-mention:horzsa-gergely@tk_szociologia|https://szociologia.tk.elte.hu/valsagok-kihivasok-es-adaptacio
+  labels:
+  - Horzsa Gergely
+  - Horzsa Gergely
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/olt-gergely
+  - tk_szociologia|name-mention:olt-gergely@tk_szociologia|https://szociologia.tk.elte.hu/smart-technologiak-lehetosegei-korlatai
+  labels:
+  - Olt Gergely
+  - Olt Gergely
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/gabriel-dora
+  - tk_szociologia|name-mention:gabriel-dora@tk_szociologia|https://szociologia.tk.elte.hu/care-org-idosgondozas-kozep-kelet-europa
+  labels:
+  - Gábriel Dóra
+  - Gábriel Dóra
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - external:tk.mta.hu|https://tk.mta.hu/kutato/kapitany-agnes
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/kapitany-agnes
+  labels:
+  - Kapitány Ágnes
+  - Kapitány Ágnes
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: false
+    same_profile_slug: true
+    same_email_domain: false
+    unlinked_mention: false
+- refs:
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/kapitany-gabor
+  - tk_szociologia|name-mention:kapitany-gabor@tk_szociologia|https://szociologia.tk.elte.hu/integracios-es-dezintegracios-folyamatok
+  labels:
+  - Kapitány Gábor
+  - Kapitány Gábor
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/kende-agnes
+  - tk_szociologia|name-mention:kende-agnes@tk_szociologia|https://szociologia.tk.elte.hu/exploring-and-educating-cultural-literacy-through-art
+  labels:
+  - Kende Ágnes
+  - Kende Ágnes
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/mako-csaba
+  - tk_szociologia|name-mention:mako-csaba@tk_szociologia|https://szociologia.tk.elte.hu/quinne
+  labels:
+  - Makó Csaba
+  - Makó Csaba
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - external:tk.mta.hu|https://tk.mta.hu/kutato/nemenyi-maria
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/nemenyi-maria
+  labels:
+  - Neményi Mária
+  - Neményi Mária
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: false
+    same_profile_slug: true
+    same_email_domain: false
+    unlinked_mention: false
+- refs:
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/nemenyi-maria
+  - tk_szociologia|name-mention:nemenyi-maria@tk_szociologia|https://szociologia.tk.elte.hu/terno
+  labels:
+  - Neményi Mária
+  - Neményi Mária
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - external:tk.mta.hu|https://tk.mta.hu/kutato/p-toth-tamas
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/p-toth-tamas
+  labels:
+  - P.Tóth Tamás
+  - P. Tóth Tamás
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: false
+    same_profile_slug: true
+    same_email_domain: false
+    unlinked_mention: false
+- refs:
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/sik-endre
+  - tk_szociologia|name-mention:sik-endre@tk_szociologia|https://szociologia.tk.elte.hu/az-osztaly-valtozo-jelentosege-osszehasonlito-perspektivaban
+  labels:
+  - Sik Endre
+  - Sik Endre
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - external:tk.mta.hu|https://tk.mta.hu/kutato/szalai-julia
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/szalai-julia
+  labels:
+  - Szalai Júlia
+  - Szalai ✝ Júlia
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: false
+    same_profile_slug: true
+    same_email_domain: false
+    unlinked_mention: false
+- refs:
+  - external:tk.mta.hu|https://tk.mta.hu/kutato/szirmai-viktoria
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/szirmai-viktoria
+  labels:
+  - Szirmai Viktória
+  - Szirmai Viktória
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: false
+    same_profile_slug: true
+    same_email_domain: false
+    unlinked_mention: false
+- refs:
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/szirmai-viktoria
+  - tk_szociologia|name-mention:szirmai-viktoria@tk_szociologia|https://szociologia.tk.elte.hu/tarsadalmi-polarizacio
+  labels:
+  - Szirmai Viktória
+  - Szirmai Viktória
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/tamas-pal
+  - tk_szociologia|name-mention:tamas-pal@tk_szociologia|https://szociologia.tk.elte.hu/forsee
+  labels:
+  - Tamás ✝ Pál
+  - Tamás Pál
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/tibori-timea
+  - tk_szociologia|name-mention:tibori-timea@tk_szociologia|https://szociologia.tk.elte.hu/a-20-szazad-hangja
+  labels:
+  - Tibori Tímea
+  - Tibori Tímea
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/vidra-zsuzsanna
+  - tk_szociologia|name-mention:vidra-zsuzsanna@tk_szociologia|https://szociologia.tk.elte.hu/exploring-and-educating-cultural-literacy-through-art
+  labels:
+  - Vidra Zsuzsanna
+  - Vidra Zsuzsanna
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|name-mention:gregor-aniko@tk_szociologia|https://szociologia.tk.elte.hu/a-tarsadalmi-egyenlotlensegek-ujratermelodese-az-osztalyszerkezet-tetejen
+  - tk_szociologia|name-mention:gregor-aniko@tk_szociologia|https://szociologia.tk.elte.hu/az-osztaly-valtozo-jelentosege-osszehasonlito-perspektivaban
+  labels:
+  - Gregor Anikó
+  - Gregor Anikó
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - external:tk.hu|https://tk.hu/kutato/balogh-lidia
+  - external:tk.mta.hu|https://tk.mta.hu/kutato/balogh-lidia
+  labels:
+  - Balogh Lídia
+  - Balogh Lídia
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: false
+    same_profile_slug: true
+    same_email_domain: false
+    unlinked_mention: false
+- refs:
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/antal-z-laszlo
+  - tk_szociologia|name-mention:antal-z-laszlo@tk_szociologia|https://szociologia.tk.elte.hu/tarsadalmi-valaszok-az-egeszsegugyi-ellatas-rendkiv
+  labels:
+  - Antal Z. László
+  - Antal Z. László
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|name-mention:ferencz-zoltan@tk_szociologia|https://szociologia.tk.elte.hu/smart-technologiak-lehetosegei-korlatai
+  - tk_szociologia|name-mention:ferencz-zoltan@tk_szociologia|https://szociologia.tk.elte.hu/tarsadalmi-valaszok-az-egeszsegugyi-ellatas-rendkiv
+  labels:
+  - Ferencz Zoltán
+  - Ferencz Zoltán
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/ferencz-zoltan
+  - tk_szociologia|name-mention:ferencz-zoltan@tk_szociologia|https://szociologia.tk.elte.hu/tarsadalmi-valaszok-az-egeszsegugyi-ellatas-rendkiv
+  labels:
+  - Ferencz Zoltán
+  - Ferencz Zoltán
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - tk_szociologia|https://szociologia.tk.elte.hu/kutato/ferencz-zoltan
+  - tk_szociologia|name-mention:ferencz-zoltan@tk_szociologia|https://szociologia.tk.elte.hu/smart-technologiak-lehetosegei-korlatai
+  labels:
+  - Ferencz Zoltán
+  - Ferencz Zoltán
+  method: auto:same_name
+  score: 0.55
+  signals:
+    same_institution_family: true
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - external:tk.mta.hu|https://tk.mta.hu/kutato/szabo-andrea
+  - tk_szociologia|name-mention:szabo-andrea@tk_szociologia|https://szociologia.tk.elte.hu/valsagok-kihivasok-es-adaptacio
+  labels:
+  - Szabó Andrea
+  - Szabó Andrea
+  method: auto:same_name
+  score: 0.4
+  signals:
+    same_institution_family: false
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - external:tk.mta.hu|https://tk.mta.hu/kutato/gero-marton
+  - tk_politikatudomany|name-mention:gero-marton@tk_politikatudomany|https://politikatudomany.tk.elte.hu/strudel
+  labels:
+  - Gerő Márton
+  - Gerő Márton
+  method: auto:same_name
+  score: 0.4
+  signals:
+    same_institution_family: false
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - external:tk.mta.hu|https://tk.mta.hu/kutato/gero-marton
+  - tk_szociologia|name-mention:gero-marton@tk_szociologia|https://szociologia.tk.elte.hu/valsagok-kihivasok-es-adaptacio
+  labels:
+  - Gerő Márton
+  - Gerő Márton
+  method: auto:same_name
+  score: 0.4
+  signals:
+    same_institution_family: false
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - external:tk.mta.hu|https://tk.mta.hu/kutato/gero-marton
+  - tk_szociologia|name-mention:gero-marton@tk_szociologia|https://szociologia.tk.elte.hu/az-osztaly-valtozo-jelentosege-osszehasonlito-perspektivaban
+  labels:
+  - Gerő Márton
+  - Gerő Márton
+  method: auto:same_name
+  score: 0.4
+  signals:
+    same_institution_family: false
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - external:tk.mta.hu|https://tk.mta.hu/kutato/janky-bela
+  - tk_szociologia|name-mention:janky-bela@tk_szociologia|https://szociologia.tk.elte.hu/joleti-attitudok-magyarazata-altalanos-moralis-elvek
+  labels:
+  - Janky Béla
+  - Janky Béla
+  method: auto:same_name
+  score: 0.4
+  signals:
+    same_institution_family: false
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - external:tk.mta.hu|https://tk.mta.hu/kutato/sagvari-bence
+  - tk_szociologia|name-mention:sagvari-bence@tk_szociologia|https://szociologia.tk.elte.hu/sogreen-social-aspects-of-the-green-transition
+  labels:
+  - Ságvári Bence
+  - Ságvári Bence
+  method: auto:same_name
+  score: 0.4
+  signals:
+    same_institution_family: false
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - external:tk.mta.hu|https://tk.mta.hu/kutato/sagvari-bence
+  - tk_szociologia|name-mention:sagvari-bence@tk_szociologia|https://szociologia.tk.elte.hu/infra4nextgen
+  labels:
+  - Ságvári Bence
+  - Ságvári Bence
+  method: auto:same_name
+  score: 0.4
+  signals:
+    same_institution_family: false
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - external:tk.mta.hu|https://tk.mta.hu/kutato/sagvari-bence
+  - tk_szociologia|name-mention:sagvari-bence@tk_szociologia|https://szociologia.tk.elte.hu/egy-online-kozossegi-halozat-eletciklusa-big-data-elemzes
+  labels:
+  - Ságvári Bence
+  - Ságvári Bence
+  method: auto:same_name
+  score: 0.4
+  signals:
+    same_institution_family: false
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - external:tk.mta.hu|https://tk.mta.hu/kutato/sagvari-bence
+  - tk_szociologia|name-mention:sagvari-bence@tk_szociologia|https://szociologia.tk.elte.hu/a-kultura-es-az-ertekek-kapcsolata
+  labels:
+  - Ságvári Bence
+  - Ságvári Bence
+  method: auto:same_name
+  score: 0.4
+  signals:
+    same_institution_family: false
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - external:tk.mta.hu|https://tk.mta.hu/kutato/sagvari-bence
+  - tk_szociologia|name-mention:sagvari-bence@tk_szociologia|https://szociologia.tk.elte.hu/european-social-survey-ess
+  labels:
+  - Ságvári Bence
+  - Ságvári Bence
+  method: auto:same_name
+  score: 0.4
+  signals:
+    same_institution_family: false
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - external:tk.hu|https://tk.hu/kutato/acsady-judit
+  - tk_szociologia|name-mention:acsady-judit@tk_szociologia|https://szociologia.tk.elte.hu/tarsadalmi-valaszok-az-egeszsegugyi-ellatas-rendkiv
+  labels:
+  - Acsády Judit
+  - Acsády Judit
+  method: auto:same_name
+  score: 0.4
+  signals:
+    same_institution_family: false
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - external:tk.mta.hu|https://tk.mta.hu/kutato/albert-fruzsina
+  - tk_szociologia|name-mention:albert-fruzsina@tk_szociologia|https://szociologia.tk.elte.hu/a-vakcinacios-szandek-megertese
+  labels:
+  - Albert Fruzsina
+  - Albert Fruzsina
+  method: auto:same_name
+  score: 0.4
+  signals:
+    same_institution_family: false
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - external:tk.mta.hu|https://tk.mta.hu/kutato/albert-fruzsina
+  - tk_szociologia|name-mention:albert-fruzsina@tk_szociologia|https://szociologia.tk.elte.hu/eletkeretek-a-bortonon-innen-es-tul
+  labels:
+  - Albert Fruzsina
+  - Albert Fruzsina
+  method: auto:same_name
+  score: 0.4
+  signals:
+    same_institution_family: false
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - external:tk.mta.hu|https://tk.mta.hu/kutato/hajdu-gabor
+  - tk_szociologia|name-mention:hajdu-gabor@tk_szociologia|https://szociologia.tk.elte.hu/a-tarsadalmi-egyenlotlensegek-ujratermelodese-az-osztalyszerkezet-tetejen
+  labels:
+  - Hajdu Gábor
+  - Hajdu Gábor
+  method: auto:same_name
+  score: 0.4
+  signals:
+    same_institution_family: false
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - external:tk.mta.hu|https://tk.mta.hu/kutato/hajdu-gabor
+  - tk_szociologia|name-mention:hajdu-gabor@tk_szociologia|https://szociologia.tk.elte.hu/valsagok-kihivasok-es-adaptacio
+  labels:
+  - Hajdu Gábor
+  - Hajdu Gábor
+  method: auto:same_name
+  score: 0.4
+  signals:
+    same_institution_family: false
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - external:tk.mta.hu|https://tk.mta.hu/kutato/hajdu-gabor
+  - tk_szociologia|name-mention:hajdu-gabor@tk_szociologia|https://szociologia.tk.elte.hu/tarsadalmi-kornyezet-tarsadalmi-egyenlotlensegek-es-szubjektiv
+  labels:
+  - Hajdu Gábor
+  - Hajdu Gábor
+  method: auto:same_name
+  score: 0.4
+  signals:
+    same_institution_family: false
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - external:tk.mta.hu|https://tk.mta.hu/kutato/david-beata
+  - tk_szociologia|name-mention:david-beata@tk_szociologia|https://szociologia.tk.elte.hu/valsagok-kihivasok-es-adaptacio
+  labels:
+  - Dávid Beáta
+  - Dávid Beáta
+  method: auto:same_name
+  score: 0.4
+  signals:
+    same_institution_family: false
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - external:tk.hu|https://tk.hu/kutato/tardos-katalin
+  - tk_szociologia|name-mention:tardos-katalin@tk_szociologia|https://szociologia.tk.elte.hu/untwist-repoliticize-gender-h2020
+  labels:
+  - Tardos Katalin
+  - Tardos Katalin
+  method: auto:same_name
+  score: 0.4
+  signals:
+    same_institution_family: false
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - external:tk.mta.hu|https://tk.mta.hu/kutato/csurgo-bernadett
+  - tk_szociologia|name-mention:csurgo-bernadett@tk_szociologia|https://szociologia.tk.elte.hu/valsagok-kihivasok-es-adaptacio
+  labels:
+  - Csurgó Bernadett
+  - Csurgó Bernadett
+  method: auto:same_name
+  score: 0.4
+  signals:
+    same_institution_family: false
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - external:tk.mta.hu|https://tk.mta.hu/kutato/csurgo-bernadett
+  - tk_szociologia|name-mention:csurgo-bernadett@tk_szociologia|https://szociologia.tk.elte.hu/kulturalis-orokseg-es-fenntarthato-videkfejlodes
+  labels:
+  - Csurgó Bernadett
+  - Csurgó Bernadett
+  method: auto:same_name
+  score: 0.4
+  signals:
+    same_institution_family: false
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - external:tk.mta.hu|https://tk.mta.hu/kutato/kovach-imre
+  - tk_szociologia|name-mention:kovach-imre@tk_szociologia|https://szociologia.tk.elte.hu/cpra-agrieva
+  labels:
+  - Kovách Imre
+  - Kovách Imre
+  method: auto:same_name
+  score: 0.4
+  signals:
+    same_institution_family: false
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - external:tk.mta.hu|https://tk.mta.hu/kutato/kovach-imre
+  - tk_szociologia|name-mention:kovach-imre@tk_szociologia|https://szociologia.tk.elte.hu/cpra-control-post
+  labels:
+  - Kovách Imre
+  - Kovách Imre
+  method: auto:same_name
+  score: 0.4
+  signals:
+    same_institution_family: false
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - external:tk.mta.hu|https://tk.mta.hu/kutato/kovach-imre
+  - tk_szociologia|name-mention:kovach-imre@tk_szociologia|https://szociologia.tk.elte.hu/living-from-their-land
+  labels:
+  - Kovách Imre
+  - Kovách Imre
+  method: auto:same_name
+  score: 0.4
+  signals:
+    same_institution_family: false
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - external:tk.mta.hu|https://tk.mta.hu/kutato/kovach-imre
+  - tk_szociologia|name-mention:kovach-imre@tk_szociologia|https://szociologia.tk.elte.hu/integracios-es-dezintegracios-folyamatok
+  labels:
+  - Kovách Imre
+  - Kovách Imre
+  method: auto:same_name
+  score: 0.4
+  signals:
+    same_institution_family: false
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - external:tk.mta.hu|https://tk.mta.hu/kutato/kristof-luca
+  - tk_szociologia|name-mention:kristof-luca@tk_szociologia|https://szociologia.tk.elte.hu/valsagok-kihivasok-es-adaptacio
+  labels:
+  - Kristóf Luca
+  - Kristóf Luca
+  method: auto:same_name
+  score: 0.4
+  signals:
+    same_institution_family: false
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - external:tk.mta.hu|https://tk.mta.hu/kutato/megyesi-boldizsar
+  - tk_szociologia|name-mention:megyesi-boldizsar@tk_szociologia|https://szociologia.tk.elte.hu/az-agrar-es-videkfejlesztesi-politikak-hatasa-a-helyi-elel
+  labels:
+  - Megyesi Boldizsár
+  - Megyesi Boldizsár
+  method: auto:same_name
+  score: 0.4
+  signals:
+    same_institution_family: false
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - external:tk.mta.hu|https://tk.mta.hu/kutato/nemenyi-maria
+  - tk_szociologia|name-mention:nemenyi-maria@tk_szociologia|https://szociologia.tk.elte.hu/terno
+  labels:
+  - Neményi Mária
+  - Neményi Mária
+  method: auto:same_name
+  score: 0.4
+  signals:
+    same_institution_family: false
+    same_profile_slug: false
+    same_email_domain: false
+    unlinked_mention: true
+- refs:
+  - external:tk.mta.hu|https://tk.mta.hu/kutato/szirmai-viktoria
+  - tk_szociologia|name-mention:szirmai-viktoria@tk_szociologia|https://szociologia.tk.elte.hu/tarsadalmi-polarizacio
+  labels:
+  - Szirmai Viktória
+  - Szirmai Viktória
+  method: auto:same_name
+  score: 0.4
+  signals:
+    same_institution_family: false
     same_profile_slug: false
     same_email_domain: false
     unlinked_mention: true

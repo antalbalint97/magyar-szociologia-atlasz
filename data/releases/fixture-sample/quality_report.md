@@ -1,10 +1,10 @@
 # Data-quality report: fixture-sample
 
-- generated_at: 2026-10-04T16:26:28+00:00
+- generated_at: 2026-10-04T16:39:53+00:00
 - dataset_kind: **fixture**
 - schema_version: 0.1.0
 - sources: tk_kisebbsegkutato, tk_politikatudomany, tk_recens, tk_szociologia
-- parsers: curated=curated/0.1.0, derive.taxonomy=taxonomy_keyword_map/0.1.0, tk.listing=tk/0.2.1, tk.profile=tk/0.2.1, tk.project=tk/0.2.1, tk.project_listing=tk/0.2.1, tk.unit=tk/0.2.1
+- parsers: curated=curated/0.1.0, derive.taxonomy=taxonomy_keyword_map/0.1.0, tk.listing=tk/0.2.2, tk.profile=tk/0.2.2, tk.project=tk/0.2.2, tk.project_listing=tk/0.2.2, tk.unit=tk/0.2.2
 
 | severity | count |
 |---|---|
