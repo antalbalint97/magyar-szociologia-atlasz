@@ -172,6 +172,8 @@ sources:
     unit_type: institute
     base_url: https://szociologia.tk.elte.hu
     host_aliases: [szociologia.tk.hu, szociologia.tk.mta.hu, szociologia.tk.hun-ren.hu, socio.mta.hu]
+    # 301 to the same path on base_url, checked 2026-10-04 (#14); other aliases are inferred
+    verified_host_aliases: [szociologia.tk.hu, szociologia.tk.mta.hu]
     adapter: tk
     enabled: true
     verified: true
@@ -198,6 +200,8 @@ sources:
     unit_type: research_centre
     base_url: https://recens.tk.elte.hu
     host_aliases: [recens.tk.hu, recens.tk.mta.hu, recens.tk.hun-ren.hu]
+    # 301 to the same path on base_url, checked 2026-10-04 (#14); other aliases are inferred
+    verified_host_aliases: [recens.tk.hu, recens.tk.mta.hu]
     adapter: tk
     enabled: true
     verified: true
@@ -219,6 +223,8 @@ sources:
     unit_type: institute
     base_url: https://kisebbsegkutato.tk.elte.hu
     host_aliases: [kisebbsegkutato.tk.hu, kisebbsegkutato.tk.mta.hu, kisebbsegkutato.tk.hun-ren.hu]
+    # 301 to the same path on base_url, checked 2026-10-04 (#14); other aliases are inferred
+    verified_host_aliases: [kisebbsegkutato.tk.hu, kisebbsegkutato.tk.mta.hu]
     adapter: tk
     enabled: true
     verified: true
@@ -241,6 +247,8 @@ sources:
     unit_type: institute
     base_url: https://politikatudomany.tk.elte.hu
     host_aliases: [politikatudomany.tk.hu, politikatudomany.tk.mta.hu, politikatudomany.tk.hun-ren.hu, politologia.tk.mta.hu, politologia.tk.hu, politologia.tk.elte.hu]
+    # 301 to the same path on base_url, checked 2026-10-04 (#14); other aliases are inferred
+    verified_host_aliases: [politikatudomany.tk.hu, politikatudomany.tk.mta.hu, politologia.tk.mta.hu, politologia.tk.hu]
     adapter: tk
     enabled: true
     verified: true
@@ -267,6 +275,8 @@ sources:
     unit_type: institute
     base_url: https://jog.tk.elte.hu
     host_aliases: [jog.tk.hu, jog.tk.mta.hu]
+    # 301 to the same path on base_url, checked 2026-10-04 (#14); other aliases are inferred
+    verified_host_aliases: [jog.tk.mta.hu]
     adapter: tk
     enabled: false
     verified: false

@@ -1,5 +1,7 @@
 """Parser tests against real TK page snapshots (contact details scrubbed; see tests/fixtures/tk/README.md)."""
 
+from bs4 import BeautifulSoup
+
 from szocatlas.normalize.urls import canonical_url, mtmt_id
 from szocatlas.scrub import scrub_html
 from szocatlas.sources.tk import parser as P
@@ -294,3 +296,23 @@ def test_is_project_metadata_is_conservative():
               "Comparative Agendas Project", "Adaptációs mechanizmusok", "Kutatási projektek értékelése"]
     assert [t for t in meta if not P.is_project_metadata(t)] == []
     assert [t for t in titles if P.is_project_metadata(t)] == []
+
+
+def test_person_links_keep_the_url_as_written(aliases):
+    # #5: identity rules must know whether a link reached the canonical host only through an alias
+    html = ('<div><a href="https://politikatudomany.tk.hun-ren.hu/kutato/ujlaki-anna">Ujlaki Anna</a>'
+            '<a href="/kutato/gyulai-attila">Gyulai Attila</a></div>')
+    links = P._links(BeautifulSoup(html, "html.parser").div, "https://politikatudomany.tk.elte.hu/p", aliases)
+    assert [(lk.url, lk.stated_url) for lk in links] == [
+        ("https://politikatudomany.tk.elte.hu/kutato/ujlaki-anna",
+         "https://politikatudomany.tk.hun-ren.hu/kutato/ujlaki-anna"),
+        ("https://politikatudomany.tk.elte.hu/kutato/gyulai-attila",
+         "https://politikatudomany.tk.elte.hu/kutato/gyulai-attila"),
+    ]
+
+
+def test_registry_alias_status(registry):
+    assert registry.alias_status("szociologia.tk.elte.hu") == "canonical"
+    assert registry.alias_status("szociologia.tk.mta.hu") == "verified"
+    assert registry.alias_status("szociologia.tk.hun-ren.hu") == "inferred"
+    assert registry.alias_status("example.org") == "unknown"

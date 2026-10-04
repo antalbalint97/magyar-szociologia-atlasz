@@ -150,7 +150,7 @@ class TKAdapter(SourceAdapter):
             ref = self.person_ref(link.url)
             res.records.append(
                 SourceRecord(ref=ref, label=link.text, document_id=doc.document_id,
-                             hints={"profile_url": link.url, "site": self.owner_source(link.url)})
+                             hints={"profile_url": link.url, "stated_url": link.stated_url, "site": self.owner_source(link.url)})
             )
             res.claims.append(f.literal(ref, "name", link.text, locator="listing.link_text", snippet=link.text))
             if self.owner_source(link.url) == self.entry.source_id:
@@ -276,7 +276,7 @@ class TKAdapter(SourceAdapter):
         for link, label in unit.leaders:
             pref = self.person_ref(link.url)
             res.records.append(SourceRecord(ref=pref, label=link.text, document_id=doc.document_id,
-                                            hints={"profile_url": link.url, "site": self.owner_source(link.url)}))
+                                            hints={"profile_url": link.url, "stated_url": link.stated_url, "site": self.owner_source(link.url)}))
             c.append(f.literal(pref, "name", link.text, locator="unit.leader", snippet=link.text))
             c.append(f.relation(pref, "LEADS", uref, locator="unit.leader", snippet=f"{label}: {link.text}",
                                 qualifiers={"role": label}))
@@ -284,7 +284,7 @@ class TKAdapter(SourceAdapter):
         for link in unit.members:
             pref = self.person_ref(link.url)
             res.records.append(SourceRecord(ref=pref, label=link.text, document_id=doc.document_id,
-                                            hints={"profile_url": link.url, "site": self.owner_source(link.url)}))
+                                            hints={"profile_url": link.url, "stated_url": link.stated_url, "site": self.owner_source(link.url)}))
             c.append(f.literal(pref, "name", link.text, locator="unit.members", snippet=link.text))
             c.append(f.relation(pref, "MEMBER_OF", uref, locator="unit.members", snippet=link.text))
         return res
@@ -345,7 +345,7 @@ class TKAdapter(SourceAdapter):
             per = self.person_ref(link.url)
             snip = proj.lead_snippets.get(link.url, f"Kutatásvezető: {link.text}")
             res.records.append(SourceRecord(ref=per, label=link.text, document_id=doc.document_id,
-                                            hints={"profile_url": link.url, "site": self.owner_source(link.url)}))
+                                            hints={"profile_url": link.url, "stated_url": link.stated_url, "site": self.owner_source(link.url)}))
             c.append(f.literal(per, "name", link.text, locator=f"{loc}.field.vezeto", snippet=link.text))
             c.append(f.relation(per, "PRINCIPAL_INVESTIGATOR_OF", pref, locator=f"{loc}.field.vezeto",
                                 snippet=snip, **period))
@@ -362,7 +362,7 @@ class TKAdapter(SourceAdapter):
         for link in proj.participants:
             per = self.person_ref(link.url)
             res.records.append(SourceRecord(ref=per, label=link.text, document_id=doc.document_id,
-                                            hints={"profile_url": link.url, "site": self.owner_source(link.url)}))
+                                            hints={"profile_url": link.url, "stated_url": link.stated_url, "site": self.owner_source(link.url)}))
             c.append(f.literal(per, "name", link.text, locator=f"{loc}.field.resztvevok", snippet=link.text))
             c.append(f.relation(per, "PARTICIPATES_IN", pref, locator=f"{loc}.field.resztvevok",
                                 snippet=link.text, **period))

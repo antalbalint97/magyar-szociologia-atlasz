@@ -52,6 +52,8 @@ class SourceEntry(BaseModel):
     unit_type: str | None = None
     base_url: str | None = None
     host_aliases: list[str] = Field(default_factory=list)
+    # aliases confirmed by a fetched path-preserving redirect; every other alias is inferred
+    verified_host_aliases: list[str] = Field(default_factory=list)
     source_type: str = "institutional_website"
     adapter: str | None = None
     adapter_config: dict[str, Any] = Field(default_factory=dict)
@@ -84,6 +86,8 @@ class Registry(BaseModel):
         for s in self.sources:
             if s.institution and s.institution not in keys:
                 raise ValueError(f"{s.source_id}: unknown institution {s.institution}")
+            if set(s.verified_host_aliases) - set(s.host_aliases):
+                raise ValueError(f"{s.source_id}: verified alias not in host_aliases")
             if s.enabled and not s.adapter:
                 raise ValueError(f"{s.source_id}: enabled source needs an adapter")
         return self
@@ -120,6 +124,21 @@ class Registry(BaseModel):
             for a in s.host_aliases:
                 out[a.lower()] = canonical
         return out
+
+
+    def alias_status(self, host: str) -> str:
+        """'canonical' for a source's own host, 'verified' or 'inferred' for an alias, else 'unknown'."""
+        from urllib.parse import urlsplit
+
+        host = host.lower()
+        for s in self.sources:
+            if s.base_url and (urlsplit(s.base_url).hostname or "").lower() == host:
+                return "canonical"
+            if host in (a.lower() for a in s.verified_host_aliases):
+                return "verified"
+            if host in (a.lower() for a in s.host_aliases):
+                return "inferred"
+        return "unknown"
 
 
 def load_registry(path: Path | str = DEFAULT_REGISTRY) -> Registry:

@@ -24,7 +24,7 @@ from bs4 import BeautifulSoup, NavigableString, Tag
 from ...normalize.names import clean_display_name, normalise_whitespace
 from ...normalize.urls import canonical_url, mtmt_id, orcid_id, scholar_id
 
-PARSER_VERSION = "tk/0.2.2"
+PARSER_VERSION = "tk/0.3.0"
 
 PROFILE_PATH_RE = re.compile(r"^/kutato/(?!pdf/)([a-z0-9][a-z0-9-]*)/?$")
 CV_PATH_RE = re.compile(r"^/kutato/pdf/(\d+)$")
@@ -171,8 +171,9 @@ def _host(url: str) -> str:
 
 @dataclass
 class Link:
-    url: str  # canonical
+    url: str  # canonical (host aliases applied)
     text: str
+    stated_url: str = ""  # as written on the page (absolute, aliases not applied): alias evidence for #5
 
 
 @dataclass
@@ -259,7 +260,7 @@ def _link(a: Tag, base: str, aliases: dict[str, str]) -> Link | None:
     href = (a.get("href") or "").strip()
     if not href or href.startswith(("mailto:", "tel:", "#", "javascript:")):
         return None
-    return Link(canonical_url(href, base=base, aliases=aliases), text_of(a))
+    return Link(canonical_url(href, base=base, aliases=aliases), text_of(a), canonical_url(href, base=base))
 
 
 def _links(el: Tag, base: str, aliases: dict[str, str]) -> list[Link]:
@@ -271,11 +272,11 @@ def _links(el: Tag, base: str, aliases: dict[str, str]) -> list[Link]:
         adjacent = prev is not None and out and not normalise_whitespace(
             "".join(str(x) for x in _between(prev, a)))
         if adjacent and out[-1].url == lk.url:
-            out[-1] = Link(lk.url, out[-1].text + lk.text)  # one name split across two links
+            out[-1] = Link(lk.url, out[-1].text + lk.text, lk.stated_url)  # one name split across two links
         elif adjacent and len(out[-1].text) <= 2 and lk.text[:1].islower():
             # "<a href=A>S</a><a href=B>zikra Dorottya</a>": a stray initial linked to the
             # wrong profile; the name belongs to the second link only
-            out[-1] = Link(lk.url, out[-1].text + lk.text)
+            out[-1] = Link(lk.url, out[-1].text + lk.text, lk.stated_url)
         else:
             out.append(lk)
     return out
@@ -342,12 +343,12 @@ def _split_lines(block: Tag, base: str, aliases: dict[str, str]) -> list[Line]:
                         if (links and links[-1].url == lk.url and prev is not None and prev.name == "a"
                                 and c.previous_sibling is prev):
                             # "<a>S</a><a>zikra Dorottya</a>": one name split across two links
-                            links[-1] = Link(lk.url, links[-1].text + lk.text)
+                            links[-1] = Link(lk.url, links[-1].text + lk.text, lk.stated_url)
                         elif (links and len(links[-1].text) <= 2 and lk.text[:1].islower()
                               and prev is not None and prev.name == "a" and c.previous_sibling is prev):
                             # "<a href=/en/…>D</a><a href=/…>onáció alapú …</a>": a stray initial
                             # linked elsewhere; the text belongs to the second link
-                            links[-1] = Link(lk.url, links[-1].text + lk.text)
+                            links[-1] = Link(lk.url, links[-1].text + lk.text, lk.stated_url)
                         else:
                             links.append(lk)
                     walk(c)
