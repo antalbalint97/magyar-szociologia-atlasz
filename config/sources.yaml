@@ -171,7 +171,7 @@ sources:
     unit_english_name: Institute for Sociology
     unit_type: institute
     base_url: https://szociologia.tk.elte.hu
-    host_aliases: [szociologia.tk.hu, szociologia.tk.mta.hu]
+    host_aliases: [szociologia.tk.hu, szociologia.tk.mta.hu, szociologia.tk.hun-ren.hu, socio.mta.hu]
     adapter: tk
     enabled: true
     verified: true
@@ -185,7 +185,11 @@ sources:
       project_listings:
         - {path: /kategoria/futo-kutatasok, status_label: futó}
         - {path: /kategoria/lezart-kutatasok, status_label: lezárt}
-    notes: Datasets link points to openarchive.tk.mta.hu (division SZI).
+    notes: >
+      Datasets link points to openarchive.tk.mta.hu (division SZI). socio.mta.hu (the
+      former MTA Sociology Institute host) appears in /kutato/<slug> links on project
+      pages; aliased by that pattern, not by a fetched redirect (host blocked in the
+      crawl environment).
 
   - source_id: tk_recens
     institution: elte_tk
@@ -193,7 +197,7 @@ sources:
     unit_english_name: Computational Social Science - Research Center for Educational and Network Studies (CSS-RECENS)
     unit_type: research_centre
     base_url: https://recens.tk.elte.hu
-    host_aliases: [recens.tk.hu, recens.tk.mta.hu]
+    host_aliases: [recens.tk.hu, recens.tk.mta.hu, recens.tk.hun-ren.hu]
     adapter: tk
     enabled: true
     verified: true
@@ -214,7 +218,7 @@ sources:
     unit_english_name: Institute for Minority Studies
     unit_type: institute
     base_url: https://kisebbsegkutato.tk.elte.hu
-    host_aliases: [kisebbsegkutato.tk.hu, kisebbsegkutato.tk.mta.hu]
+    host_aliases: [kisebbsegkutato.tk.hu, kisebbsegkutato.tk.mta.hu, kisebbsegkutato.tk.hun-ren.hu]
     adapter: tk
     enabled: true
     verified: true
@@ -236,7 +240,7 @@ sources:
     unit_english_name: Institute for Political Science
     unit_type: institute
     base_url: https://politikatudomany.tk.elte.hu
-    host_aliases: [politikatudomany.tk.hu, politikatudomany.tk.mta.hu]
+    host_aliases: [politikatudomany.tk.hu, politikatudomany.tk.mta.hu, politikatudomany.tk.hun-ren.hu, politologia.tk.mta.hu, politologia.tk.hu, politologia.tk.elte.hu]
     adapter: tk
     enabled: true
     verified: true
@@ -250,7 +254,11 @@ sources:
         - {path: /politikai-viselkedes-osztaly, unit_type: research_department}
       project_listings:
         - {path: /kategoria/futo-kutatasi-projektek, status_label: futó}
-    notes: Paths confirmed from the site menu on the first live crawl (2026-10-04).
+    notes: >
+      Paths confirmed from the site menu on the first live crawl (2026-10-04).
+      politologia.tk.mta.hu redirects here (observed 2026-10-04); the *.tk.hun-ren.hu
+      aliases on all tk_* entries are inferred from /kutato/<slug> links on the sites
+      and could not be fetched from the crawl environment.
 
   - source_id: tk_jog
     institution: elte_tk

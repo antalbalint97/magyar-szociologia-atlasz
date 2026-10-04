@@ -185,3 +185,11 @@ def test_parse_period_variants():
     assert P.parse_period("2019–2023") == ("2019", "2023")
     assert P.parse_period("2022-") == ("2022", None)
     assert P.parse_period("folyamatban") == (None, None)
+
+
+def test_name_split_across_two_links_is_repaired():
+    # observed on the SZI "Társadalom- és Közpolitika" unit page (2026-10-04)
+    html = ('<td><a href="https://szociologia.tk.mta.hu/kutato/messing-vera">S</a>\n'
+            '<a href="https://szociologia.tk.hu/kutato/szikra-dorottya">zikra Dorottya</a></td>')
+    links = P._links(P.soup_of(html), "https://szociologia.tk.elte.hu/", {})
+    assert [(lk.url.rsplit("/", 1)[1], lk.text) for lk in links] == [("szikra-dorottya", "Szikra Dorottya")]

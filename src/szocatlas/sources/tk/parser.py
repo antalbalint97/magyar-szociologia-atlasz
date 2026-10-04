@@ -81,6 +81,9 @@ PROJECT_ROLE_RE = re.compile(
     r"(nyertes )?társpályázó|konzorciumi partner)$",
     re.I,
 )
+TRAILING_LEAD_RE = re.compile(
+    r"[,;–-]\s*(?:a\s+)?(kutatás vezetője|kutatásvezető|projektvezető|témavezető)\s*:\s*([^():]+)$", re.I
+)
 TRAILING_PAREN_RE = re.compile(r"\s*\(([^()]*)\)\s*$")
 FUNDER_PREFIX_RE = re.compile(r"^(NKFIH|OTKA|NKFI|ERC|H2020|Horizon Europe|MTA|EFOP|GINOP|TKP)\b", re.I)
 ORG_WORD_RE = re.compile(
@@ -224,7 +227,31 @@ def _link(a: Tag, base: str, aliases: dict[str, str]) -> Link | None:
 
 
 def _links(el: Tag, base: str, aliases: dict[str, str]) -> list[Link]:
-    return [lk for a in el.find_all("a", href=True) if (lk := _link(a, base, aliases))]
+    out: list[Link] = []
+    for a in el.find_all("a", href=True):
+        if (lk := _link(a, base, aliases)) is None:
+            continue
+        prev = a.find_previous_sibling("a")
+        adjacent = prev is not None and out and not normalise_whitespace(
+            "".join(str(x) for x in _between(prev, a)))
+        if adjacent and out[-1].url == lk.url:
+            out[-1] = Link(lk.url, out[-1].text + lk.text)  # one name split across two links
+        elif adjacent and len(out[-1].text) <= 2 and lk.text[:1].islower():
+            # "<a href=A>S</a><a href=B>zikra Dorottya</a>": a stray initial linked to the
+            # wrong profile; the name belongs to the second link only
+            out[-1] = Link(lk.url, out[-1].text + lk.text)
+        else:
+            out.append(lk)
+    return out
+
+
+def _between(a: Tag, b: Tag) -> list:
+    out = []
+    for sib in a.next_siblings:
+        if sib is b:
+            break
+        out.append(sib.get_text() if isinstance(sib, Tag) else sib)
+    return out
 
 
 def is_profile_url(url: str) -> bool:
@@ -275,7 +302,13 @@ def _split_lines(block: Tag, base: str, aliases: dict[str, str]) -> list[Line]:
                     continue
                 else:
                     if c.name == "a" and (lk := _link(c, base, aliases)):
-                        links.append(lk)
+                        prev = c.find_previous_sibling()
+                        if (links and links[-1].url == lk.url and prev is not None and prev.name == "a"
+                                and c.previous_sibling is prev):
+                            # "<a>S</a><a>zikra Dorottya</a>": one name split across two links
+                            links[-1] = Link(lk.url, links[-1].text + lk.text)
+                        else:
+                            links.append(lk)
                     walk(c)
 
     walk(block)
@@ -532,9 +565,13 @@ def parse_profile(html: str, base: str, aliases: dict[str, str], site_unit: str 
 def _project_mention(line: Line) -> ProjectMention:
     """'<a>Title</a> (Kutatásvezető)', 'Title (kutatásvezető: X Y)', 'Title (2019-2023)'."""
     t = line.text
-    link = line.links[0] if line.links else None
+    # a link to a researcher profile names a person (usually the lead), not the project
+    link = next((lk for lk in line.links if not is_profile_url(lk.url)), None)
+    stated = None
+    if m := TRAILING_LEAD_RE.search(t):
+        stated, t = m.group(2).strip(), t[: m.start()].strip()
     title = link.text if link and link.text else t
-    pm = ProjectMention(title=title, url=link.url if link else None, snippet=t)
+    pm = ProjectMention(title=title, url=link.url if link else None, snippet=line.text, stated_lead=stated)
     rest = t[len(link.text):] if link and t.startswith(link.text) else t
     if m := LEADING_PERIOD_RE.match(rest):
         # "2023-2027 – Title", "2024-jelenleg – Title"
