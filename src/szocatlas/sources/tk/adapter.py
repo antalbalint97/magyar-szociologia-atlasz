@@ -235,6 +235,9 @@ class TKAdapter(SourceAdapter):
             res.records.append(SourceRecord(ref=pref, label=pm.title, document_id=doc.document_id,
                                             hints={"url": pm.url} if pm.url else {}))
             c.append(f.literal(pref, "title", pm.title, locator="profile.section.projektek", snippet=pm.snippet))
+            if pm.grant_id:
+                c.append(f.literal(pref, "grant_id", pm.grant_id, locator="profile.section.projektek",
+                                   snippet=pm.snippet))
             kw = {}
             if pm.period_from or pm.period_until:
                 kw = dict(valid_from=pm.period_from, valid_until=pm.period_until,

@@ -193,3 +193,101 @@ def test_name_split_across_two_links_is_repaired():
             '<a href="https://szociologia.tk.hu/kutato/szikra-dorottya">zikra Dorottya</a></td>')
     links = P._links(P.soup_of(html), "https://szociologia.tk.elte.hu/", {})
     assert [(lk.url.rsplit("/", 1)[1], lk.text) for lk in links] == [("szikra-dorottya", "Szikra Dorottya")]
+
+
+# --- #8: metadata lines in a profile's "Projektek" section are never projects ---------
+
+PTI = "TK Politikatudományi Intézet"
+KI = "TK Kisebbségkutató Intézet"
+
+
+def _projects(fixture_html, aliases, name, url, unit):
+    prof = P.parse_profile(fixture_html(name), url, aliases, unit)
+    return prof, {pm.title: pm for pm in prof.projects}
+
+
+def test_section_headings_are_not_projects(fixture_html, aliases):
+    prof, by_title = _projects(fixture_html, aliases, "ki_eiler_ferenc.html",
+                               "https://kisebbsegkutato.tk.elte.hu/kutato/eiler-ferenc", KI)
+    assert "Aktuális kutatások:" not in by_title and "Lezárt kutatások:" not in by_title
+    assert prof.rejected_project_lines == ["Aktuális kutatások:", "Lezárt kutatások:"]
+    assert len(prof.projects) == 5
+    assert "Németek, helyi társadalom és hatalom (Harta, 1920–1989)" in by_title  # a year range inside a title stays
+
+
+def test_role_grant_and_funder_lines_are_not_projects(fixture_html, aliases):
+    # "2024-2026 <a>Title</a>" / "NKFIH. K147329" / "Kutatásvezető" per project
+    prof, by_title = _projects(fixture_html, aliases, "recens_kmetty_zoltan.html",
+                               "https://recens.tk.elte.hu/kutato/kmetty-zoltan", RECENS)
+    for junk in ("Kutatásvezető", "Kutató", "Szenior Kutató", "Projekt koordinátor", "Vezető kutató, WP vezető",
+                 "NKFIH. K147329", "H2020. G-ID: 785125", "TÁMOP 5.4.1-12", "Magyar Tudományos Akadémia"):
+        assert junk not in by_title
+        assert junk in prof.rejected_project_lines
+    # real projects with periods, acronyms and grant vocabulary are kept
+    assert by_title["NATCONSUMERS"].period_from == "2015"
+    assert by_title["Digitális politikai lábnyomok"].period_until == "2026"
+    assert "ISSP – Hálózatok és erőforrások" in by_title
+    # uncertain activities stay for activity classification (#9)
+    assert "ELKH Zászlóshajó projekt" in by_title and "MTA Kutatócsoport" in by_title
+    assert len(prof.projects) == 16
+
+
+def test_initial_linked_elsewhere_is_joined_to_the_title(fixture_html, aliases):
+    _, by_title = _projects(fixture_html, aliases, "recens_kmetty_zoltan.html",
+                            "https://recens.tk.elte.hu/kutato/kmetty-zoltan", RECENS)
+    pm = by_title["Donáció alapú digitális adatgyűjtés"]
+    assert pm.url == "https://recens.tk.elte.hu/donacio-alapu-digitalis-adatgyujtes"
+    assert "D" not in by_title
+
+
+def test_table_header_row_and_cells_are_not_projects(fixture_html, aliases):
+    # columns: Cím / téma | Intézmény | Időtartam
+    prof, by_title = _projects(fixture_html, aliases, "pti_hajnal_gyorgy.html",
+                               "https://politikatudomany.tk.elte.hu/kutato/hajnal-gyorgy", PTI)
+    for junk in ("Cím / téma", "Intézmény", "Időtartam", "2005-2009", "Magyar Közigazgatási Intézet"):
+        assert junk not in by_title
+    assert len(prof.projects) == 7
+    pm = by_title["“Közpolitikai kudarcok Magyarországon” – ROP3.1.1"]
+    assert (pm.period_from, pm.period_until, pm.role) == ("2005", "2009", "kutatásvezető")
+    assert "Magyar Közigazgatási Intézet (kutatásvezető)" in pm.snippet
+
+
+def test_table_grant_and_role_cells_qualify_the_title(fixture_html, aliases):
+    # columns: grant | funder – role | title
+    prof, by_title = _projects(fixture_html, aliases, "pti_szabo_andrea.html",
+                               "https://politikatudomany.tk.elte.hu/kutato/szabo-andrea", PTI)
+    for junk in ("119603 jelű", "kutatásvezető", "vezető kutató", "K–OTKA –résztvevő kutató"):
+        assert junk not in by_title
+    pm = by_title["Részvétel, képviselet, pártosság. Választáskutatás, 2018."]
+    assert (pm.grant_id, pm.role) == ("119603 jelű", "kutatásvezető")
+    assert by_title["ESS Magyarország"].role == "résztvevő kutató"
+    assert len(prof.projects) == 8
+
+
+def test_table_period_cell_before_the_title(fixture_html, aliases):
+    prof, by_title = _projects(fixture_html, aliases, "szi_szalai_julia.html",
+                               "https://szociologia.tk.elte.hu/kutato/szalai-julia", SZI)
+    assert not any(P.PERIOD_LINE_RE.match(t) for t in by_title)
+    assert len(prof.projects) == 5
+    assert {(pm.period_from, pm.period_until) for pm in prof.projects} >= {("2002", "2004"), ("2003", None)}
+
+
+def test_link_whose_text_is_a_url_is_not_a_title(fixture_html, aliases):
+    prof, _ = _projects(fixture_html, aliases, "szi_csizmady_adrienne.html",
+                        "https://szociologia.tk.elte.hu/kutato/csizmady-adrienne", SZI)
+    titles = [pm.title for pm in prof.projects]
+    assert "https://tinlab.hu/" not in titles and "" not in titles
+    first = prof.projects[0]
+    assert first.title.startswith("Techceptance") and "https://" not in first.title
+    assert first.url is None and first.role == "kutatásvezető"
+
+
+def test_is_project_metadata_is_conservative():
+    meta = ["Korábbi projektek:", "Futó projektek:", "Projektek", "Kutatásvezető", "Projektvezető",
+            "Kutatás résztvevői", "Résztvevők", "2022-2024", "2022–2024", "2024", "2021-",
+            "NKFIH. K147329", "119603 jelű", "OTKA PD kutatás – kutatásvezető"]
+    titles = ["NATCONSUMERS", "Magyar Ifjúság 2016", "ESS Magyarország", "ELKH Zászlóshajó projekt",
+              "NKFIH K 124384 Rétegződés és mobilitás", "OTKA – „A magyar központi közigazgatás”",
+              "Választáskutatás, 2018.", "MTA Kutatócsoport", "Krízis és Innováció", "ISSP 2017"]
+    assert [t for t in meta if not P.is_project_metadata(t)] == []
+    assert [t for t in titles if P.is_project_metadata(t)] == []
