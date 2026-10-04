@@ -1,3 +1,11 @@
+ki_eiler_ferenc.html:
+  content_sha256: 5d94c6b8e18bc7be3332b4c95d7c9c8c96101b6f354f252db1971860cc638ef6
+  kind: person
+  observed: '2026-10-04'
+  reconstructed: false
+  scrubbed: true
+  source_id: tk_kisebbsegkutato
+  url: https://kisebbsegkutato.tk.elte.hu/kutato/eiler-ferenc
 ki_feischmidt_margit.html:
   content_sha256: 99556522bd930d6383457a74da2a41f4d43be3ba25f341641e325c08c1d6fe3d
   kind: person
@@ -22,6 +30,22 @@ pti_adam_zoltan.html:
   scrubbed: true
   source_id: tk_politikatudomany
   url: https://politikatudomany.tk.elte.hu/kutato/adam-zoltan
+pti_hajnal_gyorgy.html:
+  content_sha256: d736e5f75e3d3918dedaa45d401a8bfb0993d1e7951605eee30d5e96a52d0f15
+  kind: person
+  observed: '2026-10-04'
+  reconstructed: false
+  scrubbed: true
+  source_id: tk_politikatudomany
+  url: https://politikatudomany.tk.elte.hu/kutato/hajnal-gyorgy
+pti_szabo_andrea.html:
+  content_sha256: 8dd1bf376732301f19866489c94e827269b1f3ceb599ce9bc059edac5fdc0f05
+  kind: person
+  observed: '2026-10-04'
+  reconstructed: false
+  scrubbed: true
+  source_id: tk_politikatudomany
+  url: https://politikatudomany.tk.elte.hu/kutato/szabo-andrea
 recens_freigang_istvan.html:
   content_sha256: dc1e236514048c2471a7d6493f0a24b98a614bd32d759881c2cdade634de43a2
   kind: person
@@ -30,6 +54,14 @@ recens_freigang_istvan.html:
   scrubbed: true
   source_id: tk_recens
   url: https://recens.tk.elte.hu/kutato/freigang-istvan
+recens_kmetty_zoltan.html:
+  content_sha256: 708d23289e7b6ac059af90848d2ac1f96d12245506b3f34bd26c9bbbc86f41c2
+  kind: person
+  observed: '2026-10-04'
+  reconstructed: false
+  scrubbed: true
+  source_id: tk_recens
+  url: https://recens.tk.elte.hu/kutato/kmetty-zoltan
 recens_koltai_julia.html:
   content_sha256: a18325558f91aa2188cfe58f764160211e2b1d9d135bd7e7b8865798417046f5
   kind: person
@@ -62,6 +94,14 @@ szi_albert_fruzsina.html:
   scrubbed: true
   source_id: tk_szociologia
   url: https://szociologia.tk.elte.hu/kutato/albert-fruzsina
+szi_csizmady_adrienne.html:
+  content_sha256: b5ad0ee806ece89eb399accc6acb9c9b3cdcf14f47a86b60e68ea1fd719be3ce
+  kind: person
+  observed: '2026-10-04'
+  reconstructed: false
+  scrubbed: true
+  source_id: tk_szociologia
+  url: https://szociologia.tk.elte.hu/kutato/csizmady-adrienne
 szi_futo_kutatasok.html:
   content_sha256: ad858ce6af8ed0ba9876766f44e8cc525341281ba5ab68726b0b540048444d7b
   kind: project_listing
@@ -87,6 +127,14 @@ szi_project_vakcinacio.html:
   scrubbed: true
   source_id: tk_szociologia
   url: https://szociologia.tk.elte.hu/a-vakcinacios-szandek-megertese
+szi_szalai_julia.html:
+  content_sha256: eae2324cf7892e36f20baa806bffe642c1cc670d8717734e0fd6018ed441cc8c
+  kind: person
+  observed: '2026-10-04'
+  reconstructed: false
+  scrubbed: true
+  source_id: tk_szociologia
+  url: https://szociologia.tk.elte.hu/kutato/szalai-julia
 szi_unit_csalad.html:
   content_sha256: 067047e2fdebddffb705cfcf6a30eee45ef1a7b655bc35e21207168288bcbe28
   kind: unit

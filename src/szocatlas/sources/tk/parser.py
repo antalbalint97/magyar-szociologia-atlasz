@@ -24,7 +24,7 @@ from bs4 import BeautifulSoup, NavigableString, Tag
 from ...normalize.names import clean_display_name, normalise_whitespace
 from ...normalize.urls import canonical_url, mtmt_id, orcid_id, scholar_id
 
-PARSER_VERSION = "tk/0.2.0"
+PARSER_VERSION = "tk/0.2.1"
 
 PROFILE_PATH_RE = re.compile(r"^/kutato/(?!pdf/)([a-z0-9][a-z0-9-]*)/?$")
 CV_PATH_RE = re.compile(r"^/kutato/pdf/(\d+)$")
@@ -95,6 +95,40 @@ SENTENCE_LABEL_SPLIT_RE = re.compile(r"(?<=[a-záéíóöőúüű)])\.\s+(?=[A-Z
 GRANT_IN_LABEL_RE = re.compile(r"^(NKFIH|OTKA|NKFI)\s+([A-Z]{0,4}\s?-?\d{5,6})$")
 AFFIL_SUFFIX_RE = re.compile(r"\s*\(([^()]*)\)\s*$")
 
+# Lines in a profile's "Projektek" section that are metadata about a project, never a
+# project title (#8). High precision only: a line is rejected when the whole line is a
+# section label, a column header, a role, a period, a bare grant id or a bare funder name.
+# Anything that might be a project, programme, network or infrastructure is kept (#9).
+PROJECT_SECTION_LABEL_RE = re.compile(
+    r"^((jelenleg |korábbi |futó |aktuális |lezárt |lezárult |befejezett |folyamatban lévő )?"
+    r"(kutatási )?(projektek?|kutatások|kutatási projektek?)|cím ?/ ?téma|intézmény|időtartam|"
+    r"szerep|finanszírozó|támogató|résztvevők|résztvevő kutatók|(a )?kutatás résztvevői|projekt résztvevői)\s*:?$",
+    re.I,
+)
+_ROLE = (
+    r"(kutatásvezető|projektvezető|témavezető|szakmai vezető|vezető kutató|társkutató|"
+    r"alprojekt-?vezető|wp[ -]?vezető|résztvevő( kutató)?|(szenior |senior |junior )?kutató|munkatárs|"
+    r"tag|(projekt ?)?koordinátor|(nyertes )?társpályázó|konzorciumi partner|national coordinator|"
+    r"principal investigator|researcher|team member)"
+)
+ROLE_LINE_RE = re.compile(rf"^{_ROLE}(\s*[,/]\s*{_ROLE})*\.?$", re.I)
+_FUNDER = r"(NKFIH|NKFI|OTKA|ERC|H2020|Horizon 2020|Horizon Europe|EFOP|GINOP|TÁMOP|TKP|KEHOP|VEKOP)"
+# "NKFI kutatás – kutatásvezető", "K–OTKA –résztvevő kutató": a funder plus the person's role
+FUNDER_ROLE_LINE_RE = re.compile(rf"^(K\s*[–-]\s*)?{_FUNDER}\b[^–—-]{{0,25}}?\s*[–—-]+\s*(?P<role>{_ROLE})$", re.I)
+# "NKFIH. K147329", "H2020. G-ID: 785125", "TÁMOP 5.4.1-12", "119603 jelű"
+GRANT_LINE_RE = re.compile(
+    rf"^({_FUNDER}[\s.:]*(G-ID:?\s*)?([A-Z]{{1,4}}\s?-?)?(\d{{4,7}}|\d+(\.\d+)+(-\d+)?)|"
+    r"(K\s?)?\d{5,6}\s+jelű)\.?$",
+    re.I,
+)
+FUNDER_ONLY_LINE_RE = re.compile(
+    r"^(Magyar Tudományos Akadémia|MTA|NKFIH|NKFI|OTKA|Európai Bizottság|European Commission|ERC|"
+    r"H2020|Horizon 2020|Horizon Europe)\.?$",
+    re.I,
+)
+URL_TEXT_RE = re.compile(r"^(https?://|www\.)\S+$", re.I)
+TRAILING_URL_RE = re.compile(r"\s*(https?://|www\.)\S+\s*$", re.I)
+
 SECTION_AREAS = re.compile(r"^kutatási (terület|téma)", re.I)
 SECTION_PROJECTS = re.compile(r"^(projektek|kutatások|futó projektek|kutatási projektek)", re.I)
 SECTION_PUBS = re.compile(r"publikáció", re.I)
@@ -158,6 +192,7 @@ class ProjectMention:
     period_until: str | None = None
     role: str | None = None          # e.g. "Kutatásvezető" when the person is the lead
     stated_lead: str | None = None   # "(kutatásvezető: Kovách Imre)" -> someone else leads
+    grant_id: str | None = None      # from a grant cell in the same table row
 
 
 @dataclass
@@ -180,6 +215,7 @@ class ProfilePage:
     projects: list[ProjectMention] = field(default_factory=list)
     biography: str | None = None
     unknown_labels: list[str] = field(default_factory=list)  # for parser QA, never stored
+    rejected_project_lines: list[str] = field(default_factory=list)  # metadata lines (#8), parser QA
 
 
 @dataclass
@@ -306,6 +342,11 @@ def _split_lines(block: Tag, base: str, aliases: dict[str, str]) -> list[Line]:
                         if (links and links[-1].url == lk.url and prev is not None and prev.name == "a"
                                 and c.previous_sibling is prev):
                             # "<a>S</a><a>zikra Dorottya</a>": one name split across two links
+                            links[-1] = Link(lk.url, links[-1].text + lk.text)
+                        elif (links and len(links[-1].text) <= 2 and lk.text[:1].islower()
+                              and prev is not None and prev.name == "a" and c.previous_sibling is prev):
+                            # "<a href=/en/…>D</a><a href=/…>onáció alapú …</a>": a stray initial
+                            # linked elsewhere; the text belongs to the second link
                             links[-1] = Link(lk.url, links[-1].text + lk.text)
                         else:
                             links.append(lk)
@@ -542,9 +583,7 @@ def parse_profile(html: str, base: str, aliases: dict[str, str], site_unit: str 
                     page.biography = page.biography or text_of(b)
                     break
         elif SECTION_PROJECTS.match(heading):
-            mentions = [_project_mention(line) for b in blocks
-                        for line in _split_lines(b, base, aliases) if line.text]
-            page.projects += _merge_period_headers(mentions)
+            page.projects += _profile_projects(blocks, base, aliases, page.rejected_project_lines)
 
     if page.biography is None:
         # first substantial paragraph directly under the title
@@ -566,7 +605,8 @@ def _project_mention(line: Line) -> ProjectMention:
     """'<a>Title</a> (Kutatásvezető)', 'Title (kutatásvezető: X Y)', 'Title (2019-2023)'."""
     t = line.text
     # a link to a researcher profile names a person (usually the lead), not the project
-    link = next((lk for lk in line.links if not is_profile_url(lk.url)), None)
+    link = next((lk for lk in line.links
+                 if not is_profile_url(lk.url) and not URL_TEXT_RE.match(lk.text.strip())), None)
     stated = None
     if m := TRAILING_LEAD_RE.search(t):
         stated, t = m.group(2).strip(), t[: m.start()].strip()
@@ -593,7 +633,94 @@ def _project_mention(line: Line) -> ProjectMention:
             break
         rest = rest[: m.start()]
     if not link:
-        pm.title = rest.strip()
+        pm.title = TRAILING_URL_RE.sub("", rest).strip()  # "… TINLAB https://tinlab.hu/"
+    return pm
+
+
+def is_project_metadata(text: str) -> bool:
+    """True when the whole line is a label, role, period, grant id or funder name (#8)."""
+    t = text.strip().strip("„”\"").strip()
+    return (not t or bool(PROJECT_SECTION_LABEL_RE.match(t) or ROLE_LINE_RE.match(t)
+                          or PERIOD_LINE_RE.match(t) or re.fullmatch(r"\d{4}\.?", t)
+                          or GRANT_LINE_RE.match(t) or FUNDER_ROLE_LINE_RE.match(t)
+                          or FUNDER_ONLY_LINE_RE.match(t)))
+
+
+def _profile_projects(blocks: list[Tag], base: str, aliases: dict[str, str],
+                      rejected: list[str]) -> list[ProjectMention]:
+    """Project mentions in a profile's "Projektek" section.
+
+    A table row is one project: the first cell that is not metadata is the title, and
+    period / grant / role cells of the same row qualify it (observed column orders differ:
+    title-institution-period, period-title, grant-role-title). Outside tables, metadata
+    lines are dropped, not attached, because their direction is not determinable from
+    the markup (role lines follow the title on some profiles, precede it on others).
+    """
+    out: list[ProjectMention] = []
+    rows: dict[int, list[Tag]] = {}
+    order: list[tuple[str, object]] = []
+    for b in blocks:
+        tr = b.find_parent("tr")
+        if tr is None:
+            order.append(("line", b))
+        else:
+            if id(tr) not in rows:
+                rows[id(tr)] = []
+                order.append(("row", id(tr)))
+            rows[id(tr)].append(b)
+    flat: list[ProjectMention] = []
+
+    def flush_flat():
+        out.extend(_merge_period_headers(flat))
+        flat.clear()
+
+    for kind, item in order:
+        if kind == "line":
+            for line in _split_lines(item, base, aliases):
+                if not line.text:
+                    continue
+                pm = _project_mention(line)
+                if (not pm.title.strip() or is_project_metadata(pm.title)) and not (
+                        pm.period_from and PROJECT_ROLE_RE.match(pm.title.strip())):
+                    rejected.append(line.text)  # "Korábbi projektek:", "Kutatásvezető", "2022-2024"
+                    continue
+                flat.append(pm)
+            continue
+        flush_flat()
+        cells = [ln for b in rows[item] for ln in _split_lines(b, base, aliases) if ln.text]
+        if pm := _table_row_mention(cells):
+            out.append(pm)
+        else:
+            rejected.append(" | ".join(c.text for c in cells))
+    flush_flat()
+    return out
+
+
+def _table_row_mention(cells: list[Line]) -> ProjectMention | None:
+    title_cell = next((c for c in cells if not is_project_metadata(c.text)), None)
+    if title_cell is None:
+        return None  # header row ("Cím / téma | Intézmény | Időtartam") or an empty row
+    pm = _project_mention(title_cell)
+    if not pm.title.strip():
+        return None
+    pm.snippet = " | ".join(c.text for c in cells)
+    for c in cells:
+        if c is title_cell:
+            continue
+        t = c.text.strip()
+        if PERIOD_LINE_RE.match(t) or re.fullmatch(r"\d{4}\.?", t):
+            if not (pm.period_from or pm.period_until):
+                pm.period_from, pm.period_until = (t[:4], None) if re.fullmatch(r"\d{4}\.?", t) else parse_period(t)
+        elif GRANT_LINE_RE.match(t):
+            pm.grant_id = pm.grant_id or t
+        elif ROLE_LINE_RE.match(t):
+            pm.role = pm.role or t
+        elif m := FUNDER_ROLE_LINE_RE.match(t):
+            pm.role = pm.role or m.group("role").strip()
+        elif m := TRAILING_PAREN_RE.search(t):
+            # "Magyar Közigazgatási Intézet (kutatásvezető)": the institution cell states the role
+            if PROJECT_ROLE_RE.match(m.group(1).strip()):
+                pm.role = pm.role or m.group(1).strip()
     return pm
 
 
