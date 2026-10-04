@@ -106,7 +106,7 @@ def ingest(source_ids: list[str] | None, *, replay: bool = False, paths: Paths |
 
 def ingest_fixtures(fixture_dir: Path, paths: Paths | None = None,
                     registry: Registry | None = None) -> dict[str, dict]:
-    """Parse reconstructed fixtures as if fetched. Produces a *fixture* dataset only."""
+    """Parse test fixtures as if fetched. Produces a *fixture* dataset only (never a release)."""
     paths = paths or Paths()
     registry = registry or load_registry()
     spec = yaml.safe_load((fixture_dir / "fixtures.yaml").read_text(encoding="utf-8"))
@@ -119,7 +119,9 @@ def ingest_fixtures(fixture_dir: Path, paths: Paths | None = None,
         adapter = ADAPTERS[entry.adapter](entry, registry, fetcher)
         page = fetcher.get(meta["url"], source_id=entry.source_id, source_type=_stype(meta["kind"]))
         parse = {"person": adapter.parse_person, "unit": adapter.parse_unit,
-                 "project": adapter.parse_project, "listing": adapter.parse_listing}[meta["kind"]]
+                 "project": adapter.parse_project, "listing": adapter.parse_listing,
+                 "project_listing": lambda pg: adapter.parse_project_listing(pg, meta.get("status_label")),
+                 }[meta["kind"]]
         res = parse(page)
         res.documents.append(page.document)
         by_source.setdefault(entry.source_id, ParseResult()).extend(res)
@@ -129,7 +131,8 @@ def ingest_fixtures(fixture_dir: Path, paths: Paths | None = None,
 def _stype(kind: str):
     from .models.enums import SourceType
     return {"person": SourceType.INSTITUTIONAL_PROFILE, "unit": SourceType.UNIT_PAGE,
-            "project": SourceType.PROJECT_PAGE, "listing": SourceType.INSTITUTIONAL_LISTING}[kind]
+            "project": SourceType.PROJECT_PAGE, "listing": SourceType.INSTITUTIONAL_LISTING,
+            "project_listing": SourceType.INSTITUTIONAL_LISTING}[kind]
 
 
 def _apply_review(claims: list[Claim], path: Path) -> list[Claim]:

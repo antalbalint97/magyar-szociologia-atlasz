@@ -221,11 +221,14 @@ sources:
     adapter_config:
       institute_code: KI
       people_listing: /kutatok
-      units: []
+      units:
+        - {path: /kisebbsegszociologiai-es-antropologiai-osztaly, unit_type: research_department}
+        - {path: /kisebbsegtorteneti-es-etnopolitikai-osztaly, unit_type: research_department}
       project_listings: []
     notes: >
-      Two departments observed by name (Kisebbségszociológiai és Antropológiai Osztály;
-      Kisebbségtörténeti és Etnopolitikai Osztály); their URLs are not yet confirmed.
+      Department URLs confirmed from the site menu (2026-10-04). Research is listed
+      under thematic pages (Identitáspolitika, Roma tárgyú kutatások, ...) rather than a
+      project category, so no project listing is configured yet.
 
   - source_id: tk_politikatudomany
     institution: elte_tk
@@ -236,13 +239,18 @@ sources:
     host_aliases: [politikatudomany.tk.hu, politikatudomany.tk.mta.hu]
     adapter: tk
     enabled: true
-    verified: false
+    verified: true
     scope: adjacent
     adapter_config:
       institute_code: PTI
       people_listing: /kutatok
-      units: []
-      project_listings: []
+      units:
+        - {path: /demokracia-es-politikaelmeleti-osztaly, unit_type: research_department}
+        - {path: /kormanyzas-es-kozpolitika-osztaly, unit_type: research_department}
+        - {path: /politikai-viselkedes-osztaly, unit_type: research_department}
+      project_listings:
+        - {path: /kategoria/futo-kutatasi-projektek, status_label: futó}
+    notes: Paths confirmed from the site menu on the first live crawl (2026-10-04).
 
   - source_id: tk_jog
     institution: elte_tk

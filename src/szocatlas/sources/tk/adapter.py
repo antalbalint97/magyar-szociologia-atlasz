@@ -97,6 +97,7 @@ class TKAdapter(SourceAdapter):
     def discover_projects(self) -> Iterator[str]:
         """Project links from category listings (same host, single path segment)."""
         excluded = ("kutato", "kutatok", "kategoria", "hirek", "intezet", "kapcsolat", "en")
+        self._project_listing_docs: list[tuple[Page, str | None]] = []
         for spec in self.cfg.get("project_listings") or []:
             queue, seen = deque([self.url(spec["path"])]), set()
             while queue:
@@ -107,8 +108,12 @@ class TKAdapter(SourceAdapter):
                 page = self.fetch(url, SourceType.INSTITUTIONAL_LISTING)
                 if page is None or page.document.http_status >= 400:
                     continue
+                self._project_listing_docs.append((page, spec.get("status_label")))
                 soup = P.soup_of(page.text)
                 main = P._main(soup)
+                # Article title links are the projects; other single-segment links on the
+                # page (menus, staff pages) are only a fallback for listings without articles.
+                articles = {pp.url for pp in P.parse_project_listing(page.text, page.document.final_url, self.aliases)}
                 for link in P._links(main, page.document.final_url, self.aliases):
                     parts = urlsplit(link.url)
                     segs = [s for s in parts.path.split("/") if s]
@@ -116,6 +121,8 @@ class TKAdapter(SourceAdapter):
                         continue
                     if parts.path == urlsplit(url).path and "page=" in parts.query:
                         queue.append(link.url)
+                    elif articles and link.url not in articles:
+                        continue
                     elif len(segs) == 1 and segs[0] not in excluded and not parts.query:
                         if link.url not in self._project_status:
                             self._project_status[link.url] = spec.get("status_label")
@@ -129,6 +136,9 @@ class TKAdapter(SourceAdapter):
         for page in getattr(self, "_listing_docs", []):
             out.documents.append(page.document)
             out.extend(self.parse_listing(page))
+        for page, status in getattr(self, "_project_listing_docs", []):
+            out.documents.append(page.document)
+            out.extend(self.parse_project_listing(page, status))
         return out
 
     def parse_listing(self, page: Page) -> ParseResult:
@@ -194,10 +204,13 @@ class TKAdapter(SourceAdapter):
         positions = prof.positions or ([self._listing_positions[doc.canonical_url]]
                                         if doc.canonical_url in self._listing_positions else [])
         for pos in positions:
+            q = {"position_title": pos}
+            if prof.staff_category:
+                q["staff_category"] = prof.staff_category
             c.append(
                 f.relation(
                     ref, "AFFILIATED_WITH", self.site_unit_ref(), locator="profile.position",
-                    snippet=pos, qualifiers={"position_title": pos},
+                    snippet=pos, qualifiers=q,
                 )
             )
         if not positions:
@@ -226,8 +239,16 @@ class TKAdapter(SourceAdapter):
             if pm.period_from or pm.period_until:
                 kw = dict(valid_from=pm.period_from, valid_until=pm.period_until,
                           temporal_basis=TemporalBasis.EXPLICIT)
+            q = {}
+            if pm.role:
+                q["role"] = pm.role
+            if pm.stated_lead:
+                q["stated_lead"] = pm.stated_lead  # a name only; never resolved to a person here
             c.append(f.relation(ref, "PARTICIPATES_IN", pref, locator="profile.section.projektek",
-                                snippet=pm.snippet, confidence=0.85, **kw))
+                                snippet=pm.snippet, confidence=0.85, qualifiers=q, **kw))
+            if pm.role and P.PROJECT_LEAD_LABEL_RE.match(pm.role):
+                c.append(f.relation(ref, "PRINCIPAL_INVESTIGATOR_OF", pref, locator="profile.section.projektek",
+                                    snippet=pm.snippet, confidence=0.85, **kw))
         return res
 
     def parse_unit(self, page: Page) -> ParseResult:
@@ -270,54 +291,87 @@ class TKAdapter(SourceAdapter):
         res = ParseResult()
         proj = P.parse_project(page.text, doc.final_url, self.aliases)
         pref = self.project_ref(doc.canonical_url, proj.title)
-        res.records.append(SourceRecord(ref=pref, label=proj.title, document_id=doc.document_id,
-                                        hints={"url": doc.canonical_url, "grant_id": proj.grant_id}))
+        self._emit_project(res, f, doc, pref, proj, "project", title_locator="project.h1")
         c = res.claims
-        c.append(f.literal(pref, "title", proj.title, locator="project.h1", snippet=proj.title))
         c.append(f.literal(pref, "website", doc.canonical_url, locator="document.url", snippet=doc.canonical_url))
-        if proj.grant_id:
-            c.append(f.literal(pref, "grant_id", proj.grant_id, locator="project.field.azonosito", snippet=proj.grant_snippet))
-        if proj.funder:
-            c.append(f.literal(pref, "funding_body", proj.funder, locator="project.field.funder",
-                               snippet=proj.grant_snippet or proj.funder, confidence=0.85))
-        if proj.start:
-            c.append(f.literal(pref, "start", proj.start, locator="project.field.idotartam",
-                               snippet=proj.period_snippet, temporal_basis=TemporalBasis.EXPLICIT))
-        if proj.end:
-            c.append(f.literal(pref, "end", proj.end, locator="project.field.idotartam",
-                               snippet=proj.period_snippet, temporal_basis=TemporalBasis.EXPLICIT))
         if status := self._project_status.get(doc.canonical_url):
             c.append(f.literal(pref, "status_label", status, locator="listing.category", snippet=status))
         if proj.description:
             c.append(f.literal(pref, "abstract", proj.description, locator="project.description", snippet=proj.description))
         c.append(f.relation(pref, "HOSTED_BY", self.site_unit_ref(), locator="project.site",
                             snippet=doc.page_title or proj.title, confidence=0.85))
+        return res
+
+    def parse_project_listing(self, page: Page, status: str | None) -> ParseResult:
+        """Project lines on a category listing, attributed to the listing page itself."""
+        doc = page.document
+        f = ClaimFactory(doc, "tk.project_listing", self.parser_version)
+        res = ParseResult()
+        for proj in P.parse_project_listing(page.text, doc.final_url, self.aliases):
+            pref = self.project_ref(proj.url, proj.title)
+            self._emit_project(res, f, doc, pref, proj, "listing.article", title_locator="listing.article.title")
+            if status:
+                res.claims.append(f.literal(pref, "status_label", status, locator="listing.category",
+                                            snippet=f"{doc.page_title or ''} {proj.title}".strip()))
+        return res
+
+    def _emit_project(self, res: ParseResult, f: ClaimFactory, doc, pref: EntityRef, proj: P.ProjectPage,
+                      loc: str, *, title_locator: str) -> None:
+        res.records.append(SourceRecord(ref=pref, label=proj.title, document_id=doc.document_id,
+                                        hints={k: v for k, v in {"url": proj.url, "grant_id": proj.grant_id}.items() if v}))
+        c = res.claims
+        c.append(f.literal(pref, "title", proj.title, locator=title_locator, snippet=proj.title))
+        if proj.grant_id:
+            c.append(f.literal(pref, "grant_id", proj.grant_id, locator=f"{loc}.field.azonosito", snippet=proj.grant_snippet))
+        if proj.funder:
+            # a bare line above the period ("NKFIH ADVANCED", "Horizon Europe") is the
+            # funding scheme as the site labels it; weaker than a labelled field
+            c.append(f.literal(pref, "funding_body", proj.funder, locator=f"{loc}.field.funder",
+                               snippet=proj.funder_snippet or proj.funder,
+                               confidence=0.85 if proj.funder_labelled else 0.7))
+        if proj.start:
+            c.append(f.literal(pref, "start", proj.start, locator=f"{loc}.field.idotartam",
+                               snippet=proj.period_snippet, temporal_basis=TemporalBasis.EXPLICIT))
+        if proj.end:
+            c.append(f.literal(pref, "end", proj.end, locator=f"{loc}.field.idotartam",
+                               snippet=proj.period_snippet, temporal_basis=TemporalBasis.EXPLICIT))
         period = dict(valid_from=proj.start, valid_until=proj.end, temporal_basis=TemporalBasis.EXPLICIT) \
             if proj.start else {}
         for link in proj.leads:
             per = self.person_ref(link.url)
+            snip = proj.lead_snippets.get(link.url, f"Kutatásvezető: {link.text}")
             res.records.append(SourceRecord(ref=per, label=link.text, document_id=doc.document_id,
                                             hints={"profile_url": link.url, "site": self.owner_source(link.url)}))
-            c.append(f.literal(per, "name", link.text, locator="project.field.vezeto", snippet=link.text))
-            c.append(f.relation(per, "PRINCIPAL_INVESTIGATOR_OF", pref, locator="project.field.vezeto",
-                                snippet=f"Projektvezető: {link.text}", **period))
-            c.append(f.relation(per, "PARTICIPATES_IN", pref, locator="project.field.vezeto",
-                                snippet=f"Projektvezető: {link.text}", qualifiers={"role": "projektvezető"}, **period))
+            c.append(f.literal(per, "name", link.text, locator=f"{loc}.field.vezeto", snippet=link.text))
+            c.append(f.relation(per, "PRINCIPAL_INVESTIGATOR_OF", pref, locator=f"{loc}.field.vezeto",
+                                snippet=snip, **period))
+            c.append(f.relation(per, "PARTICIPATES_IN", pref, locator=f"{loc}.field.vezeto",
+                                snippet=snip, qualifiers={"role": "kutatásvezető"}, **period))
+        for name, line in proj.unlinked_leads:
+            # No profile link: a name-only record that resolution will never auto-merge.
+            per = self._name_mention(name, pref)
+            res.records.append(SourceRecord(ref=per, label=name, document_id=doc.document_id,
+                                            hints={"unlinked_mention": True}))
+            c.append(f.literal(per, "name", name, locator=f"{loc}.field.vezeto.unlinked", snippet=line, confidence=0.8))
+            c.append(f.relation(per, "PRINCIPAL_INVESTIGATOR_OF", pref, locator=f"{loc}.field.vezeto.unlinked",
+                                snippet=line, confidence=0.8, assertion_type=AssertionType.INSTITUTIONAL, **period))
         for link in proj.participants:
             per = self.person_ref(link.url)
             res.records.append(SourceRecord(ref=per, label=link.text, document_id=doc.document_id,
                                             hints={"profile_url": link.url, "site": self.owner_source(link.url)}))
-            c.append(f.literal(per, "name", link.text, locator="project.field.resztvevok", snippet=link.text))
-            c.append(f.relation(per, "PARTICIPATES_IN", pref, locator="project.field.resztvevok",
+            c.append(f.literal(per, "name", link.text, locator=f"{loc}.field.resztvevok", snippet=link.text))
+            c.append(f.relation(per, "PARTICIPATES_IN", pref, locator=f"{loc}.field.resztvevok",
                                 snippet=link.text, **period))
         for name, role in proj.unlinked_participants:
-            # No profile link: a name-only record that resolution will never auto-merge.
-            per = local_ref(self.entry, EntityType.PERSON, f"name-mention:{slugify(name)}@{doc.canonical_url}")
+            per = self._name_mention(name, pref)
             res.records.append(SourceRecord(ref=per, label=name, document_id=doc.document_id,
                                             hints={"unlinked_mention": True}))
-            c.append(f.literal(per, "name", name, locator="project.field.resztvevok.unlinked",
+            c.append(f.literal(per, "name", name, locator=f"{loc}.field.resztvevok.unlinked",
                                snippet=f"{role}: {name}", confidence=0.8))
-            c.append(f.relation(per, "PARTICIPATES_IN", pref, locator="project.field.resztvevok.unlinked",
+            c.append(f.relation(per, "PARTICIPATES_IN", pref, locator=f"{loc}.field.resztvevok.unlinked",
                                 snippet=f"{role}: {name}", qualifiers={"role": role}, confidence=0.8,
                                 assertion_type=AssertionType.INSTITUTIONAL, **period))
-        return res
+
+    def _name_mention(self, name: str, project: EntityRef) -> EntityRef:
+        # keyed by the project, so the listing and the project page share one mention
+        return local_ref(self.entry, EntityType.PERSON, f"name-mention:{slugify(name)}@{project.source_ref}")

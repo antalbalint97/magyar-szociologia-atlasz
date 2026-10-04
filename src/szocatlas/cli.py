@@ -42,8 +42,9 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("action", choices=["capture"])
     p.add_argument("--source", required=True)
     p.add_argument("--url", required=True)
-    p.add_argument("--kind", required=True, choices=["person", "unit", "project", "listing"])
+    p.add_argument("--kind", required=True, choices=["person", "unit", "project", "listing", "project_listing"])
     p.add_argument("--name", required=True, help="fixture file name, e.g. recens_koltai_julia.html")
+    p.add_argument("--status-label", help="project_listing only: the category's status (futó / lezárt)")
 
     args = ap.parse_args(argv)
     logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO, format="%(levelname)s %(message)s")
@@ -89,18 +90,22 @@ def _capture(args) -> int:
 
     from .fetch import PoliteFetcher, RawStore
     from .models.enums import SourceType
+    from .scrub import scrub_html
 
     reg = load_registry()
     entry = reg.source(args.source)
     fetcher = PoliteFetcher(RawStore(REPO_ROOT / "data" / "raw"), reg.policy(entry), reg.host_aliases())
     page = fetcher.get(args.url, source_id=entry.source_id, source_type=SourceType.INSTITUTIONAL_PROFILE)
     fdir = REPO_ROOT / "tests" / "fixtures" / entry.adapter
-    (fdir / args.name).write_text(page.text, encoding="utf-8")
+    # contact details and scripts are stripped; the rest of the markup is kept as served
+    (fdir / args.name).write_text(scrub_html(page.text), encoding="utf-8")
     spec_path = fdir / "fixtures.yaml"
     spec = yaml.safe_load(spec_path.read_text(encoding="utf-8")) or {}
     spec[args.name] = {"url": args.url, "source_id": entry.source_id, "kind": args.kind,
                        "observed": page.document.retrieved_at.date().isoformat(), "reconstructed": False,
-                       "content_sha256": page.document.content_sha256}
+                       "content_sha256": page.document.content_sha256, "scrubbed": True}
+    if args.status_label:
+        spec[args.name]["status_label"] = args.status_label
     spec_path.write_text(yaml.safe_dump(spec, allow_unicode=True, sort_keys=True), encoding="utf-8")
     print(f"captured {args.url} -> {fdir / args.name}")
     return 0

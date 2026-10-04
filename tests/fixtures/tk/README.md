@@ -1,19 +1,23 @@
 # TK fixtures
 
-**These fixtures are reconstructed, not raw snapshots.** The build environment that
-wrote them had no direct HTTP access to `*.tk.elte.hu`, so each file is hand-written
-HTML that reproduces the *fields and link patterns* observed on the live page on
-2026-10-04 (via a text rendering of the page), not its markup. Contact details are
-replaced with `XXX`.
+**These fixtures are real page snapshots** from the first live crawl (2026-10-04),
+captured with
 
-They exist to test parser behaviour that does not depend on exact markup (labelled
-fields, link patterns, host aliases, section headings). The parsers deliberately avoid
-CSS-class selectors for this reason.
+    szocatlas fixtures capture --source tk_recens --url https://recens.tk.elte.hu/kutato/koltai-julia \
+        --kind person --name recens_koltai_julia.html
 
-Replace them with real snapshots as soon as the pipeline runs with network access:
+`capture` runs the page through `szocatlas.scrub.scrub_html` before writing it:
+e-mail local parts become `xxx@<domain>`, phone and room values become `XXX`, and
+scripts, iframes and HTML comments are removed. Everything else is the markup as
+served, so the tests exercise the real structure (an `<h2>` page title, `<h5>`
+section headings, `<br>`-separated project lines, `<article>` project listings).
 
-    szocatlas fixtures capture --source tk_recens --url https://recens.tk.elte.hu/kutato/koltai-julia
+`fixtures.yaml` records each file's origin URL, observation date, kind and the
+sha256 of the unscrubbed response. The raw responses themselves live only in
+`data/raw/` and are never committed.
 
-`fixtures.yaml` records origin URL, observation date and `reconstructed: true` for each
-file; the capture command flips that flag. Reconstructed fixtures can never enter a
-dataset release (`SourceDocument.synthetic` is set and QA fails the release).
+The fixture dataset (`szocatlas ingest-fixtures`) is still marked synthetic: it is a
+handful of hand-picked pages, so it can never pose as a release snapshot.
+
+The earlier hand-reconstructed fixtures were replaced by these snapshots; the
+parser differences that the real markup exposed are listed in CHANGELOG.md.
