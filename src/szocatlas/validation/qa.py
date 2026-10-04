@@ -24,6 +24,7 @@ from ..models.entities import Person, Project
 from ..models.enums import EntityType, EpistemicStatus, MatchStatus, MentionResolutionStatus, RelationType
 from ..normalize.names import name_key, order_free_key
 from ..resolution.matcher import MatchDecision
+from ..sources.tk.parser import is_project_metadata
 
 AFFILIATION_TYPES = {RelationType.AFFILIATED_WITH, RelationType.MEMBER_OF, RelationType.LEADS,
                      RelationType.WORKED_AT}
@@ -183,6 +184,12 @@ def run_checks(ds: CanonicalDataset, decisions: list[MatchDecision], seeds_path:
         if re.search(r"(journal|folyóirat|editor|főszerkesztő)", p.label, re.I):
             F.append(Finding("review.project_label_suspicious", "warning",
                              f"project '{p.label}' may be a journal/role listed under Projektek", [p.canonical_id]))
+    # a heading, role, period, grant id or funder name emitted as a project is a parser bug (#8)
+    meta = sorted((p.label, p.canonical_id) for p in ds.by_type(EntityType.PROJECT) if is_project_metadata(p.label))
+    if meta:
+        F.append(Finding("parser.project_title_is_metadata", "warning",
+                         f"{len(meta)} projects are titled with a section label, role, period, grant id or funder name",
+                         [i for _, i in meta], {"labels": [label for label, _ in meta]}))
 
     # coverage & stats
     counts = Counter(e.entity_type.value for e in ds.entities.values())
