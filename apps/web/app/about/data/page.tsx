@@ -128,7 +128,7 @@ export default async function AboutData() {
       <section className="section" aria-labelledby="limits">
         <header><h2 id="limits">Ismert korlátok</h2></header>
         <ul className="rows">
-          {szi && <li><strong>SZI projektvezetők és résztvevők.</strong> Az SZI {hu(szi.of)} projektjéből {hu(szi.n)} ({percent(szi.n, szi.of)}) megfigyelt vezető nélkül szerepel; ennek jelentős része egy ismert feldolgozási hiány: a régi oldalsablon címsor alatt sorolja a neveket (<IssueLink n={31} />).</li>}
+          {szi && <li><strong>SZI projektvezetők és résztvevők.</strong> Az SZI {hu(szi.of)} projektjéből {hu(szi.n)} ({percent(szi.n, szi.of)}) megfigyelt vezető nélkül szerepel ebben a kiadásban. Az SZI projektoldalai a neveket részben címsorok alatt sorolják; ezek feldolgozását a <IssueLink n={31} /> tárgyalja.</li>}
           {recens && <li><strong>CSS-RECENS projektek.</strong> A profilok ritkán linkelnek projektoldalra: {hu(recens.of)} kutatóból {hu(recens.n)} ({percent(recens.n, recens.of)}) kapcsolódik projekthez. Ez a gyűjtés, nem a kutatócsoport jellemzője.</li>}
           <li><strong>Korábbi munkatársak és külső partnerek</strong> csak említésként szerepelnek, mert az atlasz a jelenlegi munkatárslistákból indul (<IssueLink n={28} />).</li>
           <li><strong>A témák kulcsszó-szabályokból származnak</strong>, nem a kutatók saját besorolásai; a szabályok pontossága még nincs mérve (<IssueLink n={15} />).</li>

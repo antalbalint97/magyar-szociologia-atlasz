@@ -15,10 +15,10 @@ export function SourceNotes({ a, sources, topic = "projects" }: { a: Atlas; sour
     const g = sziLeadGap(a);
     if (g) notes.push(
       <p key="szi" className="note coverage">
-        <strong>Ismert hiány (SZI):</strong> az SZI projektoldalainak egy részén a vezetők és résztvevők címsor alatt
-        szerepelnek, amit a jelenlegi feldolgozó még nem olvas (<IssueLink n={31} />). Az SZI{" "}
+        <strong>Ismert hiány (SZI):</strong> ebben a kiadásban az SZI{" "}
         {hu(g.of)} projektjéből {hu(g.n)} ({percent(g.n, g.of)}) megfigyelt projektvezető nélkül szerepel, így az SZI
-        projektkapcsolatai alulreprezentáltak.
+        projektkapcsolatai alulreprezentáltak. Az SZI projektoldalai a neveket részben címsorok alatt sorolják; ezek
+        feldolgozását a <IssueLink n={31} /> tárgyalja.
       </p>,
     );
   }

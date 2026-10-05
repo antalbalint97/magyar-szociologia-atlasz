@@ -54,7 +54,7 @@ export default async function NetworkPage({ searchParams }: { searchParams: SP }
         <h1 style={{ fontSize: "2rem", marginBottom: 6 }}>Hálózati felfedező</h1>
         <p className="muted" style={{ maxWidth: "85ch" }}>
           Mindig egy szeletből indulunk, sosem a teljes gráfból. A pozíciók elrendezési algoritmusból adódnak; közelség és
-          kapcsolatszám nem jelent fontosságot. Az SZI projektjeinél a vezetők és résztvevők egy része még hiányzik (#31),
+          kapcsolatszám nem jelent fontosságot. Az SZI projektjeinél a vezetők és résztvevők egy része hiányzik (#31),
           a CSS-RECENS profiljai ritkán hivatkoznak projektre — ezek a szeletek alakját is befolyásolják.
         </p>
         <GraphExplorer
