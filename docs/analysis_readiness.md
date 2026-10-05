@@ -11,6 +11,7 @@ measured and two can be compared):
 
     szocatlas readiness <release>                                     # indicators A1-T1, also written by `build`
     python research/analysis/projection_sensitivity.py data/releases/<release>   # weightings, identity policy, large projects, communities
+    python research/analysis/identity_basis_recount.py data/releases/<release>   # B3, B4 and the three versions, recounted by separate code
 
 Indicator definitions, denominators and the analysis each one threatens: docs/methodology.md §9
 and the generated `analysis_readiness.md` of every release. Percentages are whole percents from
@@ -474,7 +475,10 @@ conclusion about Hungarian sociology.
 * **The identity basis of an edge is derived, not stored (#37).** It is joined from the claims to the
   mention that carries each claim. A join on the form of the claim's subject reference is wrong,
   because one profile link is shared by mentions made in different documents with different
-  statuses; the tests cover this, and a stored basis would remove the risk.
+  statuses; the tests cover this, and a stored basis would remove the risk. The recount script
+  reads the same files with separate code and agrees with every identity-basis figure of §8 on
+  `m2`, `p5`, `p7r`, `p16` and `p31` (B3, B4, the strict and complete versions); it shares the
+  rule, not the implementation, so it checks the join and not the rule's design.
 * **Thresholds 8, 9 and 10** come from the size distribution (there is a gap after 10: 13 and 20),
   not from theory. Louvain is the only community method tried; no null model was run.
 * **The `complete projects` policy is conservative:** it also drops projects whose absent

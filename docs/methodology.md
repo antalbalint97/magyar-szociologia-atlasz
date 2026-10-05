@@ -408,13 +408,16 @@ in docs/analysis_readiness.md §8.
 
     szocatlas readiness <release> [--json] [--write]
     python research/analysis/projection_sensitivity.py data/releases/<release> [--json] [--seeds 10]
+    python research/analysis/identity_basis_recount.py data/releases/<release> [--json]
 
 The first measures the indicators A1-T1 of any release; the second runs the sensitivity checks of
 docs/analysis_readiness.md §5 (weightings, identity policy and the labelled review upper bound,
-large projects, communities).
+large projects, communities); the third recounts B3, B4 and the three versions of the edges from the
+release files with separate code (no import from `szocatlas`), as a check on the claim-to-mention
+join that the identity basis depends on.
 
-The second needs the `analysis` extra (`pip install -e '.[analysis]'`, networkx). Both read a
-release directory and nothing else, and both are deterministic (fixed seeds and node order).
+The second needs the `analysis` extra (`pip install -e '.[analysis]'`, networkx). All three read a
+release directory and nothing else, and all are deterministic (fixed seeds and node order).
 
 ### Reference
 

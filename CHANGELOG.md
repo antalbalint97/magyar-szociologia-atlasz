@@ -21,8 +21,11 @@
   weightings, degree and betweenness rankings, the identity policies, the removal of large
   projects and seeded community detection, as aggregate output. The assessment, with a grade per
   analysis type, is `docs/analysis_readiness.md` (proposed grades: no analysis type is `READY`);
-  definitions are in `docs/methodology.md` §9. 24 new tests. The `p31` rebuild changed only
-  `analysis_readiness.*` and the quality report.
+  definitions are in `docs/methodology.md` §9. 24 new tests. `research/analysis/identity_basis_recount.py`
+  recounts the identity-basis figures (B3, B4 and the three versions of the edges) from the files of
+  a release with separate code and no import from `szocatlas`; it is the oracle for the join in the
+  readiness module (5 more tests) and agrees with it on all five compared releases. The `p31`
+  rebuild changed only `analysis_readiness.*` and the quality report.
 * TK parser 0.6.0, SZI heading template (#31, ADR-0010): 86 of the 193 SZI project pages write
   "Projektvezető" / "Kutatásvezető (MTA SZKI)" / "Résztvevők" as headings and the value in the
   blocks below; the parser only read `Label: value` lines and found no lead or participant on
