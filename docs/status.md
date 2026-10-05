@@ -70,7 +70,8 @@ crawl into a trustworthy canonical graph before more institutions are added.
   * 329 project mentions have no Project. Each has an explicit reason in the coverage
     report: 282 give a title and no page, 32 link an external site, 11 link another TK
     unit's site that is not a source, 1 links a grant record, 3 link an in-scope page that is
-    not of project-page shape. 4 await review (`review/project_review.yaml`).
+    not of project-page shape. Besides those, 3 await review and 1 (ESS Magyarország) is
+    deferred to #9 (`review/project_review.yaml`).
   * Activity classification of journals, networks and programmes listed as projects is
     #9. ESS Magyarország is deferred to it.
 - **Unreachable hosts** from the crawl environment: doktori.hu, web.archive.org,

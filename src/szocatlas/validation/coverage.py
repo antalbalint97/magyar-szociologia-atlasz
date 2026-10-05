@@ -352,10 +352,10 @@ UNRESOLVED_CATEGORIES = {
 
 
 def unresolved_category(m, frontier_by_url: dict[str, dict]) -> str:
+    if m.resolution.method == "manual:project_deferred":  # a deferred mention is held in review too: say which
+        return "deferred_to_ontology"
     if m.resolution.status.value == "REVIEW_REQUIRED":
         return "identity_review"
-    if m.resolution.method == "manual:project_deferred":
-        return "deferred_to_ontology"
     if not m.linked_url:
         return "title_only_no_page_link"
     if registry_grant_keys(m.linked_url):

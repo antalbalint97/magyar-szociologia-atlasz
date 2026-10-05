@@ -109,6 +109,8 @@ def test_unresolved_category_is_derived_from_the_mention_and_the_frontier():
     cat = C.unresolved_category
     assert cat(mention(status="REVIEW_REQUIRED"), frontier) == "identity_review"
     assert cat(mention(method="manual:project_deferred"), frontier) == "deferred_to_ontology"
+    # a deferred mention is also held in the review queue: it is counted as deferred, not as an identity question
+    assert cat(mention(status="REVIEW_REQUIRED", method="manual:project_deferred"), frontier) == "deferred_to_ontology"
     assert cat(mention(), frontier) == "title_only_no_page_link"
     assert cat(mention("https://ext.example/p"), frontier) == "linked_page_external_site"
     assert cat(mention("https://other.tk.hu/p"), frontier) == "linked_page_other_unit_site"
