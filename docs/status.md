@@ -44,15 +44,21 @@ Person-Person projection is `READY_WITH_RESTRICTIONS`; person rankings, institut
 roles, positions, project types, topics and methods, and anything over time are `NOT_READY`; no
 analysis type is `READY`. Every release now carries its own `analysis_readiness.md`. What the
 grades rest on (p31, each figure with its denominator in the document):
-* 296 of 825 stated project participants (36%) are outside the graph (no candidate Person, or in
+* 334 of 825 stated project participants (40%) are outside the graph (no candidate Person, or in
   review). The Person universe is each site's current staff listing; former staff and outside
   collaborators are mentions (#28). 429 of 1,435 person mentions (30%) are outside the graph.
 * 7 projects of 8 or more persons carry 376 of 584 ties (64%); 322 (55%) exist only through them,
   and 68 of the 83 cross-institute ties run through one project of 20 persons.
-* 167 of 601 project edges (28%) rest only on an automatic identity rule (SZI 163 of 349);
-  the strict policy keeps 473 of the 584 ties.
+* 204 of 601 project edges (34%) rest only on an automatic identity rule (SZI 196 of 349); the
+  strict policy keeps 296 of the 584 ties and 11 of the 83 cross-institute ties. The rule behind
+  most of the cross-institute ties (`slug_family_host`) was checked against its own evidence on all
+  40 resolutions it made; it rests on a declared assumption (ADR-0007).
 * Degree rankings are not stable: with the 7 projects removed the top decile overlaps the original
-  by 0.087 (Jaccard), so no ranking of persons is authorised.
+  by 0.087 (Jaccard), and by 0.042 when only anchored or certain edges are kept, so no ranking of
+  persons is authorised.
+* The review queue is bounded from the other side: accepting every one of the 47 statements in
+  review that has one candidate would give 707 ties (from 584) and 177 cross-institute ties (from
+  83). An upper bound, not a forecast, and a reviewer decision.
 * Project resolution is uneven by institute (project mentions resolved: SZI 298 of 417, KI 74 of
   114, PTI 74 of 186, CSS-RECENS 4 of 66); most of what remains has no page to anchor on.
 

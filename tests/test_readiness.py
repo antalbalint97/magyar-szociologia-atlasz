@@ -74,8 +74,10 @@ def make_release(tmp_path: Path) -> Path:
             subject = f"src_{site(n)[0]}|https://{site(n)}/kutato/p{n}"
             claims.append({"claim_id": f"clm_{n}_{k}", "predicate": "PARTICIPATES_IN", "subject": {"source_ref": subject},
                            "object": {"source_ref": page(k)}})
-    mention = lambda n, status: {"source_ref": f"src_a|name-mention:p{n}@{page('A')}", "normalized_name": f"person {n}",  # noqa: E731
-                                 "source_id": "src_a", "resolution": {"status": status}, "candidates": []}
+    mention = lambda n, status, cid=None: {  # noqa: E731  (a mention carries its claims in context[*].claim_ids)
+        "source_ref": f"src_a|name-mention:p{n}@{page('A')}", "normalized_name": f"person {n}", "source_id": "src_a",
+        "resolution": {"status": status}, "candidates": [],
+        "context": [{"relation": "PARTICIPATES_IN", "target_id": "prj_A", "claim_ids": [cid]}] if cid else []}
     # person 2: replace the anchored claim by an auto mention claim; person 3: add one; plus two stated names outside the graph
     claims = [c for c in claims if c["claim_id"] != "clm_2_A"]
     claims.append({"claim_id": "clm_2_A", "predicate": "PARTICIPATES_IN", "subject": {"source_ref": mention(2, "X")["source_ref"]},
@@ -90,8 +92,9 @@ def make_release(tmp_path: Path) -> Path:
         outside.append({"claim_id": f"clm_out_{n}", "predicate": "PARTICIPATES_IN",
                         "subject": {"source_ref": mention(n, status)["source_ref"]}, "object": {"source_ref": page("A")}})
     dump(root / "claims.jsonl", claims + outside)
-    dump(root / "entities" / "PersonMention.jsonl", [mention(2, "HIGH_CONFIDENCE_AUTO"), mention(3, "HIGH_CONFIDENCE_AUTO"),
-                                                     mention(21, "UNRESOLVED"), mention(22, "REVIEW_REQUIRED")])
+    dump(root / "entities" / "PersonMention.jsonl", [mention(2, "HIGH_CONFIDENCE_AUTO", "clm_2_A"),
+                                                     mention(3, "HIGH_CONFIDENCE_AUTO", "clm_3_A_auto"),
+                                                     mention(21, "UNRESOLVED", "clm_out_21"), mention(22, "REVIEW_REQUIRED", "clm_out_22")])
     dump(root / "matches.jsonl", [])
     return root
 
@@ -146,6 +149,70 @@ def test_participant_subjects_count_those_outside_the_graph(release):
     # names outside the graph (one UNRESOLVED, one REVIEW_REQUIRED)
     assert b3["subjects"] == 19 and b3["in_graph"] == R.share(17, 19) and b3["outside_graph"] == R.share(2, 19)
     assert b3["by_status"] == {"HIGH_CONFIDENCE_AUTO": 2, "REVIEW_REQUIRED": 1, "UNRESOLVED": 1, "anchored": 15}
+
+
+def rows(path: Path) -> list[dict]:
+    return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+
+
+def add_cases_a_source_ref_cannot_tell_apart(root: Path) -> None:
+    """Identity is read from the mention that carries a claim, not from the form of the subject's source_ref (#17).
+    Person 4's claim on B is a profile link carried by a HIGH_CONFIDENCE_AUTO mention (an old host whose alias cannot
+    be verified, ADR-0007); person 5's on C a profile link carried by a DETERMINISTIC one; an external profile link
+    that is UNRESOLVED states a participant of D; person 7 is stated on C in two documents, once certain and once
+    automatic (one statement, two claims)."""
+    site = lambda n: B_HOST if 6 <= n <= 10 else A_HOST  # noqa: E731
+    profile = lambda n: f"src_{site(n)[0]}|https://{site(n)}/kutato/p{n}"  # noqa: E731
+    carrier = lambda ref, status, cid, key: {"source_ref": ref, "normalized_name": key, "source_id": "src_a",  # noqa: E731
+                                              "resolution": {"status": status}, "candidates": [],
+                                              "context": [{"relation": "PARTICIPATES_IN", "claim_ids": [cid]}]}
+    external = "external:old.example|https://old.example/kutato/x"
+    page_d = f"src_a|https://{A_HOST}/D"
+    claims = rows(root / "claims.jsonl") + [
+        {"claim_id": "clm_7_C_listing", "predicate": "PARTICIPATES_IN", "subject": {"source_ref": profile(7)},
+         "object": {"source_ref": f"src_a|https://{A_HOST}/C"}},
+        {"claim_id": "clm_ext_D", "predicate": "PARTICIPATES_IN", "subject": {"source_ref": external},
+         "object": {"source_ref": page_d}}]
+    dump(root / "claims.jsonl", claims)
+    dump(root / "relations.jsonl", [r | {"claim_ids": r["claim_ids"] + ["clm_7_C_listing"]}
+                                    if r["relation_id"] == "rel_7_C_PARTICIPATES_IN" else r
+                                    for r in rows(root / "relations.jsonl")])
+    dump(root / "entities" / "PersonMention.jsonl", rows(root / "entities" / "PersonMention.jsonl") + [
+        carrier(profile(4), "HIGH_CONFIDENCE_AUTO", "clm_4_B", "person 4"),
+        carrier(profile(5), "DETERMINISTIC", "clm_5_C", "person 5"),
+        carrier(profile(7), "DETERMINISTIC", "clm_7_C", "person 7"),
+        carrier(profile(7), "HIGH_CONFIDENCE_AUTO", "clm_7_C_listing", "person 7"),
+        carrier(external, "UNRESOLVED", "clm_ext_D", "x")])
+
+
+def test_a_profile_link_resolved_by_an_automatic_rule_is_an_automatic_edge(release):
+    add_cases_a_source_ref_cannot_tell_apart(release)
+    report = R.readiness_report(release)
+    b4 = report["indicators"]["B4"]["values"]
+    # (2, A) automatic only; (3, A) anchored and automatic; (4, B) a profile link, automatic only; (7, C) certain in one
+    # document and automatic in the other. The other 12 edges are anchored or certain.
+    assert b4["by_basis"] == {"auto_only": 2, "certain": 12, "certain+auto": 2} and b4["edges"] == 16
+    assert b4["auto_only_share"] == R.share(2, 16)
+    basis = R._edge_basis(R.ReleaseData(release))
+    assert basis["rel_7_C_PARTICIPATES_IN"] == "certain+auto" and basis["rel_4_B_PARTICIPATES_IN"] == "auto_only"
+    v = report["sensitivity"]["variants"]
+    # strict drops (2, A) and (4, B): B has one Person left, so one project fewer with two or more Persons
+    assert v["default"]["projects_with_two_or_more"] == 4 and v["strict_certain_edges_only"]["projects_with_two_or_more"] == 3
+
+
+def test_an_unresolved_external_link_is_outside_the_graph_and_makes_its_project_incomplete(release):
+    add_cases_a_source_ref_cannot_tell_apart(release)
+    report = R.readiness_report(release)
+    b3 = report["indicators"]["B3"]["values"]["all"]
+    # 16 edges rest on 17 subjects (person 3 on A is a profile and a mention; person 7 on C is stated twice but is one
+    # subject, with its stronger identification), plus three stated subjects outside the graph: an UNRESOLVED name, a
+    # REVIEW_REQUIRED name and an UNRESOLVED external link on D
+    assert b3["subjects"] == 20 and b3["in_graph"] == R.share(17, 20) and b3["outside_graph"] == R.share(3, 20)
+    assert b3["by_status"] == {"DETERMINISTIC": 2, "HIGH_CONFIDENCE_AUTO": 3, "REVIEW_REQUIRED": 1, "UNRESOLVED": 2,
+                               "anchored": 12}
+    # D states an external profile nobody resolved: D is not complete, so person 11 (D only) is not in the complete variant
+    complete = report["sensitivity"]["variants"]["complete_projects_only"]
+    assert complete["persons_with_edge"] == 10 and complete["projects_with_two_or_more"] == 3  # B, C, E
 
 
 def test_per_source_denominators_follow_the_page_hosts(release):

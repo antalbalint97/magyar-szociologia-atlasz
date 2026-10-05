@@ -10,15 +10,18 @@
   definition, denominator and the analysis it threatens; no pass/fail thresholds, no timestamps,
   no person named or ranked, byte-identical for an unchanged release. The Person-Project graph is
   the observed layer and the Person-Person projection a derived one; the identity basis of every
-  project edge (anchored, certain, automatic) is read from the claims behind it, and the
-  projection is measured under three versions of the edges (`default`,
-  `strict_certain_edges_only`, `complete_projects_only`, never merged) and for large-project
-  thresholds of 8, 9 and 10 persons. `research/analysis/projection_sensitivity.py` (networkx, the
+  project edge (anchored, certain, automatic) is read from the claims behind it, each joined to
+  the mention that carries it (never from the form of the subject's reference: a profile or
+  external link can be unresolved or automatic too), and the projection is measured under three
+  versions of the edges (`default`, `strict_certain_edges_only`, `complete_projects_only`, never
+  merged) and for large-project thresholds of 8, 9 and 10 persons. The recall side is a labelled
+  upper bound, not a version of the data: every statement still in review that has exactly one
+  candidate Person accepted, in total and one kind at a time. `research/analysis/projection_sensitivity.py` (networkx, the
   `analysis` extra) compares unweighted, shared-project-count and size-discounted (Newman 2001)
   weightings, degree and betweenness rankings, the identity policies, the removal of large
   projects and seeded community detection, as aggregate output. The assessment, with a grade per
   analysis type, is `docs/analysis_readiness.md` (proposed grades: no analysis type is `READY`);
-  definitions are in `docs/methodology.md` §9. 20 new tests. The `p31` rebuild changed only
+  definitions are in `docs/methodology.md` §9. 24 new tests. The `p31` rebuild changed only
   `analysis_readiness.*` and the quality report.
 * TK parser 0.6.0, SZI heading template (#31, ADR-0010): 86 of the 193 SZI project pages write
   "Projektvezető" / "Kutatásvezető (MTA SZKI)" / "Résztvevők" as headings and the value in the

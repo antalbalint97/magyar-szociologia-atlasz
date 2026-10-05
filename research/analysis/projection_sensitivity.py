@@ -12,7 +12,9 @@ Three things are varied, one at a time, against the same baseline (the ``default
 * the **weighting** of the projection: ``unweighted`` (1 per tied pair), ``project_count`` (shared projects),
   ``size_discounted`` (each shared project adds 1/(n-1), Newman 2001);
 * the **identity policy** of the edges (readiness.variant_memberships): every edge, only edges with an anchored
-  or certain identification, only projects whose stated participants are all in the graph;
+  or certain identification, only projects whose stated participants are all in the graph. The precision side;
+  the recall side is a separate, labelled **upper bound** (readiness.review_candidates_accepted): every review
+  mention that has exactly one candidate Person is taken as that Person. It is not a version of the data;
 * the **large projects**, removed from k = 8, 9, 10 persons. This is a sensitivity check, never a correction:
   a large project is data, not an error.
 
@@ -37,11 +39,25 @@ from pathlib import Path
 
 import networkx as nx
 
-from szocatlas.validation.readiness import LARGE_PROJECT_THRESHOLDS, ReleaseData, variant_memberships
+from szocatlas.validation.readiness import (
+    LARGE_PROJECT_THRESHOLDS, ReleaseData, review_candidates_accepted, variant_memberships)
 
 WEIGHTINGS = ("unweighted", "project_count", "size_discounted")
 TOP_SHARE = 0.1
 Membership = dict[str, set[str]]
+REVIEW_KINDS = ("another institute", "another institute, common surname", "same institute, common surname",
+                "same institute", "a link or name conflict")
+
+
+def review_kind(candidate: dict[str, object]) -> str:
+    """The kind of review item a candidate is, read from the signals the resolver recorded (a description, not a
+    decision): the page is on another institute's site or on the Person's own, the surname is on the common-surname
+    list, or the page's own link contradicts the stated name."""
+    signals, negative = set(candidate.get("signals", [])), set(candidate.get("negative_signals", []))
+    if negative & {"LINK_NAME_MISMATCH", "LINKS_OTHER_PROFILE"}:
+        return "a link or name conflict"
+    where = "same institute" if signals & {"SAME_INSTITUTE", "SOURCE_UNIT_MEMBER"} else "another institute"
+    return f"{where}, common surname" if "COMMON_SURNAME" in negative else where
 
 
 # ------------------------------------------------------------------ the projection
@@ -308,6 +324,12 @@ def sensitivity(release: Path, seeds: int = 10) -> dict[str, object]:
 
     base_g_scores = sc["unweighted"]
     out["identity_policy"] = {name: against_baseline(m) for name, m in variants.items() if name != "default"}
+    accepted, accepted_info = review_candidates_accepted(rel)
+    out["identity_upper_bound"] = {"all single-candidate statements accepted": {**accepted_info, **against_baseline(accepted)}}
+    for kind in REVIEW_KINDS:  # where the bound comes from: one kind of review statement at a time
+        only, only_info = review_candidates_accepted(rel, accept=lambda c, k=kind: review_kind(c) == k)
+        if only_info["pairs"]:
+            out["identity_upper_bound"][f"only: {kind}"] = {**only_info, **against_baseline(only)}
     out["large_projects_removed"] = {f">={k}": {"projects_removed": sum(1 for ms in base.values() if len(ms) >= k),
                                                 **against_baseline(base, drop_from=k)}
                                      for k in LARGE_PROJECT_THRESHOLDS}
@@ -367,18 +389,35 @@ def render(rep: dict[str, object]) -> str:
     L += ["", "Size-discounted strength equals the number of projects with two or more persons: "
           f"{rep['size_discounted_strength_equals_projects_with_two_or_more_persons']}.", ""]
     for key, title in (("identity_policy", "Identity policy against the default edges"),
+                       ("identity_upper_bound", "Review queue accepted (an upper bound, not a version of the data)"),
                        ("large_projects_removed", "Large projects removed (sensitivity, not a correction)")):
-        L += [f"## {title}", "",
-              "| version | persons with edge | ties | ties across institutes | components | largest component "
+        L += [f"## {title}", ""]
+        if key == "identity_upper_bound":
+            L += ["Every stated name still in REVIEW_REQUIRED that has exactly one viable candidate Person is taken as that "
+                  "Person, as if a reviewer had confirmed all of them. It bounds from above what the review queue could "
+                  "add under that one rule. A reviewer rejects some (a common surname, a name that contradicts the page's "
+                  "own link), a name with several candidates is left out, and none of this is in any release: it is the "
+                  "recall-side counterpart of the strict policy above. The rows 'only: ...' accept one kind of review "
+                  "statement at a time (by the signals the resolver recorded) to show where the bound comes from.", ""]
+        L += ["| version | persons with edge | ties | ties across institutes | components | largest component "
               "| rho (degree) | top-decile overlap (degree) | rho (discounted strength) | community NMI with baseline |",
               "|---|---|---|---|---|---|---|---|---|---|"]
         for name, v in rep[key].items():
             d, s = v["degree_vs_baseline"], v["strength_size_discounted_vs_baseline"]
-            label = name + (f" ({v['projects_removed']} projects)" if "projects_removed" in v else "")
+            label = name + (f" ({v['projects_removed']} projects)" if "projects_removed" in v else "") \
+                + (f" ({v['new_edges']} new edge{'' if v['new_edges'] == 1 else 's'})" if "new_edges" in v else "")
             L.append(f"| {label} | {v['persons_with_edge']} | {v['ties']} | {v['ties_across_institutes']} | {v['components']} "
                      f"| {v['largest_component']} | {_fmt(d['spearman'])} | {_fmt(d['top_decile_jaccard'])} | {_fmt(s['spearman'])} "
                      f"| {_fmt(v['communities_nmi_with_baseline'])} |")
         L.append("")
+        if key == "identity_upper_bound":
+            for v in list(rep[key].values())[:1]:
+                L += [f"{v['review_mention_records']} review mention records are {v['review_statements']} distinct "
+                      f"(Project, stated name) statements still in review (the same name seen in two documents is one). "
+                      f"By viable candidates: one Person {v['with_one_candidate']} (accepted), several "
+                      f"{v['with_several_candidates']} (left out), none {v['with_no_viable_candidate']}. The {v['pairs']} "
+                      f"(Project, Person) pairs add {v['new_edges']} edges that are new; {v['persons_gaining_a_first_edge']} "
+                      f"Persons gain their first project edge and {v['projects_gaining_a_person']} Projects gain a Person.", ""]
     L += ["## Do the communities restate the institutes?", "",
           "Louvain, seeded, on the Persons with at least one tie. NMI is the normalised mutual information with the "
           "partition by institute (units: Persons with exactly one unit). The institute partition's own modularity is "

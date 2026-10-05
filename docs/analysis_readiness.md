@@ -29,21 +29,21 @@ or methods, or follows anything over time is `NOT_READY`. No analysis type is `R
 | A | A-2 composition by unit | READY_WITH_RESTRICTIONS (KI, PTI, SZI); NOT_READY (CSS-RECENS) | a named unit: CSS-RECENS 1 of 24 (4%), the others 86-98% |
 | A | A-3 position, rank, seniority | NOT_READY | position titles are raw strings (#10) |
 | A | A-4 who joined or left | NOT_READY | none of 289 affiliation relations has a date; one snapshot |
-| B | B-1 bipartite description within a source: projects per person, persons per project | READY_WITH_RESTRICTIONS | 36% of stated participants are outside the graph (B3) |
+| B | B-1 bipartite description within a source: projects per person, persons per project | READY_WITH_RESTRICTIONS | 40% of stated participants are outside the graph (B3) |
 | B | B-2 comparing institutes' participation | NOT_READY | researchers with a project edge range from 21% to 90% by template, not by behaviour |
 | B | B-3 roles (lead, participant, coordinator) | NOT_READY | label semantics undecided; 51 of 193 SZI project pages state people under a label no field took (#36) |
 | B | B-4 project attributes (funder, grant, duration) | NOT_READY | funder on 40%, grant id on 11%, period on 60% of Projects; field conflicts (#11) |
 | B | B-5 project types (research project, programme, network, journal) | NOT_READY | no activity type is modelled: 0 of 280 (#9) |
 | B | B-6 participation over time | NOT_READY | dates partial (#11); most edges are "observed at crawl time" |
-| C | C-1 structure of the projection: ties, components, size and degree distributions | READY_WITH_RESTRICTIONS | with the checks of §3; 55% of ties exist only through 7 projects |
+| C | C-1 structure of the projection: ties, components, size and degree distributions | READY_WITH_RESTRICTIONS | with the checks of §3; 55% of ties exist only through 7 projects, and the strict identity policy keeps 296 of 584 ties |
 | C | C-2 weighted ties and strength as distributions | READY_WITH_RESTRICTIONS | prefer size-discounted weights; strength then equals the bipartite degree |
-| C | C-3 person-level centrality, as a ranking or as importance | NOT_READY | degree and discounted strength agree at rho 0.715; remove 7 projects and the top decile changes almost entirely (§5) |
-| C | C-4 community detection | READY_WITH_RESTRICTIONS | exploratory only; communities partly restate institutes (NMI 0.572-0.674) |
-| C | C-5 cross-institute collaboration, brokerage, integration | NOT_READY | 68 of 83 cross-institute ties run through one project of 20 persons |
+| C | C-3 person-level centrality, as a ranking or as importance | NOT_READY | degree and discounted strength agree at rho 0.715; the top decile changes almost entirely when 7 projects go (overlap 0.087) or when automatic identifications go (0.042) (§5) |
+| C | C-4 community detection | READY_WITH_RESTRICTIONS | exploratory only; communities partly restate institutes (NMI 0.521-0.676) |
+| C | C-5 cross-institute collaboration, brokerage, integration | NOT_READY | 68 of 83 cross-institute ties run through one project of 20 persons, and 72 of the 83 rest on edges identified only by an automatic rule |
 | C | C-6 network statistics of two releases read as change | NOT_READY | releases differ by pipeline (§8), not by the world |
 | D | D-1 topic or method prevalence by person, unit, institute | NOT_READY | keyword-derived; coverage 16% (SZI) to 93% (KI); false positives measured (#15) |
 | D | D-2 person-topic or topic co-occurrence networks | NOT_READY | same |
-| I | I-1 analysis on canonical Persons with mention statuses reported | READY_WITH_RESTRICTIONS | 30% of person mentions are outside the graph; 17% rest on an automatic rule |
+| I | I-1 analysis on canonical Persons with mention statuses reported | READY_WITH_RESTRICTIONS | 30% of person mentions are outside the graph; 17% were resolved by an automatic rule; 34% of project edges rest only on one |
 | I | I-2 graphs with nodes for unresolved mentions or name strings | NOT_READY | 187 of 347 person-like nodes (54%) would be names |
 | T | T-1 snapshot "as of the crawl" | READY_WITH_RESTRICTIONS | state it as "as of the crawl" |
 | T | T-2 longitudinal analysis | NOT_READY | see A-4, B-6 |
@@ -120,9 +120,10 @@ including CSS-RECENS; read a position string as a rank. *Blockers:* #10 (positio
 (89%), PTI 39 of 51 (76%), CSS-RECENS 5 of 24 (21%) (B1). 208 of 280 Projects (74%) have a Person in
 the graph, 175 (63%) a PI, 92 (33%) two or more Persons (B2); with two or more: KI 14 of 47 (30%),
 PTI 19 of 37 (51%), SZI 59 of 193 (31%), CSS-RECENS 0 of 3. The pages state 825 distinct
-(project, participant) pairs; 529 (64%) are in the graph (361 anchored by a profile link, 168 by an
-automatic name rule) and **296 (36%) are not** (249 with no candidate Person, 47 in review) (B3).
-Of 601 project edges, 167 (28%) rest only on an automatic identity rule (B4). Project nodes are
+(project, subject) pairs; 491 (60%) are in the graph (196 on the subject's own profile page, 95 by a
+verified profile link, 200 by an automatic rule) and **334 (40%) are not** (285 with no candidate
+Person, 49 in review) (B3). Of 601 project edges, 204 (34%) rest only on an automatic identity rule
+(B4). Project nodes are
 page-backed; 282 project mentions are titles without a page and produce no edge (SZI 103, PTI 86,
 CSS-RECENS 59, KI 34). No activity type is modelled (0 of 280, #9). Explicit dates: 238 of 423
 `PARTICIPATES_IN` (56%), 104 of 178 `PRINCIPAL_INVESTIGATOR_OF` (58%); a start date on 167 of 280
@@ -148,11 +149,12 @@ projects with two or more persons; 4 components, the largest holding 107 of 113 
 8, maximum 29. Ties inside one institute: SZI 295, PTI 118, KI 87, CSS-RECENS 1; **across
 institutes 83** (14%). **7 projects of 8 or more persons (sizes 8, 8, 8, 9, 10, 13, 20) carry 376
 ties (64%); 322 (55%) exist only through them**, and 10 persons have no tie outside them. 3 projects
-of 10 or more carry 298 (51%); 235 (40%) exist only through them.
+of 10 or more carry 298 (51%); 235 (40%) exist only through them. Of the 83 ties across institutes,
+72 rest on edges identified only by an automatic rule (§5, point 3).
 
 *Limits.* A tie is co-listing on a project page: it can mean working together, belonging to the same
 grant or sitting in the same consortium. A project of n persons adds n(n-1)/2 ties (190 for the
-project of 20). The graph is incomplete by the 36% of participants outside it.
+project of 20). The graph is incomplete by the 40% of participants outside it.
 
 *May:* C-1, C-2 and C-4 with S1-S6. *Must not:* rank persons; call a degree "importance" or
 "influence"; call a community a school or a tradition; report cross-institute ties as integration;
@@ -183,8 +185,9 @@ with a stated reason in `coverage.md` (I3).
 
 *May:* analyses on canonical Persons, with the mention statuses reported. *Must not:* a name-based
 graph, nodes for unresolved mentions, merging mentions by name across pages. A false merge is worse
-than an unresolved mention (docs/methodology.md §3), so the sensitivity runs only ever remove
-automatic identifications, never add any. *Blockers:* #34 (a stated affiliation is not used as
+than an unresolved mention (docs/methodology.md §3), so the identity policies of §5 only ever remove
+automatic identifications; the one run that adds identifications (every review candidate accepted)
+is an upper bound, labelled as such, and no release contains it. *Blockers:* #34 (a stated affiliation is not used as
 evidence; the protection against a namesake is incidental), #37 (the identity basis of an edge is
 not stored, only derivable), #28.
 
@@ -231,55 +234,82 @@ the reports).
 | version | persons with edge | ties | across institutes | components (largest) | rho degree | top-decile overlap | rho discounted strength | community NMI with default |
 |---|---|---|---|---|---|---|---|---|
 | default (every edge) | 120 | 584 | 83 | 4 (107) | | | | |
-| strict (anchored or certain edges only) | 113 | 473 | 79 | 6 (93) | 0.877 | 0.524 | 0.723 | 0.834 |
-| complete projects only | 99 | 216 | 12 | 6 (58) | 0.442 | 0.182 | 0.540 | 0.716 |
+| strict (anchored or certain edges only) | 104 | 296 | 11 | 7 (81) | 0.469 | 0.042 | 0.617 | 0.741 |
+| complete projects only | 91 | 170 | 1 | 7 (27) | 0.350 | 0.200 | 0.438 | 0.641 |
 | projects of 8+ persons removed (7) | 120 | 262 | 8 | 6 (76) | 0.515 | 0.087 | 0.901 | 0.650 |
 | projects of 9+ removed (4) | 120 | 323 | 15 | 5 (98) | 0.560 | 0.036 | 0.954 | 0.738 |
 | projects of 10+ removed (3) | 120 | 349 | 15 | 5 (99) | 0.614 | 0.091 | 0.959 | 0.751 |
+| *upper bound, not a version of the data: every review statement with one candidate accepted (46 new edges)* | 122 | 707 | 177 | 3 (113) | 0.940 | 0.786 | 0.900 | 0.820 |
 
-**Communities** (Louvain, seed 0; 113 persons in ties; seed stability is the lowest NMI between
-seed 0 and nine other seeds)
+The last row is the recall side of the strict policy: 49 stated names are still in review, 47 of
+them with exactly one candidate Person (2 have several and are left out). Accepting all 47 is the
+most the review queue could add under that one rule; a reviewer will reject some (§6 says by kind),
+and no release contains it. It is reported so that "what is missing" is bounded as well as "what is
+automatic".
+
+**Communities** (Louvain, seed 0; 113 persons in ties in the default graph; seed stability is the
+lowest NMI between seed 0 and nine other seeds)
 
 | graph | communities | modularity | modularity of the institute partition | NMI with institute | NMI with unit | seed stability |
 |---|---|---|---|---|---|---|
 | default, unweighted | 8 | 0.547 | 0.445 | 0.674 | 0.637 | 0.927 |
 | default, shared-project count | 9 | 0.555 | 0.482 | 0.671 | 0.618 | 0.795 |
 | default, size-discounted | 10 | 0.675 | 0.518 | 0.597 | 0.581 | 0.872 |
-| strict, unweighted | 10 | 0.599 | 0.477 | 0.593 | 0.579 | 0.939 |
-| complete projects only, unweighted | 10 | 0.663 | 0.537 | 0.598 | 0.654 | 0.940 |
+| strict, unweighted (93 persons in ties) | 11 | 0.669 | 0.626 | 0.653 | 0.694 | 0.961 |
+| complete projects only, unweighted (63) | 9 | 0.688 | 0.489 | 0.521 | 0.582 | 0.952 |
 | 8+ removed, unweighted | 11 | 0.661 | 0.573 | 0.572 | 0.608 | 0.798 |
+| 9+ removed, unweighted | 9 | 0.658 | 0.595 | 0.657 | 0.605 | 0.897 |
+| 10+ removed, unweighted | 9 | 0.647 | 0.589 | 0.676 | 0.635 | 0.904 |
 
 *What follows.*
 
-1. **Who looks central depends on the weighting and on seven projects.** Degree and discounted
-   strength agree at rho 0.715 (top-decile overlap 0.350). Remove the seven projects of 8 or more
-   persons and degree keeps rho 0.515 but its top decile is almost entirely different (overlap
-   0.087), while discounted strength keeps rho 0.901. A degree ranking of persons is a ranking of
-   who sits on a large project. That is why C-3 is `NOT_READY`.
+1. **Who looks central depends on the weighting, on seven projects and on the automatic
+   identifications.** Degree and discounted strength agree at rho 0.715 (top-decile overlap 0.350).
+   Remove the seven projects of 8 or more persons and degree keeps rho 0.515 but its top decile is
+   almost entirely different (overlap 0.087), while discounted strength keeps rho 0.901. Keep only the
+   edges with an anchored or certain identification and degree has rho 0.469 and a top-decile overlap
+   of 0.042. A degree ranking of persons is a ranking of who sits on a large project and who was
+   identified by a rule. That is why C-3 is `NOT_READY`.
 2. **The discounted weight adds nothing to the bipartite degree.** Under 1/(n-1) each project adds
    exactly 1 to the strength of each of its persons (checked on every person). The size-discounted
    graph is useful for ties, not as a second measure of persons.
-3. **Cross-institute structure is one project.** Of the 83 ties across institutes, 68 (82%) run
-   through the project of 20 persons ("Integrációs és dezintegrációs folyamatok a magyar
-   társadalomban", an SZI page that lists persons of PTI and CSS-RECENS), 7 through a project of 8
-   (KI-SZI), and 8 through four projects of 2 to 5 persons. 75 (90%) exist only through projects of
-   8 or more; remove them and 8 remain. It is not an identity artefact (79 of the 83 survive the
-   strict policy) but a concentration artefact, which is why C-5 is `NOT_READY` and why the
-   complete-projects variant (which drops that project, since part of its list is outside the
-   graph) keeps only 12.
-4. **The edges that rest on an automatic rule move the top decile.** The strict policy keeps rho 0.877
-   for degree but a top-decile overlap of 0.524, down from 0.870 on `p16`: #31 added 33 ties, all
-   through SZI participants resolved by an automatic rule (they vanish under the strict policy, which
-   has 473 ties on both releases). The rule is precise on what was audited (§6) but the structure
-   depends on it, so S4 is a requirement.
+3. **Cross-institute structure is one project, identified by an automatic rule.** Of the 83 ties
+   across institutes, 68 (82%) run through the project of 20 persons ("Integrációs és
+   dezintegrációs folyamatok a magyar társadalomban", an SZI page that lists persons of PTI and
+   CSS-RECENS), 7 through a project of 8 (KI-SZI), and 8 through four projects of 2 to 5 persons.
+   75 (90%) exist only through projects of 8 or more; remove them and 8 remain. **And 72 of the 83
+   (87%) are gone under the strict policy** (11 remain; the complete-projects variant, which drops
+   that project because part of its list is outside the graph, keeps 1). 17 of the 20 persons of the
+   large project are identified only by `slug_family_host` (one more only by `institute_unique_name`):
+   the page links `tk.mta.hu/kutato/<slug>` or a sibling site and the stated name is the full name of
+   the Person with the same slug. §6
+   reports what was checked on that rule; it rests on a declared assumption (one profile namespace
+   per institution family, ADR-0007), not on a verified link. The cross-institute structure is a
+   concentration artefact and an identity-rule dependency at once, which is why C-5 is `NOT_READY`.
+4. **The edges that rest on an automatic rule carry about half of the structure.** 204 of 601 project
+   edges (34%) rest only on one (`institute_unique_name` 162, `slug_family_host` 33,
+   `own_profile_project` 6, `slug_inferred_alias` 4; one edge rests on two rules): SZI 196 of 349
+   (56%), PTI 7 of 116 (6%), KI 1 of 133 (1%). Without them 296 of the 584 ties and 104 of the 120
+   persons remain, on `p16` as on `p31`: #31 added 33 ties and all of them run through SZI
+   participants resolved by an automatic rule. The rules are consistent with their evidence on what
+   was audited (§6) but the structure depends on them, so S4 is a requirement.
 5. **Communities are not just institutes, and not independent of them.** Louvain beats the institute
    partition on modularity (0.547 against 0.445; 0.675 against 0.518 discounted), so there is structure
-   inside institutes; but NMI with the institute is 0.572-0.674 and the structure changes when large
-   projects go (NMI 0.650-0.751 with the default partition). Partitions are stable across seeds
-   (lowest NMI 0.795-0.940). Treat them as an exploratory picture.
+   inside institutes; but NMI with the institute is 0.521-0.676 and the structure changes when large
+   projects or automatic identifications go (NMI 0.641-0.751 with the default partition). Partitions
+   are stable across seeds (lowest NMI 0.795-0.961). Treat them as an exploratory picture.
 6. **Small numbers.** The top decile is 12-15 persons and a Spearman rho on 120 persons moves by a
    few hundredths with one project; read the tables for what is large (0.087 against 0.901), not for
    the second decimal.
+7. **The review queue could move the structure as far as the automatic rules do, in the other
+   direction.** Accepting every statement in review that has one candidate Person would take ties from
+   584 to 707 and cross-institute ties from 83 to 177, while person-level agreement with the default
+   stays high (degree rho 0.940, top-decile overlap 0.786): rankings are far more sensitive to what is
+   automatic than to what is in review, and cross-institute counts are sensitive to both. The bound is
+   not a forecast. 23 of the 47 statements name, on one institute's page, a person of another with a
+   name unique in the family; accepting only those takes cross-institute ties to 163 and ties to
+   670. Whether such a page means that person or a namesake outside the sample is a reviewer's
+   decision, and it is the single decision that would change the cross-institute picture most.
 
 ## 6. Identity sensitivity (what the person mentions do to the graph)
 
@@ -288,15 +318,17 @@ Three versions of the project edges, never merged (S4):
 | version | what is in | persons with edge | ties |
 |---|---|---|---|
 | default | every project edge: anchored profile links, certain mentions, `HIGH_CONFIDENCE_AUTO` mentions | 120 | 584 |
-| strict | only edges with an anchored or certain claim (drops 167 edges that rest only on an automatic rule; 7 persons then have no edge) | 113 | 473 |
-| complete projects | only the 120 Projects whose stated participants are all in the graph (86 with one person, 34 with two or more) | 99 | 216 |
+| strict | only edges with an anchored or certain claim (drops the 204 edges that rest only on an automatic rule; 16 persons then have no edge) | 104 | 296 |
+| complete projects | only the 114 Projects whose stated participants are all in the graph (84 with one person, 30 with two or more) | 91 | 170 |
 
 Person mentions (1,435), reported separately for each status: `DETERMINISTIC` 758 (53%),
 `HIGH_CONFIDENCE_AUTO` 248 (17%), `REVIEW_REQUIRED` 67 (5%), `UNRESOLVED` 362 (25%). Certain evidence
 alone resolves 53%; with the automatic rule 70%; 30% are outside the graph. By source (resolved
 including the automatic rule): CSS-RECENS 58 of 58 (100%), KI 179 of 247 (72%), PTI 314 of 448 (70%),
-SZI 455 of 682 (67%). Edges that rest only on an automatic rule: SZI 163 of 349 (47%), PTI 3 of 116
-(3%), KI 1 of 133 (1%), CSS-RECENS 0 of 3.
+SZI 455 of 682 (67%). Edges that rest only on an automatic rule: SZI 196 of 349 (56%), PTI 7 of 116
+(6%), KI 1 of 133 (1%), CSS-RECENS 0 of 3. A mention is an observation (ADR-0006), so a name stated on
+a project page and again in a category listing is two mentions: the 67 mentions in review are 49
+distinct (project, name) statements, and B3 counts statements.
 
 *Precision of the automatic rule on what #31 added* (an audit of plausibility, not a ground truth).
 Of the 247 new heading-derived person mentions (112 distinct names) all 112 strings read as person
@@ -307,6 +339,24 @@ by a parenthetical (an affiliation or a placeholder): 41 have no candidate and 2
 resolved. No false merge was found. The residual risk the data cannot show is a namesake outside the
 staff universe. 19 mentions (7 distinct names: common surnames, or a namesake at another institute)
 went to review; 130 (79 names) have no candidate.
+
+*Consistency of every automatic rule with its own evidence* (also not a ground truth). The 248
+automatic resolutions: `institute_unique_name` 149, `own_profile_project` 45, `slug_family_host` 40,
+`slug_inferred_alias` 14. Each records a full-name match (232 exact, 15 normalised, 1 a name form the
+Person is already observed under) and no blocking signal on the chosen candidate; the cautions are
+a different institute (19) and a common surname (15). For `slug_family_host`, which carries the
+cross-institute structure, the slug of the linked profile equals one of the Person's own profile
+slugs in all 40 (32 Persons; links on `tk.mta.hu`, `tk.hu`, `szociologia.tk.mta.hu`,
+`szociologia.tk.elte.hu`). What the data cannot show is a namesake outside the staff universe, and
+whether one `/kutato/<slug>` names one person on every host of the family (the assumption of
+ADR-0007).
+
+*What is in review* (67 mentions, 49 statements). 26 name, on one institute's page, a person of
+another (23 with a name unique in the family, 3 with a common surname); 19 are same-institute
+common surnames, for which `institute_unique_name` is switched off; 2 are contradicted by the
+page's own link (`LINK_NAME_MISMATCH`); 2 have several candidate Persons. Accepting all of them
+that have one candidate is the upper bound of §5 (ties 707, across institutes 177). That is a
+reviewer's decision, not a rule's.
 
 ## 7. Source bias
 
@@ -322,15 +372,15 @@ comparison between institutes measures these before it measures anything else.
 | project mentions resolved; titles with no page | 298 of 417 (71%); 103 | 74 of 114 (65%); 34 | 74 of 186 (40%); 86 | 4 of 66 (6%); 59 |
 | project pages with a PI; participants; period; funder | 56%; 53%; 52%; 28% | 83%; 100%; 70%; 55% | 76%; 92%; 86%; 76% | 0%; 100%; 33%; 100% (3 pages) |
 | researchers with a project edge | 52 (90%) | 25 (89%) | 39 (76%) | 5 (21%) |
-| stated participants outside the graph | 194 of 507 (38%) | 57 of 163 (35%) | 45 of 152 (30%) | 0 of 3 |
-| edges resting only on an automatic identity rule | 163 of 349 (47%) | 1 of 133 (1%) | 3 of 116 (3%) | 0 of 3 |
+| stated participants outside the graph | 212 of 507 (42%) | 67 of 163 (41%) | 55 of 152 (36%) | 0 of 3 |
+| edges resting only on an automatic identity rule | 196 of 349 (56%) | 1 of 133 (1%) | 7 of 116 (6%) | 0 of 3 |
 | person mentions with no candidate (former staff or outside collaborators, #28) | 180 of 682 (26%) | 62 of 247 (25%) | 120 of 448 (27%) | 0 of 58 |
 | project pages parsed empty; with a labelled line no field took | 8; 78 of 193 | 0; 42 of 47 | 1; 31 of 37 | 0; 2 of 3 |
 
 *Direction of the bias.* **SZI** is most of the project layer (193 of 280 Projects, 295 of 584 ties
 are SZI-SZI); its participants are mostly plain-text names, so its ties are the most sensitive to
 the identity rule (S4); its profile template rarely states a research area, so any topic result
-about SZI is about the template. **KI** has the fullest project template; a third of its stated
+about SZI is about the template. **KI** has the fullest project template; 41% of its stated
 participants are outside the graph (former staff or outside partners) and 34 titles have no page;
 KI thematic research pages are not read (#16). **PTI** has period and funder on most projects, and
 86 titles with no page. **CSS-RECENS** is structurally under-observed: profiles give titles without
@@ -350,12 +400,13 @@ took (#36); of the 86 heading-template pages, 2 yield no name, 2 use a `<p>` as 
 | Project mentions | - | - | 783 | 783 | 783 |
 | B1 researchers with a project edge | 137/161 (85%) | 141/161 (88%) | 94/160 (59%) | 120/160 (75%) | 120/160 (75%) |
 | B2 Projects with two or more Persons | 87/606 (14%) | 92/606 (15%) | 48/223 (22%) | 65/280 (23%) | 92/280 (33%) |
-| B3 stated participants outside the graph | 151/829 (18%) | 95/829 (11%) | 90/393 (23%) | 147/578 (25%) | 296/825 (36%) |
-| B4 edges resting only on automatic rules | 0/710 (0%) | 40/782 (5%) | 39/324 (12%) | 43/477 (9%) | 167/601 (28%) |
+| B3 stated participants outside the graph | 207/829 (25%) | 122/829 (15%) | 118/393 (30%) | 185/578 (32%) | 334/825 (40%) |
+| B4 edges resting only on automatic rules | 0/710 (0%) | 76/782 (10%) | 74/324 (23%) | 80/477 (17%) | 204/601 (34%) |
 | C1 co-participation ties | 243 | 488 | 451 | 551 | 584 |
 | C2 ties only through projects of 8+ Persons | 44/243 (18%) | 270/488 (55%) | 278/451 (62%) | 333/551 (60%) | 322/584 (55%) |
 | C4 cross-institute ties | 8/243 (3%) | 79/488 (16%) | 76/451 (17%) | 83/551 (15%) | 83/584 (14%) |
 | C5 components (largest) | 11 (43) | 9 (91) | 5 (78) | 5 (101) | 4 (107) |
+| Strict policy: ties kept / cross-institute ties kept | 243 of 243 / 8 of 8 | 239 of 488 / 8 of 79 | 201 of 451 / 4 of 76 | 296 of 551 / 11 of 83 | 296 of 584 / 11 of 83 |
 | I1 person mentions resolved by certain evidence | 682/1021 (67%) | 668/1021 (65%) | 668/1021 (65%) | 758/1188 (64%) | 758/1435 (53%) |
 | I1 person mentions outside the graph | 339/1021 (33%) | 224/1021 (22%) | 213/1021 (21%) | 280/1188 (24%) | 429/1435 (30%) |
 | I1 mention-only share of person-like nodes | 70/231 (30%) | 67/228 (29%) | 67/227 (30%) | 119/279 (43%) | 187/347 (54%) |
@@ -364,16 +415,18 @@ took (#36); of the 86 heading-template pages, 2 yield no name, 2 use a `<p>` as 
 | I6 orphans | 13/161 (8%) | 9/161 (6%) | 21/160 (13%) | 19/160 (12%) | 19/160 (12%) |
 
 *Reading it.* These are changes in the pipeline, not in the world. **#5** (`m2` to `p5`): ties 243
-to 488 and cross-institute ties 8 to 79 on the same pages. The identity layer attached 62 more
-(Person, Project) pairs (622 to 684, none lost; 40 project edges now rest only on an automatic
-rule), and a person added to a project of n adds up to n-1 ties: 29 of the 62 pairs sit on two
-projects that grew from 1 to 20 and from 3 to 13 persons, and 226 of the 245 new ties exist only
-through those two. Stated participants outside the graph fell from 18% to 11%. **#7**: 606 project
+to 488 and cross-institute ties 8 to 79 on the same pages; under the strict policy the
+cross-institute ties are 8 on both, so the whole increase rests on edges identified by an automatic
+rule. The identity layer attached 62 more (Person, Project) pairs (622 to 684, none lost; 76 project
+edges now rest only on an automatic rule), and a person added to a project of n adds up to n-1 ties:
+29 of the 62 pairs sit on two projects that grew from 1 to 20 and from 3 to 13 persons, and 226 of
+the 245 new ties exist only through those two. Stated participants outside the graph fell from 25%
+to 15%. **#7**: 606 project
 strings became 223 page-backed Projects, so project-level shares are not comparable across that
 line; ties fell 488 to 451. **#16**: 57 linked project pages were fetched, ties 451 to 551.
 **#31**: 247 new heading-derived person mentions, ties 551 to 584, stated participants outside the
-graph 25% to 36% (more participants were *seen*, and most of the new ones are not Persons of the
-graph), and the share of edges resting only on an automatic rule 9% to 28%. The concentration
+graph 32% to 40% (more participants were *seen*, and most of the new ones are not Persons of the
+graph), and the share of edges resting only on an automatic rule 17% to 34%. The concentration
 through projects of 8 or more persons stays between 55% and 62% from `p5` on, and the share of
 person-like nodes that would be mention-only names rose from 29% to 54% as more pages were read.
 A network statistic is therefore a statement about *this release*; S6 applies, and #18
@@ -401,8 +454,8 @@ conclusion about Hungarian sociology.
 
 | not ready | blocker | what would show it is lifted |
 |---|---|---|
-| C-3 person-level centrality | #28, Milestone 3 (who is missing), a decision on large projects | a ranking that survives S2, S3 and S4 (today rho 0.515 and a top-decile overlap of 0.087 when 7 projects go) |
-| C-5 cross-institute claims | Milestone 3, #28 | cross-institute ties that do not depend on one project |
+| C-3 person-level centrality | #28, Milestone 3 (who is missing), a decision on large projects | a ranking that survives S2, S3 and S4 (today rho 0.515 and a top-decile overlap of 0.087 when 7 projects go; 0.469 and 0.042 under the strict policy) |
+| C-5 cross-institute claims | Milestone 3, #28, #34, a review decision on the 26 cross-institute name matches | cross-institute ties that do not depend on one project and survive the strict policy (today 11 of 83 do) |
 | B-2 institute comparisons | #31 follow-ups, #16, #28 | comparison on fields all four templates offer, with equal observation |
 | A-3 positions | #10 | positions modelled (rank, employment, leadership), not strings |
 | B-3 roles | #36 | a decided meaning for every role label, read from a table |
@@ -415,8 +468,13 @@ conclusion about Hungarian sociology.
 
 * **A sample of four institutes of one centre, 160 persons.** Everything above describes it.
 * **Plausibility, not ground truth,** for identity: the 98 automatic resolutions of #31 were read
-  one by one, and the rule's residual risk (a namesake outside the staff universe) is not
-  observable here. There is no estimate of recall.
+  one by one, every automatic resolution was checked against the evidence it records (§6), and the
+  rules' residual risk (a namesake outside the staff universe) is not observable here. There is no
+  estimate of recall beyond the review upper bound of §5.
+* **The identity basis of an edge is derived, not stored (#37).** It is joined from the claims to the
+  mention that carries each claim. A join on the form of the claim's subject reference is wrong,
+  because one profile link is shared by mentions made in different documents with different
+  statuses; the tests cover this, and a stored basis would remove the risk.
 * **Thresholds 8, 9 and 10** come from the size distribution (there is a gap after 10: 13 and 20),
   not from theory. Louvain is the only community method tried; no null model was run.
 * **The `complete projects` policy is conservative:** it also drops projects whose absent

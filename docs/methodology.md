@@ -241,16 +241,30 @@ check at thresholds of 8, 9 and 10 persons ("the five largest" is ambiguous: fif
 tied).
 
 Every project edge is `OBSERVED`, but the **identity of the person** on it is not equally safe.
-The indicators read it from the claims behind the edge: *anchored* (the page links the person's
-profile), *certain* (a name mention resolved `DETERMINISTIC` or `MANUAL_CONFIRMED`), *automatic*
-(`HIGH_CONFIDENCE_AUTO`). Three versions of the project edges are compared and never merged
-silently:
+The indicators read it from the claims behind the edge, joined to the mention that carries each
+claim: *anchored* (the claim is made on the person's own profile page, so no mention carries it),
+*certain* (the carrying mention is `DETERMINISTIC` or `MANUAL_CONFIRMED`: a verified profile link, a
+manual decision), *automatic* (`HIGH_CONFIDENCE_AUTO`: a named rule fired, also for a link to an
+alias or an old host that could not be verified). The join is on the claim and never on the form
+of the subject's `source_ref`: one profile link is shared by mentions made in different documents,
+and a profile or external link can be unresolved or automatic as well as certain, so reading the
+form of the reference would misclassify it (tests cover this). A statement is a distinct (project
+page, subject); the same name seen on a project page and in a category listing is one statement
+however many mentions the release holds for it, and its identity is the strongest of its claims.
+Three versions of the project edges are compared and never merged silently:
 
 * `default`: every project edge in the release;
 * `strict_certain_edges_only`: only edges with an anchored or certain claim (drops edges that
   rest only on an automatic rule);
 * `complete_projects_only`: only Projects whose stated leads and participants are all in the
-  graph (no `REVIEW_REQUIRED` or `UNRESOLVED` mention on the page).
+  graph (no statement still `REVIEW_REQUIRED` or `UNRESOLVED`).
+
+The versions only ever remove automatic identifications. The recall side is **not a version of the
+data**: the sensitivity script also reports, labelled an upper bound, what the structure would be
+if every statement still in review that has exactly one candidate Person were accepted
+(`review_candidates_accepted`), and, one kind at a time, where that bound comes from. No release
+contains it; whether a page naming a person of another institute means that person or a namesake
+is a reviewer decision.
 
 Project nodes are page-backed (a fetched page is their identity), so no `ProjectMention` status
 changes a node; project mentions decide which mentions attach to a Project and which
@@ -284,15 +298,18 @@ participations have no edge at all (a title without a page).
   Persons in the graph. *Denominator:* canonical Projects per source of their page (the host
   serving the page URL). *Threatens:* project-level analysis; ties exist only where a project
   has two or more Persons in the graph.
-- **B3 project_participant_subjects**: distinct subjects (an anchored profile or a name mention)
-  of lead / participant claims about a project page, by whether they are in the graph: anchored,
-  certain mention, HIGH_CONFIDENCE_AUTO mention, or outside it (REVIEW_REQUIRED, UNRESOLVED).
-  *Denominator:* distinct (project page, subject) pairs asserted in claims. *Threatens:*
-  participant counts and ties of any project whose list is partly outside the graph;
-  collaborators without a profile (former staff, outside partners) are missing.
-- **B4 edge_identity_basis**: project edges by how the Person was identified: only by anchored
-  or certain evidence, anchored plus an automatic mention rule, or only by HIGH_CONFIDENCE_AUTO
-  mentions (the relation itself is OBSERVED in every case). *Denominator:* PARTICIPATES_IN and
+- **B3 project_participant_subjects**: distinct subjects (a profile link, an external profile
+  link or a name) of lead / participant claims about a project page, by how each was identified:
+  anchored (the claim is made on the subject's own profile page), certain mention,
+  HIGH_CONFIDENCE_AUTO mention, or outside the graph (REVIEW_REQUIRED, UNRESOLVED); a statement
+  seen in several documents counts once, with its strongest identification. *Denominator:*
+  distinct (project page, subject) pairs asserted in claims. *Threatens:* participant counts and
+  ties of any project whose list is partly outside the graph; collaborators without a profile
+  (former staff, outside partners) are missing.
+- **B4 edge_identity_basis**: project edges by how the Person was identified, read from the
+  claims that make the edge and the mentions that carry them: only by anchored or certain
+  evidence, anchored plus an automatic mention rule, or only by HIGH_CONFIDENCE_AUTO mentions (the
+  relation itself is OBSERVED in every case). *Denominator:* PARTICIPATES_IN and
   PRINCIPAL_INVESTIGATOR_OF relations. *Threatens:* any analysis that treats all edges alike:
   edges resting on an automatic identity rule must be switched on and off to see what depends on
   them.
@@ -334,9 +351,11 @@ participations have no edge at all (a title without a page).
 
 **I. Identity (applies to every layer)**
 
-- **I1 person_mentions**: person mentions by resolution status, and the share of person-like
-  nodes that would exist only as an unresolved name (distinct names of UNRESOLVED mentions not
-  equal to a canonical Person's name, over canonical Persons plus those names). *Denominator:*
+- **I1 person_mentions**: person mentions by resolution status (a mention is one observation of
+  a person-like record in one page, ADR-0006: a name stated on a project page and again in a
+  category listing is two mentions; B3 counts statements), and the share of person-like nodes that
+  would exist only as an unresolved name (distinct names of UNRESOLVED mentions not equal to a
+  canonical Person's name, over canonical Persons plus those names). *Denominator:*
   person mentions per observing source; canonical Persons plus mention-only names. *Threatens:*
   a name-based graph (pseudo-nodes), and every count of 'people' that mixes mentions with
   Persons.
@@ -391,7 +410,8 @@ in docs/analysis_readiness.md §8.
     python research/analysis/projection_sensitivity.py data/releases/<release> [--json] [--seeds 10]
 
 The first measures the indicators A1-T1 of any release; the second runs the sensitivity checks of
-docs/analysis_readiness.md §5 (weightings, identity policy, large projects, communities).
+docs/analysis_readiness.md §5 (weightings, identity policy and the labelled review upper bound,
+large projects, communities).
 
 The second needs the `analysis` extra (`pip install -e '.[analysis]'`, networkx). Both read a
 release directory and nothing else, and both are deterministic (fixed seeds and node order).

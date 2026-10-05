@@ -25,7 +25,7 @@ import itertools
 import json
 from collections import Counter, defaultdict
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 from urllib.parse import urlsplit
 
 from ..normalize.names import name_key, order_free_key
@@ -35,6 +35,8 @@ PROJECT_EDGES = ("PARTICIPATES_IN", "PRINCIPAL_INVESTIGATOR_OF")
 CERTAIN = ("DETERMINISTIC", "MANUAL_CONFIRMED")
 AUTO = "HIGH_CONFIDENCE_AUTO"
 OUTSIDE_GRAPH = ("REVIEW_REQUIRED", "UNRESOLVED")
+ANCHORED = "anchored"  # a claim no PersonMention carries: made on its subject's own profile page, which anchors the Person
+_STRONGEST_FIRST = (ANCHORED, "MANUAL_CONFIRMED", "DETERMINISTIC", AUTO, "REVIEW_REQUIRED", "UNRESOLVED")
 LARGE_PROJECT_THRESHOLDS = (8, 9, 10)  # thresholds, not "the five largest": the fifth place is tied (#17)
 SIZE_BUCKETS = ((1, 1, "1"), (2, 2, "2"), (3, 3, "3"), (4, 5, "4-5"), (6, 7, "6-7"), (8, 9, "8-9"), (10, 10**6, "10+"))
 
@@ -65,16 +67,19 @@ INDICATORS: dict[str, dict[str, str]] = {
            "denominator": "canonical Projects per source of their page (the host serving the page URL)",
            "threatens": "project-level analysis; ties exist only where a project has two or more Persons in the graph"},
     "B3": {"layer": "B", "name": "project_participant_subjects",
-           "definition": "distinct subjects (an anchored profile or a name mention) of lead / participant claims about "
-                         "a project page, by whether they are in the graph: anchored, certain mention, "
-                         "HIGH_CONFIDENCE_AUTO mention, or outside it (REVIEW_REQUIRED, UNRESOLVED)",
+           "definition": "distinct subjects (a profile link, an external profile link or a name) of lead / participant "
+                         "claims about a project page, by how each was identified: anchored (the claim is made on the "
+                         "subject's own profile page), certain mention, HIGH_CONFIDENCE_AUTO mention, or outside the "
+                         "graph (REVIEW_REQUIRED, UNRESOLVED); a statement seen in several documents counts once, "
+                         "with its strongest identification",
            "denominator": "distinct (project page, subject) pairs asserted in claims",
            "threatens": "participant counts and ties of any project whose list is partly outside the graph; "
                         "collaborators without a profile (former staff, outside partners) are missing"},
     "B4": {"layer": "B", "name": "edge_identity_basis",
-           "definition": "project edges by how the Person was identified: only by anchored or certain evidence, "
-                         "anchored plus an automatic mention rule, or only by HIGH_CONFIDENCE_AUTO mentions "
-                         "(the relation itself is OBSERVED in every case)",
+           "definition": "project edges by how the Person was identified, read from the claims that make the edge "
+                         "and the mentions that carry them: only by anchored or certain evidence, anchored plus an "
+                         "automatic mention rule, or only by HIGH_CONFIDENCE_AUTO mentions (the relation itself is "
+                         "OBSERVED in every case)",
            "denominator": "PARTICIPATES_IN and PRINCIPAL_INVESTIGATOR_OF relations",
            "threatens": "any analysis that treats all edges alike: edges resting on an automatic identity rule "
                         "must be switched on and off to see what depends on them"},
@@ -115,9 +120,11 @@ INDICATORS: dict[str, dict[str, str]] = {
            "denominator": "WORKS_ON_TOPIC and USES_METHOD relations; ResearchTopics; profile-backed Persons",
            "threatens": "any substantive topic claim: the relations are keyword-map derivations of free text"},
     "I1": {"layer": "I", "name": "person_mentions",
-           "definition": "person mentions by resolution status, and the share of person-like nodes that would exist "
-                         "only as an unresolved name (distinct names of UNRESOLVED mentions not equal to a "
-                         "canonical Person's name, over canonical Persons plus those names)",
+           "definition": "person mentions by resolution status (a mention is one observation of a person-like record "
+                         "in one page, ADR-0006: a name stated on a project page and again in a category listing is two "
+                         "mentions; B3 counts statements), and the share of person-like nodes that would exist only as "
+                         "an unresolved name (distinct names of UNRESOLVED mentions not equal to a canonical Person's "
+                         "name, over canonical Persons plus those names)",
            "denominator": "person mentions per observing source; canonical Persons plus mention-only names",
            "threatens": "a name-based graph (pseudo-nodes), and every count of 'people' that mixes mentions with Persons"},
     "I2": {"layer": "I", "name": "duplicate_persons",
@@ -160,6 +167,16 @@ def _rows(path: Path) -> list[dict[str, Any]]:
     return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
 
 
+def _status(mention: dict[str, Any]) -> str:
+    return (mention.get("resolution") or {}).get("status", "UNKNOWN")
+
+
+def _stronger(a: str | None, b: str) -> str:
+    """The stronger of two identification statuses (a status outside ``_STRONGEST_FIRST`` ranks last)."""
+    rank = lambda s: _STRONGEST_FIRST.index(s) if s in _STRONGEST_FIRST else len(_STRONGEST_FIRST)  # noqa: E731
+    return b if a is None or rank(b) < rank(a) else a
+
+
 class ReleaseData:
     """The files of one release directory, indexed once."""
 
@@ -182,6 +199,17 @@ class ReleaseData:
         self.by_type: dict[str, list[dict]] = defaultdict(list)
         for r in self.relations:
             self.by_type[r["type"]].append(r)
+        # claim id -> the PersonMention that carries it (context[*].claim_ids). A claim no mention carries was made on
+        # its subject's own profile page: the page anchors the Person and there is no decision to take. The join is on
+        # the claim, never on the subject's source_ref: one ref (a profile link, an external profile) is shared by
+        # mentions made in different documents, and their statuses can differ.
+        self.claim_mention: dict[str, dict[str, Any]] = {}
+        for m in self.person_mentions:
+            for ctx in m.get("context", []):
+                for cid in ctx.get("claim_ids", []):
+                    held = self.claim_mention.get(cid)
+                    if held is None or _stronger(_status(held), _status(m)) != _status(held):
+                        self.claim_mention[cid] = m
         # the source an entity belongs to is the source whose host serves its page, as in coverage.py
         self.host_source: dict[str, str] = {}
         for d in _rows(root / "documents.jsonl"):
@@ -230,52 +258,71 @@ def _membership(rel: ReleaseData, edges: list[dict]) -> dict[str, set[str]]:
     return dict(mem)
 
 
+def _page_to_project(rel: ReleaseData) -> dict[str, str]:
+    """Project page URL -> canonical Project id (a Project is page-backed: its source_refs are its pages)."""
+    return {ref.partition("|")[2]: pid for pid, p in rel.projects.items() for ref in p.get("source_refs", [])}
+
+
+def _carrier_status(rel: ReleaseData, claim_id: str) -> str:
+    """How the subject of a claim was identified: ``anchored`` (the claim was made on the subject's own profile page)
+    or the status of the PersonMention that carries it."""
+    carrier = rel.claim_mention.get(claim_id)
+    return _status(carrier) if carrier else ANCHORED
+
+
 def _edge_basis(rel: ReleaseData) -> dict[str, str]:
     """relation_id -> 'certain' | 'certain+auto' | 'auto_only' | 'other' for the project edges.
 
-    A claim is *anchored* when its subject is a profile (the page links the person), *certain* when it is a
-    name mention resolved DETERMINISTIC / MANUAL_CONFIRMED, *auto* when HIGH_CONFIDENCE_AUTO. An edge rests on
-    its claims, so one anchored or certain claim makes it certain; the relation is OBSERVED either way, the
-    difference is how the Person was identified."""
-    status = {m["source_ref"]: (m.get("resolution") or {}).get("status", "UNKNOWN") for m in rel.person_mentions}
-    claims = {c["claim_id"]: c for c in rel.claims}
+    A claim is *certain* when its subject is anchored (made on the subject's own profile page) or its mention is
+    DETERMINISTIC / MANUAL_CONFIRMED, *auto* when its mention is HIGH_CONFIDENCE_AUTO. The mention that carries a claim
+    is found by the claim, not by the form of the subject's source_ref: a profile link or an external profile link
+    can be an automatic identification too (a host alias that cannot be verified, ADR-0007). An edge rests on its
+    claims, so one certain claim makes it certain; the relation is OBSERVED either way, the difference is how the
+    Person was identified."""
+    known = {c["claim_id"] for c in rel.claims}
     out: dict[str, str] = {}
     for r in rel.relations:
         if r["type"] not in PROJECT_EDGES:
             continue
         kinds = set()
         for cid in r["claim_ids"]:
-            c = claims.get(cid)
-            if c is None:
+            if cid not in known:
                 continue
-            ref = c["subject"].get("source_ref") or ""
-            if "name-mention:" not in ref:
-                kinds.add("certain")
-            else:
-                st = status.get(ref, "UNKNOWN")
-                kinds.add("certain" if st in CERTAIN else "auto" if st == AUTO else "other")
+            st = _carrier_status(rel, cid)
+            kinds.add("certain" if st == ANCHORED or st in CERTAIN else "auto" if st == AUTO else "other")
         out[r["relation_id"]] = ("certain+auto" if {"certain", "auto"} <= kinds else "certain" if "certain" in kinds
                                  else "auto_only" if "auto" in kinds else "other")
     return out
 
 
-def _complete_projects(rel: ReleaseData) -> set[str]:
-    """Projects every stated lead/participant of which is in the graph (no REVIEW_REQUIRED / UNRESOLVED mention)."""
-    status = {m["source_ref"]: (m.get("resolution") or {}).get("status", "UNKNOWN") for m in rel.person_mentions}
-    page_to_project = {ref.partition("|")[2]: pid for pid, p in rel.projects.items() for ref in p.get("source_refs", [])}
-    outside: set[str] = set()
-    seen: set[str] = set()
+def _statements(rel: ReleaseData) -> dict[tuple[str, str], dict[str, Any]]:
+    """(Project, subject) -> what the pages state: one entry per distinct lead / participant subject of a project page.
+
+    ``status``: the strongest identification among the claims that state it (``anchored``, or the status of the
+    mention carrying the claim; the same name seen in two documents is one statement). ``candidates``: person id ->
+    candidate record (signals as recorded) for the viable candidates (not rejected, canonical) of the mentions that
+    carry it. The subject is the claim's source_ref: a profile link, an external profile link, or a name on that page."""
+    page_to_project = _page_to_project(rel)
+    out: dict[tuple[str, str], dict[str, Any]] = {}
     for c in rel.claims:
         if c["predicate"] not in PROJECT_EDGES:
             continue
         pid = page_to_project.get((c["object"].get("source_ref") or "").partition("|")[2])
         if pid is None:
             continue
-        seen.add(pid)
-        ref = c["subject"].get("source_ref") or ""
-        if "name-mention:" in ref and status.get(ref, "UNKNOWN") in OUTSIDE_GRAPH:
-            outside.add(pid)
-    return seen - outside
+        carrier = rel.claim_mention.get(c["claim_id"])
+        item = out.setdefault((pid, c["subject"].get("source_ref") or ""), {"status": None, "candidates": {}})
+        item["status"] = _stronger(item["status"], _status(carrier) if carrier else ANCHORED)
+        for x in (carrier or {}).get("candidates", []):
+            if not x.get("rejected") and x["person_id"] in rel.persons:
+                item["candidates"].setdefault(x["person_id"], x)
+    return out
+
+
+def _complete_projects(rel: ReleaseData) -> set[str]:
+    """Projects every stated lead/participant of which is in the graph (none is REVIEW_REQUIRED or UNRESOLVED)."""
+    stated = _statements(rel)
+    return {pid for pid, _ in stated} - {pid for (pid, _), v in stated.items() if v["status"] in OUTSIDE_GRAPH}
 
 
 VARIANTS = ("default", "strict_certain_edges_only", "complete_projects_only")
@@ -295,6 +342,41 @@ def variant_memberships(rel: ReleaseData) -> dict[str, dict[str, set[str]]]:
     return {"default": mem,
             "strict_certain_edges_only": _membership(rel, certain_edges),
             "complete_projects_only": {p: ms for p, ms in mem.items() if p in complete}}
+
+
+def review_candidates_accepted(rel: ReleaseData, accept: Callable[[dict[str, Any]], bool] | None = None
+                               ) -> tuple[dict[str, set[str]], dict[str, int]]:
+    """The default project -> Persons table plus the Person of every stated subject that is still REVIEW_REQUIRED and
+    has exactly one viable candidate (not rejected, a canonical Person of the release). ``accept`` narrows that to the
+    candidates it approves (it is given the candidate record, with its recorded signals).
+
+    A counterfactual for the recall side of the identity decisions, the counterpart of the strict policy on the
+    precision side: how far could the structure move if the review queue were accepted in the one way that needs no
+    choice? It is an upper bound under that rule, not a version of the data and not a forecast. A reviewer rejects
+    some of these (a common surname, a name that contradicts the page's own link); a subject with several candidates
+    is left out because "accept one of them" has no single answer, and one with none adds nothing. Nothing here is
+    written to a release, and ``variant_memberships`` stays the list of versions of the edges.
+
+    Returns the table and the counts behind it. A statement is a distinct (Project, stated subject): the same name seen
+    in a project page and in a listing page is one statement, however many mention records the release holds for it."""
+    default = _membership(rel, [r for r in rel.relations if r["type"] in PROJECT_EDGES])
+    mem = {p: set(ms) for p, ms in default.items()}
+    pending = {k: v["candidates"] for k, v in _statements(rel).items() if v["status"] == "REVIEW_REQUIRED"}
+    pairs = {(pid, person) for (pid, _), cands in pending.items() if len(cands) == 1
+             for person, cand in cands.items() if accept is None or accept(cand)}
+    new = {(pid, person) for pid, person in pairs if person not in default.get(pid, set())}
+    for pid, person in new:
+        mem.setdefault(pid, set()).add(person)
+    had_edge = {p for ms in default.values() for p in ms}
+    info = {"review_mention_records": sum(1 for m in rel.person_mentions if _status(m) == "REVIEW_REQUIRED"),
+            "review_statements": len(pending),
+            "with_one_candidate": sum(1 for c in pending.values() if len(c) == 1),
+            "with_several_candidates": sum(1 for c in pending.values() if len(c) > 1),
+            "with_no_viable_candidate": sum(1 for c in pending.values() if not c),
+            "pairs": len(pairs), "new_edges": len(new),
+            "persons_gaining_a_first_edge": len({person for _, person in new} - had_edge),
+            "projects_gaining_a_person": len({pid for pid, _ in new})}
+    return mem, info
 
 
 def tie_stats(mem: dict[str, set[str]], sites: dict[str, set[str]]) -> dict[str, Any]:
@@ -495,27 +577,16 @@ NOT_MEASURED = [
 
 
 def _participant_subjects(rel: ReleaseData) -> dict[str, Any]:
-    """B3: distinct (project page, subject) pairs of lead/participant claims, by the subject's status."""
-    status = {m["source_ref"]: (m.get("resolution") or {}).get("status", "UNKNOWN") for m in rel.person_mentions}
-    page_to_project = {ref.partition("|")[2]: pid for pid, p in rel.projects.items() for ref in p.get("source_refs", [])}
-    seen: set[tuple[str, str]] = set()
+    """B3: distinct (project page, subject) statements of lead/participant claims, by how the subject was identified."""
     counts: dict[str, Counter] = defaultdict(Counter)
-    for c in rel.claims:
-        if c["predicate"] not in PROJECT_EDGES:
-            continue
-        pid = page_to_project.get((c["object"].get("source_ref") or "").partition("|")[2])
-        subject = c["subject"].get("source_ref") or ""
-        if pid is None or (pid, subject) in seen:
-            continue
-        seen.add((pid, subject))
-        kind = "anchored" if "name-mention:" not in subject else status.get(subject, "UNKNOWN")
+    for (pid, _), v in _statements(rel).items():
         for key in sorted(rel.project_sites[pid]) + ["all"]:
-            counts[key][kind] += 1
+            counts[key][v["status"]] += 1
     out = {}
     for key in sorted(counts, key=lambda k: (k == "all", k)):
         c = counts[key]
         total = sum(c.values())
-        inside = c["anchored"] + sum(c[k] for k in CERTAIN) + c[AUTO]
+        inside = c[ANCHORED] + sum(c[k] for k in CERTAIN) + c[AUTO]
         out[key] = {"subjects": total, "by_status": dict(sorted(c.items())), "in_graph": share(inside, total),
                     "outside_graph": share(sum(c[k] for k in OUTSIDE_GRAPH), total)}
     return out

@@ -9,7 +9,7 @@ import pytest
 
 pytest.importorskip("networkx")
 
-from test_readiness import make_release  # noqa: E402  (the hand-made release, counted by hand there)
+from test_readiness import A_HOST, dump, make_release, person  # noqa: E402  (the hand-made release, counted by hand there)
 
 SCRIPT = Path(__file__).resolve().parents[1] / "research" / "analysis" / "projection_sensitivity.py"
 spec = importlib.util.spec_from_file_location("projection_sensitivity", SCRIPT)
@@ -86,6 +86,83 @@ def test_report_agrees_with_the_readiness_indicators_and_is_deterministic(releas
     for name, variant in readiness_report(release)["sensitivity"]["variants"].items():
         if name != "default":
             assert first["identity_policy"][name]["ties"] == variant["ties"]
+
+
+def add_review_mentions(root: Path) -> None:
+    """Review mentions on project A of the hand-made release (p22 is already there, with no candidate).
+    p22: one candidate on another institute, per_9 (on E only); the same name is also seen in a second document (one
+    statement, two records). p23: two candidates. p24: its one candidate is rejected. p25: one candidate of the same
+    institute with a common surname, already on A. p26: one candidate of the same institute, per_12, who has no project
+    edge. p27: one candidate, but it carries no project claim at all."""
+    page_a = f"src_a|https://{A_HOST}/A"
+    ref = lambda n: f"src_a|name-mention:p{n}@{page_a}"  # noqa: E731
+    cand = lambda pid, rejected=False, signals=("NAME_EXACT",), negative=(): {  # noqa: E731
+        "person_id": pid, "name_match": "NAME_EXACT", "rejected": rejected, "signals": list(signals),
+        "negative_signals": list(negative)}
+    other, same = ("NAME_EXACT", "UNIQUE_NAME_IN_FAMILY"), ("NAME_EXACT", "SAME_INSTITUTE", "UNIQUE_NAME_IN_FAMILY")
+    record = lambda n, cands, cid: {  # noqa: E731
+        "source_ref": ref(n), "normalized_name": f"person {n}", "source_id": "src_a",
+        "resolution": {"status": "REVIEW_REQUIRED"}, "candidates": cands,
+        "context": [{"relation": "PARTICIPATES_IN", "target_id": "prj_A", "claim_ids": [cid]}] if cid else []}
+    path = root / "entities" / "PersonMention.jsonl"
+    rows = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()]
+    for r in rows:
+        if r["normalized_name"] == "person 22":
+            r["candidates"] = [cand("per_9", signals=other, negative=("DIFFERENT_INSTITUTE",))]
+    extra = [record(22, [cand("per_9", signals=other, negative=("DIFFERENT_INSTITUTE",))], "clm_review_22_listing"),
+             record(23, [cand("per_10"), cand("per_11")], "clm_review_23"),
+             record(24, [cand("per_5", rejected=True)], "clm_review_24"),
+             record(25, [cand("per_1", signals=same, negative=("COMMON_SURNAME",))], "clm_review_25"),
+             record(26, [cand("per_12", signals=same)], "clm_review_26"), record(27, [cand("per_8")], None)]
+    dump(path, rows + extra)
+    claims = [json.loads(line) for line in (root / "claims.jsonl").read_text(encoding="utf-8").splitlines()]
+    claims += [{"claim_id": r["context"][0]["claim_ids"][0], "predicate": "PARTICIPATES_IN", "subject": {"source_ref": r["source_ref"]},
+                "object": {"source_ref": page_a}} for r in extra if r["context"]]
+    dump(root / "claims.jsonl", claims)
+    dump(root / "entities" / "Person.jsonl", [json.loads(line) for line in
+                                              (root / "entities" / "Person.jsonl").read_text(encoding="utf-8").splitlines()]
+         + [person(12, A_HOST)])
+
+
+def test_the_review_upper_bound_accepts_only_mentions_with_exactly_one_candidate(release):
+    from szocatlas.validation.readiness import ReleaseData, review_candidates_accepted
+
+    add_review_mentions(release)
+    mem, info = review_candidates_accepted(ReleaseData(release))
+    assert info == {"review_mention_records": 7, "review_statements": 5, "with_one_candidate": 3,
+                    "with_several_candidates": 1, "with_no_viable_candidate": 1, "pairs": 3, "new_edges": 2,
+                    "persons_gaining_a_first_edge": 1, "projects_gaining_a_person": 1}
+    ids = lambda ms: {f"per_{p[1:]}" for p in ms}  # noqa: E731  (the MEM names p1 for per_1)
+    assert mem["prj_A"] == {"per_1", "per_2", "per_3", "per_9", "per_12"}
+    assert {k: v for k, v in mem.items() if k != "prj_A"} == {f"prj_{k}": ids(v) for k, v in MEM.items() if k != "A"}
+
+    rep = PS.sensitivity(release, seeds=2)
+    bound = rep["identity_upper_bound"]["all single-candidate statements accepted"]
+    # A gains p9 (site b) and p12: 7 new ties (9-1, 9-2, 9-3, 12-1, 12-2, 12-3, 9-12), 4 of them across the two sites
+    assert (bound["persons_with_edge"], bound["ties"], bound["ties_across_institutes"]) == (12, 36, 19)
+    assert (bound["components"], bound["largest_component"]) == (1, 11)  # {1..8} and {9, 10} are joined
+    assert bound["new_edges"] == 2
+    default = rep["weightings"]["unweighted"]
+    assert (default["ties"], default["ties_across_institutes"], default["components"]) == (29, 15, 2)  # the baseline is untouched
+    assert "all single-candidate statements accepted" not in rep["identity_policy"]  # a bound, not a version
+    # where the bound comes from: one kind of review statement at a time (kinds are read from the recorded signals)
+    kinds = rep["identity_upper_bound"]
+    assert PS.review_kind({"signals": ["NAME_EXACT"], "negative_signals": ["LINK_NAME_MISMATCH"]}) == "a link or name conflict"
+    assert (kinds["only: another institute"]["ties"], kinds["only: another institute"]["ties_across_institutes"]) == (32, 18)
+    assert kinds["only: same institute"]["ties"] == 32 and kinds["only: same institute"]["ties_across_institutes"] == 15
+    assert kinds["only: same institute, common surname"]["ties"] == 29  # its Person is already on the project: nothing new
+    assert "only: a link or name conflict" not in kinds  # no such statement in this release
+
+
+def test_the_upper_bound_is_labelled_and_never_part_of_a_release(release):
+    from szocatlas.validation.readiness import readiness_report
+
+    add_review_mentions(release)
+    text = PS.render(PS.sensitivity(release, seeds=2))
+    assert "Review queue accepted (an upper bound, not a version of the data)" in text
+    assert "7 review mention records are 5 distinct (Project, stated name) statements still in review" in text
+    assert "By viable candidates: one Person 3 (accepted), several 1 (left out), none 1." in text
+    assert "review_mentions_on_a_project" not in json.dumps(readiness_report(release))  # the release says nothing of it
 
 
 def test_report_names_no_person(release):
