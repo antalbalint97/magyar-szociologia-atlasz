@@ -5,8 +5,10 @@ import path from "node:path";
 import { RESOLVED_MENTION, toMention } from "./mentions.ts";
 import { score } from "./search.ts";
 import type {
-  Edge, Entity, EntitySummary, Evidence, GraphStore, Mention, Neighbourhood, ReleaseInfo,
+  CoverageData, Edge, Entity, EntitySummary, Evidence, GraphStore, Mention, Neighbourhood, ReleaseInfo, Snapshot,
 } from "./types.ts";
+
+const MENTION_TYPES = new Set(["PersonMention", "ProjectMention"]);
 
 type Row = Record<string, any>;
 
@@ -33,6 +35,7 @@ function toEntity(type: string, r: Row): Entity {
     provenance: r.provenance ?? {},
     conflicts: r.conflicts ?? {},
     lastVerifiedAt: r.last_verified_at ?? null,
+    sourceRefs: r.source_refs ?? [],
   };
 }
 
@@ -65,6 +68,7 @@ interface Loaded {
   mentions: Map<string, Mention>;
   mentionsByTarget: Map<string, Mention[]>;
   projectsByOwner: Map<string, Mention[]>;
+  manifest: Row;
 }
 
 function push<K, V>(m: Map<K, V[]>, k: K, v: V) {
@@ -74,7 +78,10 @@ function push<K, V>(m: Map<K, V[]>, k: K, v: V) {
 
 export class FileStore implements GraphStore {
   private loaded: Promise<Loaded> | null = null;
-  constructor(private dir: string) {}
+  private dir: string;
+  constructor(dir: string) {
+    this.dir = dir;
+  }
 
   private load(): Promise<Loaded> {
     this.loaded ??= (async () => {
@@ -111,7 +118,7 @@ export class FileStore implements GraphStore {
           generatedAt: manifest.generated_at,
           sources: manifest.sources ?? [],
         },
-        entities, edges, byNode, claims, docs, mentions, mentionsByTarget, projectsByOwner,
+        entities, edges, byNode, claims, docs, mentions, mentionsByTarget, projectsByOwner, manifest,
       };
     })();
     return this.loaded;
@@ -125,7 +132,8 @@ export class FileStore implements GraphStore {
     const { entities, mentions } = await this.load();
     // unresolved mentions are searchable (ranked below identities); resolved ones are reached via their Person
     const pool: { e: EntitySummary; s: number }[] = [
-      ...[...entities.values()].map((e) => ({
+      // mention rows are loaded into `entities` too (for entity()); they enter the pool only below
+      ...[...entities.values()].filter((e) => !MENTION_TYPES.has(e.type)).map((e) => ({
         e: { id: e.id, type: e.type, label: e.label, alternateNames: e.alternateNames },
         s: score(query, [e.label, ...e.alternateNames, String(e.fields.name_hu ?? "")]),
       })),
@@ -184,6 +192,27 @@ export class FileStore implements GraphStore {
 
   async statedProjectsOf(personId: string): Promise<Mention[]> {
     return (await this.load()).projectsByOwner.get(personId) ?? [];
+  }
+
+  async snapshot(): Promise<Snapshot> {
+    const { info, entities, edges, mentions } = await this.load();
+    return {
+      info,
+      entities: [...entities.values()].filter((e) => !MENTION_TYPES.has(e.type)),
+      edges,
+      mentions: [...mentions.values()],
+    };
+  }
+
+  async coverage(): Promise<CoverageData> {
+    const { manifest } = await this.load();
+    let coverage: Row | null = null;
+    try {
+      coverage = JSON.parse(await readFile(path.join(this.dir, "coverage.json"), "utf-8"));
+    } catch {
+      coverage = null; // older releases and the fixture have no coverage report
+    }
+    return { coverage, manifest };
   }
 
   async evidence(claimIds: string[]): Promise<Evidence[]> {

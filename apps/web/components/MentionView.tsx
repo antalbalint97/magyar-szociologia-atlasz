@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Evidence, GraphStore, Mention } from "@/lib/graph";
 import { RESOLVED_MENTION } from "@/lib/graph/mentions";
+import { whyOpen } from "@/lib/atlas/mentionText";
 
 // ADR-0006/0007/0008: a mention page shows what one source page said about a person-like name
 // or a project-like title and the identity decision behind it, with the evidence for and against
@@ -41,12 +42,24 @@ export default async function MentionView({ m, g }: { m: Mention; g: GraphStore 
   const project = m.kind === "project";
   return (
     <>
-      <div className="type">{project ? "Projektemlítés a forrásban" : "Említés a forrásban"}</div>
-      <h1 style={{ margin: "4px 0 2px" }}>„{m.statedName}”</h1>
-      <span className={`badge ${resolved ? "OBSERVED" : "UNRESOLVED"}`}>{statusLabel(m)}</span>
-      <div className="grid" style={{ marginTop: 16 }}>
+      <header className="entity-head">
+        <div className="eyebrow">
+          <span className="kind">{project ? "Projektemlítés a forrásban" : "Személyemlítés a forrásban"}</span>
+          <span className={`badge ${resolved ? "observed" : "open"}`}>{statusLabel(m)}</span>
+        </div>
+        <h1 style={{ fontStyle: "italic", fontWeight: 500 }}>„{m.statedName}”</h1>
+        {!resolved && (
+          <p className="note" style={{ maxWidth: "75ch" }}>
+            <strong>Ez nem {project ? "projekt" : "kutató"}i adatlap.</strong> Egy forrásoldal ezt a{" "}
+            {project ? "címet" : "nevet"} írja; az atlasz megőrzi, de amíg nincs elég bizonyíték az azonosításhoz, nem
+            kezeli {project ? "projektként" : "kutatóként"}, és nem szerepel a hálózatban.
+            {whyOpen(m) && <> Ok: {whyOpen(m)}.</>}
+          </p>
+        )}
+      </header>
+      <div className="split even" style={{ marginTop: 24 }}>
         <div>
-          <section className="card">
+          <section className="section" style={{ marginTop: 0, marginBottom: 32 }}>
             <h2>Azonosítás</h2>
             {resolved ? (
               <div>{project ? "Ugyanaz a projekt" : "Ugyanaz a személy"}:{" "}
@@ -85,7 +98,7 @@ export default async function MentionView({ m, g }: { m: Mention; g: GraphStore 
               </div>
             )}
           </section>
-          <section className="card">
+          <section className="section" style={{ marginTop: 0, marginBottom: 32 }}>
             <h2>Mit mond a forrás</h2>
             <div><span className="muted">Oldal:</span> <a href={m.sourceUrl} rel="noreferrer">{m.sourceUrl}</a></div>
             {m.linkedProfileUrl && (
@@ -116,8 +129,8 @@ export default async function MentionView({ m, g }: { m: Mention; g: GraphStore 
           </section>
         </div>
         <div>
-          <section className="card">
-            <h2>Állítások</h2>
+          <section className="section" style={{ marginTop: 0, marginBottom: 32 }}>
+            <h2>Forrásállítások</h2>
             <ul style={{ paddingLeft: 18 }}>
               {evidence.slice(0, 20).map((ev) => (
                 <li key={ev.claimId}><code>{ev.predicate}</code>: „{ev.snippet}” <span className="muted">{ev.retrievedAt.slice(0, 10)}</span></li>
