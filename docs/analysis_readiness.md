@@ -160,7 +160,11 @@ project of 20). The graph is incomplete by the 40% of participants outside it.
 *May:* C-1, C-2 and C-4 with S1-S6. *Must not:* rank persons; call a degree "importance" or
 "influence"; call a community a school or a tradition; report cross-institute ties as integration;
 read the projection as the collaboration network. *Blockers:* #28 and Milestone 3 (who is missing),
-#9 and #36 (what a project and a role are).
+#34 and #37 (how safe the automatic identifications are, §6), #36 (what a role is). #9 (what a
+project is) matters for B-5 and not for the projection: the seven projects of 8 or more persons
+carry a grant id or a funder (4 an NKFIH or OTKA grant id, 1 a Lendület programme), and a keyword
+scan of the 280 titles (not a classification) finds at most 7 of the 584 ties through a title that
+looks like a newsletter, programme, network or database, 3 of them only through such titles.
 
 ### D. Topics and methods
 

@@ -112,10 +112,17 @@ heading template, ADR-0010) and #17 (the readiness report and its assessment).
 
 ## Next
 
-- Nothing is started. The readiness result says which issue to take (docs/analysis_readiness.md
-  §10): #9 first, because whether the few large "projects" that carry most of the ties are research
-  projects or programmes decides how the Person-Person projection may be read; then #28 (who is
-  missing), #10 and #11 (roles, positions, dates). #19 only as the restricted exploratory
+- Nothing is started. The readiness result points to the identity package first (#34, the
+  resolver ignores a stated affiliation; #37, the identity basis of an edge is not stored; and the
+  reviewer's decision on the 26 cross-institute name matches in review). 204 of 601 project edges
+  (34%) rest only on an automatic rule, they carry 288 of the 584 ties and 72 of the 83
+  cross-institute ties, and 162 of them rest on `institute_unique_name`, the rule that ignores what
+  a page says about a person's affiliation; every further gain in observation (#36, Milestone 3)
+  adds names that resolve through the same rule. Then #28 with the remaining #16 pieces (who is
+  missing: 40% of stated participants), then #36, #10, #11 and #9, the semantic issues that widen
+  what can be analysed. #9 does not change the projection: the 7 projects of 8 or more persons are
+  grant-funded research projects, and at most 7 of the 584 ties pass through a title that looks
+  like a newsletter, programme, network or database. #19 only as the restricted exploratory
   description of docs/analysis_readiness.md §1, and only on Bálint's go.
 - Expansion target after Milestone 2: KRTK Regionális Kutatások Intézete, then TÁRKI (#21).
   Not started.
