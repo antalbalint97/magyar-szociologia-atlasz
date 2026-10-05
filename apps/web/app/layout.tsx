@@ -11,6 +11,8 @@ export const metadata: Metadata = {
   title: { default: "Magyar Szociológia Atlasz", template: "%s · Magyar Szociológia Atlasz" },
   description:
     "A magyar szociológia intézményeinek, kutatóinak, projektjeinek és tudáskapcsolatainak interaktív, forrásokhoz kötött térképe (pilot).",
+  // pilot deployment: not for search engines yet
+  robots: { index: false, follow: false, nocache: true },
 };
 
 export const viewport: Viewport = { width: "device-width", initialScale: 1 };

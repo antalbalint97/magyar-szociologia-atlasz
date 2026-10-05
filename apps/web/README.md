@@ -24,6 +24,31 @@ GRAPH_RELEASE=2026-10-tk-m2-p16        # folder name (manifest.json, entities/, 
 Pages read the release at request time, so the same build serves any release. A release
 without `coverage.json` (e.g. the fixture) renders the coverage page with an explicit notice.
 
+## Hosted deployment (Vercel) with a real release
+
+Releases are not in git. A hosted build downloads one release tarball at build time
+(`scripts/fetch-release.mjs`, run as `prebuild`), checks it, and ships it with the server routes.
+
+| Vercel setting | Value |
+|---|---|
+| Root Directory | `apps/web` |
+| Build Command | default (`npm run build`; `prebuild` fetches the release) |
+| `ATLAS_RELEASE_URL` | tarball URL, e.g. a GitHub Release asset `https://github.com/<owner>/<repo>/releases/download/<tag>/<file>.tar.gz` |
+| `GRAPH_RELEASE` | release id = the tarball's top directory, e.g. `2026-10-tk-m2-p31` (optional, checked when set) |
+| `ATLAS_RELEASE_SHA256` | sha256 of the tarball (optional, recommended: pins the exact artifact) |
+
+With `ATLAS_RELEASE_URL` set the build stops, instead of falling back to the fixture, when the download
+fails, the archive does not extract, `manifest.json` is missing, its `release_id` differs from
+`GRAPH_RELEASE`, `dataset_kind` is not `snapshot`, the sha256 differs, or the application's
+`FileStore` cannot open the release or finds no canonical persons. The build log prints the release
+id, its sources and canonical counts. At runtime such a deployment reads only `.release/<id>`.
+`.release/` is deleted and refetched on every build, so changing `ATLAS_RELEASE_URL` (and redeploying)
+serves the new release; nothing is reused from the build cache.
+
+Every response carries `X-Robots-Tag: noindex, nofollow`, pages carry a `robots` noindex meta tag,
+and `/robots.txt` disallows everything: a pilot deployment is not for search engines. Access control
+is Vercel's Deployment Protection (dashboard setting), not application code.
+
 ## Routes
 
 | Route | What it shows |
