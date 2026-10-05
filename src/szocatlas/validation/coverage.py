@@ -260,11 +260,17 @@ def _profile_links(ds, docs, ok_profile_docs: set[str], registry: Registry, inst
             if host_scope(registry, host, institution)[0] == IN_SCOPE:
                 urls[m.linked_profile_url].add(m.source_id)
     fetched = {u for u in urls if u in ok_profile_docs}
+    slug = lambda u: urlsplit(u).path.rstrip("/").rsplit("/", 1)[-1]  # noqa: E731
+    fetched_slugs = {slug(u) for u in ok_profile_docs}
+    missing = sorted(set(urls) - fetched)
     return {
         "denominator": "distinct profile URLs of in-scope hosts linked from a listing, unit page or project page",
         "distinct_urls": len(urls),
         "fetched": share(len(fetched), len(urls)),
-        "not_fetched_sample": sorted(set(urls) - fetched)[:15],
+        "not_fetched": len(missing),
+        # profiles are fetched from staff listings; these are linked from a project or unit page and not listed
+        "not_fetched_with_same_slug_on_another_site": sum(1 for u in missing if slug(u) in fetched_slugs),
+        "not_fetched_sample": missing[:15],
     }
 
 
@@ -607,7 +613,10 @@ def render_coverage_markdown(cov: dict[str, Any], release_id: str) -> str:
     L.append(f"Category listings show {pll['distinct_urls']} distinct project URLs; {_pct(pll['fetched'])} were fetched.")
     pf = cov["discovery"]["profile_links"]
     L += ["", f"Profile links: {_pct(pf['fetched'])} of the distinct profile URLs of in-scope hosts linked from listings, unit "
-          "pages and project pages were fetched. The rest are mostly people who are not on a current staff listing.", ""]
+          f"pages and project pages were fetched. Profiles are fetched from staff listings, so the other {pf['not_fetched']} "
+          "are linked from a project or unit page and are not on that host's current staff listing "
+          f"({pf['not_fetched_with_same_slug_on_another_site']} of them have a profile with the same slug on another TK "
+          "site).", ""]
 
     L += ["## Fetch", "", cov["fetch"]["denominator"] + ".", "",
           "| source | page type | URLs | ok | HTTP error | redirected |", "|---|---|---|---|---|---|"]
