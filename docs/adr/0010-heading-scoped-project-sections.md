@@ -102,9 +102,9 @@ on the 86 pages 30 projects gained an abstract that sat in a `<div>`, and 11 abs
 participant or coordinator lists were replaced by the research description (locator
 `project.heading.description`, 37 abstract claims re-issued). Pages without an `A kutatás` heading
 keep the old rule. It still stores a header line (funder, period and lead in one paragraph), a
-partner list or an organisation as the abstract on 13 of the 187 abstracts the legacy rule wrote
-(12 SZI, 1 KI; a hand check of a heuristic candidate list, so a lower bound). That is a defect of
-a different extractor, filed as a separate issue.
+list of names or organisations, or a bibliographic reference as the abstract on 14 of the 187
+abstracts the legacy rule wrote (12 SZI, 2 KI; a hand check of a heuristic candidate list, so a
+lower bound). That is a defect of a different extractor, filed as #35.
 
 ## Consequences
 
@@ -134,7 +134,7 @@ cross-institute change.
 ## Not read, on purpose
 
 * `Koordinátor`, `Koordinátorok` (5 of the 86 pages): a consortium coordinator is not necessarily
-  the principal investigator. Which role a label carries is #10 / #9 territory.
+  the principal investigator. Which role a label carries is project-role semantics (#36).
 * `Partnerek`, `Konzorciumi tagok`: organisations.
 * A misspelt heading outside the vocabulary (`Résztevevők`, 1 page).
 * A `<p>` or `<strong>` that looks like a heading (2 pages): without a heading element the
@@ -153,7 +153,7 @@ Each is a coverage gap with a name in this list, not a silent loss.
   "MTA SZKI Budapest" as people. The vocabulary list is a precision device, and it is short enough
   to read.
 * **Extend the label vocabulary** ("Koordinátor", "Közreműködők") to raise coverage. Adds roles
-  whose meaning is undecided (#10); leaving them out costs a measured, listed gap.
+  whose meaning is undecided (#36); leaving them out costs a measured, listed gap.
 * **Resolve unlinked names by the name alone.** The resolver is unchanged: a name with no anchor
   resolves only by a rule that already existed (ADR-0007), a common surname goes to review.
 
@@ -162,4 +162,9 @@ Each is a coverage gap with a name in this list, not a silent loss.
 The resolver does not use an affiliation the page states for a plain-text name ("Kovács János
 Mátyás (IWM, Bécs)"). In this release none of the 43 heading mentions with a parenthetical
 (41 unresolved, 2 in review) resolved automatically, so no false merge exists, but the protection
-is incidental. Tracked as a separate issue; the resolver is not changed here.
+is incidental. Tracked as #34; the resolver is not changed here.
+
+The wider set of label forms that no field takes is not a parsing question. 51 of the 193 SZI
+project pages (26%) state people under a label outside the vocabulary or under a heading with no
+readable name ("További résztvevők", "Részt vevő kutatók", "Konzorciumvezető", ...). Which role each
+means, and which relation it makes, is a decision for the reviewer: #36.

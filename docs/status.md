@@ -77,12 +77,14 @@ crawl into a trustworthy canonical graph before more institutions are added.
 - **Identity**: #4, #5 and #27 are done on the Milestone 2 branch (not merged). 67 person
   mentions wait for review (`review/mention_review.yaml`). 362 have no candidate, mostly
   former staff whose profile is gone and outside collaborators (#28); 130 of them were made
-  visible by #31.
+  visible by #31. A stated affiliation is not used as resolver evidence (#34), and the identity
+  basis of a project edge is only derivable from claims, not stored (#37).
 - **Projects**: #7 is closed on the Milestone 2 branch (ADR-0008, not merged). #16 stays open:
   its first sub-problem (project pages that profiles link) is implemented there (ADR-0009, not
   merged); research-group pages, KI thematic research pages and CSS-RECENS former members are not.
-  #31 (ADR-0010) reads the SZI heading template; the label forms it leaves out are listed in the
-  follow-up issue (12 pages: "Koordinátor", singular "Résztvevő", `<p>`-styled headings).
+  #31 (ADR-0010) reads the SZI heading template. 51 of the 193 SZI project pages still state
+  people under a label no field takes; what those labels mean is a decision (#36). A wrong
+  abstract is stored on 14 pages by the legacy description rule (#35).
   * 329 project mentions have no Project. Each has an explicit reason in the coverage
     report: 282 give a title and no page, 32 link an external site, 11 link another TK
     unit's site that is not a source, 1 links a grant record, 3 link an in-scope page that is

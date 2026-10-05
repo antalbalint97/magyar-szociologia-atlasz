@@ -31,7 +31,7 @@ or methods, or follows anything over time is `NOT_READY`. No analysis type is `R
 | A | A-4 who joined or left | NOT_READY | none of 289 affiliation relations has a date; one snapshot |
 | B | B-1 bipartite description within a source: projects per person, persons per project | READY_WITH_RESTRICTIONS | 36% of stated participants are outside the graph (B3) |
 | B | B-2 comparing institutes' participation | NOT_READY | researchers with a project edge range from 21% to 90% by template, not by behaviour |
-| B | B-3 roles (lead, participant, coordinator) | NOT_READY | label semantics undecided (#10) |
+| B | B-3 roles (lead, participant, coordinator) | NOT_READY | label semantics undecided; 51 of 193 SZI project pages state people under a label no field took (#36) |
 | B | B-4 project attributes (funder, grant, duration) | NOT_READY | funder on 40%, grant id on 11%, period on 60% of Projects; field conflicts (#11) |
 | B | B-5 project types (research project, programme, network, journal) | NOT_READY | no activity type is modelled: 0 of 280 (#9) |
 | B | B-6 participation over time | NOT_READY | dates partial (#11); most edges are "observed at crawl time" |
@@ -43,7 +43,7 @@ or methods, or follows anything over time is `NOT_READY`. No analysis type is `R
 | C | C-6 network statistics of two releases read as change | NOT_READY | releases differ by pipeline (§8), not by the world |
 | D | D-1 topic or method prevalence by person, unit, institute | NOT_READY | keyword-derived; coverage 16% (SZI) to 93% (KI); false positives measured (#15) |
 | D | D-2 person-topic or topic co-occurrence networks | NOT_READY | same |
-| I | I-1 analysis on canonical Persons with mention statuses reported | READY_WITH_RESTRICTIONS | 30% of person mentions are outside the graph |
+| I | I-1 analysis on canonical Persons with mention statuses reported | READY_WITH_RESTRICTIONS | 30% of person mentions are outside the graph; 17% rest on an automatic rule |
 | I | I-2 graphs with nodes for unresolved mentions or name strings | NOT_READY | 187 of 347 person-like nodes (54%) would be names |
 | T | T-1 snapshot "as of the crawl" | READY_WITH_RESTRICTIONS | state it as "as of the crawl" |
 | T | T-2 longitudinal analysis | NOT_READY | see A-4, B-6 |
@@ -129,14 +129,16 @@ CSS-RECENS 59, KI 34). No activity type is modelled (0 of 280, #9). Explicit dat
 Projects (60%) (T1).
 
 *Limits.* A person without an edge is an isolate by coverage, not a finding. A project list that is
-partly outside the graph yields fewer ties than the page implies. The lead label is read as stated:
-"Koordinátor" is not read at all (5 SZI pages) and the singular "Résztvevő" reads profile links
-only (5 pages), both undecided (#10).
+partly outside the graph yields fewer ties than the page implies. Labels are read as stated, and
+only the known ones: 51 of 193 SZI project pages (26%) state people under a label that no field
+took ("Koordinátor", "További résztvevők", "Részt vevő kutatók", the singular "Résztvevő" that reads
+profile links only, headings with no readable name), and what such a label means is undecided
+(#36).
 
 *May:* distributions of projects per person and persons per project within one source, with B1-B3
 beside them; the bipartite graph. *Must not:* compare institutes' participation rates or degrees
 (the templates differ, §7); read a missing edge as a missing participation; treat every Project as a
-research project; read "PI" as the grant's formal principal investigator. *Blockers:* #10, #11, #9,
+research project; read "PI" as the grant's formal principal investigator. *Blockers:* #36, #11, #9,
 #28, #16 (remaining pages).
 
 ### C. Person - person (a derived projection)
@@ -155,7 +157,7 @@ project of 20). The graph is incomplete by the 36% of participants outside it.
 *May:* C-1, C-2 and C-4 with S1-S6. *Must not:* rank persons; call a degree "importance" or
 "influence"; call a community a school or a tradition; report cross-institute ties as integration;
 read the projection as the collaboration network. *Blockers:* #28 and Milestone 3 (who is missing),
-#9 and #10 (what a project and a role are).
+#9 and #36 (what a project and a role are).
 
 ### D. Topics and methods
 
@@ -182,7 +184,9 @@ with a stated reason in `coverage.md` (I3).
 *May:* analyses on canonical Persons, with the mention statuses reported. *Must not:* a name-based
 graph, nodes for unresolved mentions, merging mentions by name across pages. A false merge is worse
 than an unresolved mention (docs/methodology.md §3), so the sensitivity runs only ever remove
-automatic identifications, never add any.
+automatic identifications, never add any. *Blockers:* #34 (a stated affiliation is not used as
+evidence; the protection against a namesake is incidental), #37 (the identity basis of an edge is
+not stored, only derivable), #28.
 
 ### Time
 
@@ -332,9 +336,9 @@ KI thematic research pages are not read (#16). **PTI** has period and funder on 
 86 titles with no page. **CSS-RECENS** is structurally under-observed: profiles give titles without
 links, 3 project pages exist, no unit pages; one tie inside it and 37 to other sites, 36 of them
 through the 20-person project. Treat it as outside any institute comparison. Known SZI template
-gaps, listed rather than silent: 2 pages with a `<p>` used as a heading, 5 pages with
-"Koordinátor", 5 with the singular "Résztvevő", 2 of the 86 heading pages that yield no name
-(ADR-0010).
+gaps, listed rather than silent: 51 of 193 project pages state people under a label that no field
+took (#36); of the 86 heading-template pages, 2 yield no name, 2 use a `<p>` as a heading, 5 use
+"Koordinátor" and 5 the singular "Résztvevő" (ADR-0010).
 
 ## 8. Releases compared (before and after #5, and since)
 
@@ -400,7 +404,8 @@ conclusion about Hungarian sociology.
 | C-3 person-level centrality | #28, Milestone 3 (who is missing), a decision on large projects | a ranking that survives S2, S3 and S4 (today rho 0.515 and a top-decile overlap of 0.087 when 7 projects go) |
 | C-5 cross-institute claims | Milestone 3, #28 | cross-institute ties that do not depend on one project |
 | B-2 institute comparisons | #31 follow-ups, #16, #28 | comparison on fields all four templates offer, with equal observation |
-| A-3, B-3 positions and roles | #10 | roles and positions modelled, not strings |
+| A-3 positions | #10 | positions modelled (rank, employment, leadership), not strings |
+| B-3 roles | #36 | a decided meaning for every role label, read from a table |
 | B-4, B-6, T-2 dates and attributes | #11, #24 | typed date comparison; dated affiliations |
 | B-5 project types | #9 | `activity_type` on Projects |
 | D-1, D-2 topics and methods | #15 | recall and false-positive rates per evidence class |

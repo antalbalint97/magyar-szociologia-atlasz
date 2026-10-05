@@ -58,7 +58,7 @@ lines (the form the other three sites use). 86 are of the old template: the labe
 (`h2`-`h6`: "Projektvezető", "Kutatásvezető (MTA SZKI)", "Résztvevők (MTA SZKI)") and the value is
 the paragraphs, `<div>`s, `<li>`s or bare text under it, up to the next heading. The parser reads
 both. What it does **not** read on the 86 pages, and why: "Koordinátor(ok)" headings (5 pages; a
-consortium coordinator is not the same role as a project lead, #10), "Partnerek" and "Konzorciumi
+consortium coordinator is not the same role as a project lead, #36), "Partnerek" and "Konzorciumi
 tagok" (organisations), one misspelt heading, two pages whose labels are a `<p>` and not a
 heading, org-first or `Family, Given` name lines, and five pages that use the singular
 "Résztvevő" label (profile links only, as on a label line). Five more pages state a heading and

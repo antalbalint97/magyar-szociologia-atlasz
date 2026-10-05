@@ -44,7 +44,7 @@ missed name is a coverage gap that is counted and listed, a wrong name is a wron
 that is a label but whose value cannot be read is reported in `unmapped_labels`, not guessed.
 Every claim read this way records the heading and the line (`project.heading.*`), so a reader can
 tell a heading-derived value from a label-line one. New labels are added only with a decision on
-what they mean ("Koordinátor" is not "Projektvezető", #10).
+what they mean ("Koordinátor" is not "Projektvezető", #36).
 
 **What the crawl fetches.** Pages that a configured listing shows, plus the pages that a
 profile of an enabled source links from its project section when the link's host belongs to an
@@ -373,7 +373,7 @@ Stated in every release (`NOT_MEASURED`): who is missing (the Person universe is
 current staff listing, so collaborators and former staff are mentions at best); whether a
 project's participant list is complete (B3 counts only what pages state); whether a tie is a
 collaboration (sharing a project page is co-listing); role semantics ("Projektvezető",
-"Kutatásvezető" and "Koordinátor" are not distinguished, #10); anything about other institutions
+"Kutatásvezető" and "Koordinátor" are not distinguished, #36); anything about other institutions
 (four institutes of one research centre); and the grades themselves.
 
 ### Comparing releases
