@@ -41,6 +41,9 @@ class InstitutionSeed(BaseModel):
     parent: str | None = None  # key of parent institution
     verify_url: str | None = None
     notes: str | None = None
+    # host names of this institution's sites, historical ones included. Used only to *classify* a
+    # linked page as "a site of the same institution" (#16); it never makes a host crawlable.
+    host_suffixes: list[str] = Field(default_factory=list)
 
 
 class SourceEntry(BaseModel):

@@ -21,6 +21,7 @@ from .canonical.build import build_canonical
 from .canonical.mentions import build_mentions
 from .canonical.project_mentions import build_project_mentions
 from .canonical.curated import Taxonomy, derive_classifications, registry_claims
+from .discovery import follow_profile_project_links, merge_frontier
 from .fetch import FixtureFetcher, PoliteFetcher, RawStore, ReplayFetcher, dump_jsonl
 from .models.enums import EntityType, IdentityAnchor, ReviewStatus
 from .models.provenance import Claim, SourceDocument, SourceRecord
@@ -41,6 +42,7 @@ from .resolution.projects import (
     resolve_project_mentions,
 )
 from .resolution.review import write_mention_review, write_project_review
+from .validation.coverage import coverage_findings, coverage_report, render_coverage_markdown
 from .validation.mention_stats import mention_stats, project_mention_stats
 from .sources.base import ParseResult, SourceAdapter
 from .sources.tk.adapter import TKAdapter
@@ -68,11 +70,15 @@ class Paths:
 def write_staged(paths: Paths, source_id: str, res: ParseResult) -> dict[str, int]:
     d = paths.staged / source_id
     docs = {doc.document_id: doc for doc in res.documents}
+    diagnostics = {(r["document_id"], r["page_type"]): r for r in res.diagnostics}
     out = {
         "records": dump_jsonl(d / "records.jsonl", res.records),
         "claims": dump_jsonl(d / "claims.jsonl", {c.claim_id: c for c in res.claims}.values()),
         "documents": dump_jsonl(d / "documents.jsonl", docs.values()),
         "errors": dump_jsonl(d / "errors.jsonl", res.errors),
+        # #16 / #12: what the crawl was told about, and what the parsers found in each page
+        "frontier": dump_jsonl(d / "frontier.jsonl", sorted(res.frontier, key=lambda r: r["url"])),
+        "diagnostics": dump_jsonl(d / "diagnostics.jsonl", [diagnostics[k] for k in sorted(diagnostics, key=lambda k: (k[1], diagnostics[k]["url"], k[0]))]),
     }
     return out
 
@@ -90,15 +96,24 @@ def read_staged(paths: Paths, source_id: str) -> ParseResult:
     res.records = [SourceRecord.model_validate_json(x) for x in rows("records.jsonl")]
     res.claims = [Claim.model_validate_json(x) for x in rows("claims.jsonl")]
     res.documents = [SourceDocument.model_validate_json(x) for x in rows("documents.jsonl")]
+    res.errors = [json.loads(x) for x in rows("errors.jsonl")]
+    res.frontier = [json.loads(x) for x in rows("frontier.jsonl")]
+    res.diagnostics = [json.loads(x) for x in rows("diagnostics.jsonl")]
     return res
 
 
 def ingest(source_ids: list[str] | None, *, replay: bool = False, paths: Paths | None = None,
            registry: Registry | None = None) -> dict[str, dict]:
+    """Fetch + parse the selected sources, then follow profile project links across them (#16).
+
+    Every adapter runs first; only then are the project links its profiles stated routed to the source
+    that owns the linked host (``discovery.follow_profile_project_links``), so a page linked from one
+    site's profile and served by another is fetched by the site that owns it."""
     paths = paths or Paths()
     registry = registry or load_registry()
     store = RawStore(paths.raw)
-    report = {}
+    adapters: dict[str, SourceAdapter] = {}
+    results: dict[str, ParseResult] = {}
     for entry in registry.sources:
         if source_ids and entry.source_id not in source_ids:
             continue
@@ -110,16 +125,22 @@ def ingest(source_ids: list[str] | None, *, replay: bool = False, paths: Paths |
         policy = registry.policy(entry)
         fetcher = ReplayFetcher(store, registry.host_aliases()) if replay else \
             PoliteFetcher(store, policy, registry.host_aliases())
-        adapter = ADAPTERS[entry.adapter](entry, registry, fetcher)
-        res = adapter.run()
-        report[entry.source_id] = write_staged(paths, entry.source_id, res)
-        with open(paths.raw / entry.source_id / "runs.jsonl", "a", encoding="utf-8") as fh:
+        adapters[entry.source_id] = ADAPTERS[entry.adapter](entry, registry, fetcher)
+        results[entry.source_id] = adapters[entry.source_id].run()
+    discovery = follow_profile_project_links(adapters, results, registry)
+    report: dict[str, dict] = {}
+    for sid, res in results.items():
+        adapter = adapters[sid]
+        report[sid] = write_staged(paths, sid, res)
+        (paths.raw / sid).mkdir(parents=True, exist_ok=True)
+        with open(paths.raw / sid / "runs.jsonl", "a", encoding="utf-8") as fh:
             fh.write(json.dumps({
                 "finished_at": datetime.now(UTC).isoformat(timespec="seconds"),
                 "mode": "replay" if replay else "live",
                 "adapter": f"{adapter.name}/{adapter.parser_version}",
-                **report[entry.source_id],
+                **report[sid],
             }) + "\n")
+    report["_discovery"] = discovery
     return report
 
 
@@ -199,10 +220,11 @@ def build(release_id: str, *, source_ids: list[str] | None = None, paths: Paths 
     write_review_queue(decisions, paths.review / "unresolved_people.yaml", only_refs=set(anchors))
 
     documents = list({d.document_id: d for d in combined.documents}.values())
+    frontier = merge_frontier(combined.frontier)
     ds = canonicalize(combined.records, claim_list, documents, ref_to_id, decisions, anchors, registry,
                       ResolutionConfig.load(paths.config / "resolution.yaml"),
                       load_mention_decisions(paths.review / "manual_overrides.yaml"),
-                      load_project_decisions(paths.review / "manual_overrides.yaml"))
+                      load_project_decisions(paths.review / "manual_overrides.yaml"), frontier)
     write_mention_review(ds, paths.review / "mention_review.yaml")
     write_project_review(ds, paths.review / "project_review.yaml")
 
@@ -228,6 +250,12 @@ def build(release_id: str, *, source_ids: list[str] | None = None, paths: Paths 
         "source_retrieval_window": _window(documents),
     }
     findings = run_checks(ds, decisions, paths.config / "qa_seeds.yaml")
+    # #12: coverage is measured apart from consistency; gaps are warnings or info, never errors
+    coverage = coverage_report(ds, registry=registry, frontier=frontier, diagnostics=combined.diagnostics,
+                               errors=combined.errors, seeds_path=paths.config / "qa_seeds.yaml")
+    findings += coverage_findings(coverage)
+    manifest["source_set"] = {k: coverage["source_set"][k] for k in ("documents", "digest", "by_source", "by_page_type")}
+    manifest["coverage"] = coverage_summary(coverage)
     manifest["quality"] = dict(Counter(f.severity for f in findings))
 
     out = paths.releases / release_id
@@ -244,11 +272,29 @@ def build(release_id: str, *, source_ids: list[str] | None = None, paths: Paths 
     dump_jsonl(out / "claims.jsonl", sorted(claim_list, key=lambda c: c.claim_id))
     dump_jsonl(out / "documents.jsonl", sorted(documents, key=lambda d: d.document_id))
     dump_jsonl(out / "matches.jsonl", sorted(decisions, key=lambda d: (d.left, d.right)))
+    dump_jsonl(out / "frontier.jsonl", frontier)
+    dump_jsonl(out / "parse_report.jsonl", sorted(combined.diagnostics, key=lambda r: (r["source_id"], r["page_type"], r["url"], r["document_id"])))
+    (out / "coverage.json").write_text(json.dumps(coverage, indent=2, ensure_ascii=False, default=str), encoding="utf-8")
+    (out / "coverage.md").write_text(render_coverage_markdown(coverage, release_id), encoding="utf-8")
     (out / "manifest.json").write_text(json.dumps(manifest, indent=2, ensure_ascii=False), encoding="utf-8")
     (out / "quality_report.json").write_text(
         json.dumps([asdict(f) for f in findings], indent=2, ensure_ascii=False, default=str), encoding="utf-8")
     (out / "quality_report.md").write_text(render_markdown(findings, manifest), encoding="utf-8")
     return out, findings
+
+
+def coverage_summary(cov: dict[str, Any]) -> dict[str, Any]:
+    """The few coverage figures worth keeping in the manifest; everything else is in coverage.json."""
+    links = cov["discovery"]["project_links"]
+    pm = cov["canonicalization"]["project_mentions"]["by_source"]
+    return {
+        "report": "coverage.md",
+        "in_scope_project_links_fetched": links["in_scope"]["fetched"],
+        "project_listing_urls_fetched": cov["discovery"]["project_listing_links"]["fetched"],
+        "project_mentions_resolved_by_source": {s: v["resolved_share"] for s, v in pm.items() if s != "all"},
+        "persons_without_project_edges": {
+            s: v["without_project_edges"] for s, v in cov["network_bias"]["persons_without_project_edges"].items()},
+    }
 
 
 def person_counts(ds) -> dict[str, Any]:
@@ -328,7 +374,8 @@ def _window(documents: list[SourceDocument]) -> dict[str, str] | None:
 
 
 def canonicalize(records, claims, documents, ref_to_id, decisions, anchors, registry, config: ResolutionConfig,
-                 mention_decisions: list[MentionDecision], project_decisions: list[ProjectDecision] | None = None):
+                 mention_decisions: list[MentionDecision], project_decisions: list[ProjectDecision] | None = None,
+                 frontier: list[dict] | None = None):
     """Claims + identity -> canonical dataset with person and project mentions (ADR-0006/0007/0008).
 
     Decisions never chain: project rules see certain evidence only; person rules see
@@ -347,7 +394,8 @@ def canonicalize(records, claims, documents, ref_to_id, decisions, anchors, regi
     # pass 1a: certain evidence only; the context project rules may use
     base = build_canonical(claims, documents, ref_to_id, ev, certain_persons, certain_projects)
     resolve_project_mentions(pmb.mentions, ProjectIndex(base, records, claims, certain_projects, ref_to_id),
-                             config.project_resolver_version, project_decisions or [])
+                             config.project_resolver_version, project_decisions or [],
+                             {r["url"]: r for r in frontier or []})
     projects = claim_projects(pmb.mentions, pmb.claim_mention, pmb.own_claims)
     # pass 1b: certain person evidence and every resolved project, the context #5 rules may use
     certain = build_canonical(claims, documents, ref_to_id, ev, certain_persons, projects)

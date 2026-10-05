@@ -11,8 +11,11 @@ from ...models.enums import AssertionType, EntityType, IdentityAnchor, SourceTyp
 from ...models.provenance import EntityRef, SourceRecord
 from ...normalize.names import slugify
 from ...normalize.urls import canonical_url
-from ..base import ClaimFactory, ParseResult, SourceAdapter, local_ref
+from ..base import ClaimFactory, LinkedProject, ParseResult, SourceAdapter, diagnostic, local_ref
 from . import parser as P
+
+# single path segments that are never a project page (menus, staff, categories, news, language switch)
+NON_PROJECT_SEGMENTS = ("kutato", "kutatok", "kategoria", "hirek", "intezet", "kapcsolat", "en")
 
 
 class TKAdapter(SourceAdapter):
@@ -59,6 +62,25 @@ class TKAdapter(SourceAdapter):
     def url(self, path: str) -> str:
         return canonical_url(path, base=self.base + "/", aliases=self.aliases)
 
+    def unit_urls(self) -> set[str]:
+        """Every configured unit page of every TK source: a department is not a project (#16)."""
+        out = set()
+        for s in self.registry.sources:
+            if s.adapter == self.name and s.base_url:
+                for u in s.adapter_config.get("units") or []:
+                    out.add(canonical_url(u["path"], base=s.base_url.rstrip("/") + "/", aliases=self.aliases))
+        return out
+
+    def project_url_problem(self, url: str) -> str | None:
+        """A project page of this CMS has a one-segment path and no query ("/transzformativ-szolidaritas-kutatas")."""
+        parts = urlsplit(url)
+        segs = [x for x in parts.path.split("/") if x]
+        if parts.query or len(segs) != 1 or segs[0] in NON_PROJECT_SEGMENTS:
+            return "not_project_path"
+        if url in self.unit_urls():
+            return "unit_page"
+        return None
+
     # ------------------------------------------------------------ discovery
 
     def _crawl_listings(self, start: str) -> Iterator[tuple[str, str | None]]:
@@ -96,7 +118,7 @@ class TKAdapter(SourceAdapter):
 
     def discover_projects(self) -> Iterator[str]:
         """Project links from category listings (same host, single path segment)."""
-        excluded = ("kutato", "kutatok", "kategoria", "hirek", "intezet", "kapcsolat", "en")
+        excluded = NON_PROJECT_SEGMENTS
         self._project_listing_docs: list[tuple[Page, str | None]] = []
         for spec in self.cfg.get("project_listings") or []:
             queue, seen = deque([self.url(spec["path"])]), set()
@@ -146,6 +168,8 @@ class TKAdapter(SourceAdapter):
         f = ClaimFactory(doc, "tk.listing", self.parser_version)
         res = ParseResult()
         listing = P.parse_listing(page.text, doc.final_url, self.aliases)
+        res.diagnostics.append(diagnostic(doc, f"{self.name}/{self.parser_version}", "listing",
+                                          {"people": len(listing.people), "next_pages": len(listing.next_pages)}))
         for link, position in listing.people:
             ref = self.person_ref(link.url)
             res.records.append(
@@ -170,6 +194,12 @@ class TKAdapter(SourceAdapter):
         res = ParseResult()
         prof = P.parse_profile(page.text, doc.final_url, self.aliases, self.entry.unit_name)
         ref = self.person_ref(doc.canonical_url)
+        res.diagnostics.append(diagnostic(
+            doc, f"{self.name}/{self.parser_version}", "profile",
+            {"position": len(prof.positions), "unit": len(prof.unit_lines), "mtmt": bool(prof.mtmt_id),
+             "orcid": bool(prof.orcid), "email": bool(prof.email_domain), "research_areas": len(prof.research_areas),
+             "projects": len(prof.projects), "biography": bool(prof.biography), "cv": bool(prof.cv_url)},
+            prof.unknown_labels))
         hints = {
             "profile_url": doc.canonical_url,
             "site": self.entry.source_id,
@@ -243,6 +273,11 @@ class TKAdapter(SourceAdapter):
             pref = self.project_ref(pm.url, pm.title)
             res.records.append(SourceRecord(ref=pref, label=pm.title, document_id=doc.document_id,
                                             hints={"url": pm.url} if pm.url else {}))
+            if pm.url and self.follows_profile_project_links:
+                # #16: a link written in the project section is discovery evidence for that page
+                self.linked_projects.append(LinkedProject(
+                    url=pm.url, stated_url=pm.stated_url or pm.url, title=pm.title, source_id=self.entry.source_id,
+                    profile_url=doc.canonical_url, document_id=doc.document_id, project_ref=pref.source_ref))
             c.append(f.literal(pref, "title", pm.title, locator="profile.section.projektek", snippet=pm.snippet))
             if pm.grant_id:
                 c.append(f.literal(pref, "grant_id", pm.grant_id, locator="profile.section.projektek",
@@ -268,6 +303,9 @@ class TKAdapter(SourceAdapter):
         f = ClaimFactory(doc, "tk.unit", self.parser_version)
         res = ParseResult()
         unit = P.parse_unit(page.text, doc.final_url, self.aliases)
+        res.diagnostics.append(diagnostic(
+            doc, f"{self.name}/{self.parser_version}", "unit",
+            {"leaders": len(unit.leaders), "members": len(unit.members), "description": bool(unit.description)}))
         uref = local_ref(self.entry, EntityType.ORG_UNIT, doc.canonical_url)
         spec = next((u for u in self.cfg.get("units", []) if self.url(u["path"]) == doc.canonical_url), {})
         res.records.append(SourceRecord(ref=uref, label=unit.name, document_id=doc.document_id,
@@ -303,6 +341,8 @@ class TKAdapter(SourceAdapter):
         res = ParseResult()
         proj = P.parse_project(page.text, doc.final_url, self.aliases)
         pref = self.project_ref(doc.canonical_url, proj.title)
+        res.diagnostics.append(diagnostic(
+            doc, f"{self.name}/{self.parser_version}", "project", _project_fields(proj), proj.unmapped_labels))
         self._emit_project(res, f, doc, pref, proj, "project", title_locator="project.h1",
                            anchor=IdentityAnchor.PROJECT_PAGE.value)
         c = res.claims
@@ -320,7 +360,10 @@ class TKAdapter(SourceAdapter):
         doc = page.document
         f = ClaimFactory(doc, "tk.project_listing", self.parser_version)
         res = ParseResult()
-        for proj in P.parse_project_listing(page.text, doc.final_url, self.aliases):
+        articles = P.parse_project_listing(page.text, doc.final_url, self.aliases)
+        res.diagnostics.append(diagnostic(doc, f"{self.name}/{self.parser_version}", "project_listing",
+                                          {"projects": len(articles)}))
+        for proj in articles:
             pref = self.project_ref(proj.url, proj.title)
             self._emit_project(res, f, doc, pref, proj, "listing.article", title_locator="listing.article.title")
             if status:
@@ -390,3 +433,11 @@ class TKAdapter(SourceAdapter):
     def _name_mention(self, name: str, project: EntityRef) -> EntityRef:
         # keyed by the project, so the listing and the project page share one mention
         return local_ref(self.entry, EntityType.PERSON, f"name-mention:{slugify(name)}@{project.source_ref}")
+
+
+def _project_fields(proj: P.ProjectPage) -> dict[str, int | bool]:
+    """What a project page offered besides its title (parse diagnostics, #12)."""
+    return {"period": bool(proj.start), "funder": bool(proj.funder), "grant_id": bool(proj.grant_id),
+            "leads": len(proj.leads) + len(proj.unlinked_leads),
+            "participants": len(proj.participants) + len(proj.unlinked_participants),
+            "description": bool(proj.description)}

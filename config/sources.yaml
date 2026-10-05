@@ -35,6 +35,8 @@ institutions:
     website: https://tk.elte.hu
     parent: elte
     verify_url: https://tk.elte.hu/
+    # sites of the centre under its current and former hosts; classification of linked pages only (#16)
+    host_suffixes: [tk.elte.hu, tk.hu, tk.mta.hu, tk.hun-ren.hu]
     notes: >
       tk.hu redirects to tk.elte.hu (observed 2026-10-04). Profile links on the sites
       still use tk.mta.hu and tk.hu hosts, which are evidence of earlier institutional
@@ -180,6 +182,10 @@ sources:
     adapter_config:
       institute_code: SZI
       people_listing: /kutatok
+      # #16 (ADR-0009): a link in a profile's project section is discovery evidence for that page. It is
+      # followed one hop, only for hosts of an enabled source of this adapter and for one-segment project
+      # paths; every decision is written to the frontier.
+      follow_profile_project_links: true
       units:
         - {path: /csalad-es-tarsas-kapcsolatok, unit_type: research_department}
         - {path: /tarsadalom-es-kozpolitika-osztaly, unit_type: research_department}
@@ -208,6 +214,7 @@ sources:
     adapter_config:
       institute_code: Recens
       people_listing: /kutatok
+      follow_profile_project_links: true
       units: []
       project_listings: []
     notes: >
@@ -231,6 +238,7 @@ sources:
     adapter_config:
       institute_code: KI
       people_listing: /kutatok
+      follow_profile_project_links: true
       units:
         - {path: /kisebbsegszociologiai-es-antropologiai-osztaly, unit_type: research_department}
         - {path: /kisebbsegtorteneti-es-etnopolitikai-osztaly, unit_type: research_department}
@@ -256,6 +264,7 @@ sources:
     adapter_config:
       institute_code: PTI
       people_listing: /kutatok
+      follow_profile_project_links: true
       units:
         - {path: /demokracia-es-politikaelmeleti-osztaly, unit_type: research_department}
         - {path: /kormanyzas-es-kozpolitika-osztaly, unit_type: research_department}

@@ -2,6 +2,34 @@
 
 ## Unreleased (Milestone 2 branch)
 
+* Source coverage (#16, ADR-0009): a link in a profile's project section is discovery evidence.
+  The crawl follows it one hop when the link's host belongs to an enabled source with an adapter
+  that opted in (`follow_profile_project_links` for SZI, CSS-RECENS, KI, PTI), the path has the
+  shape of a project page (one segment, no query, not a menu/staff/category/news segment, not a
+  unit page) and the host is not an inferred-only alias. Links to other TK units' sites, external
+  sites and grant records are not fetched; each gets a **frontier row** (`frontier.jsonl` in staged
+  data and in the release: scope, decision, reason, host status, what the fetch returned,
+  `discovered_via: {type: profile_project_link, source_document, project_ref, ...}`). First run:
+  57 linked pages fetched (KI 47, PTI 7, CSS-RECENS 3), 0 errors; 90 of 90 in-scope linked URLs are
+  now in the crawl. Project mentions resolved 362 → 450 of 783 (KI 0 → 74 of 114), Projects 223 →
+  280 with every old id intact, no earlier decision changed. Unresolved link reasons now come from
+  the frontier ("linked project page not followed (external_host)").
+* TK parser 0.5.0: labels seen on the newly fetched pages ("Támogatási forrás", "Kutatás
+  időtartama", "Részvevők"), month-name periods at month precision, bare funder/period lines in a
+  header block, `unmapped_labels` for labelled lines no field took. Only explicit labels are read;
+  narrative pages yield no funder, period or participants. 10 real, scrubbed fixtures.
+* Canonical build: a coarser ISO date agrees with the single finer date it prefixes
+  (`PARTIAL_DATE_FIELDS`: `start`, `end`), so "2021-06" and "2021-06-25" are not a conflict.
+* Coverage QA (#12): every release has `coverage.json` / `coverage.md`, `parse_report.jsonl`,
+  `frontier.jsonl` and `manifest.source_set` (document count, digest, by source and page type).
+  Layers: document universe, discovery, fetch, parse, canonicalisation by observing source with an
+  explicit category for every unresolved project mention, field coverage, network consequences
+  (researchers without a project edge, upper bound of ties missing because a linked page has no
+  Project), sentinels. Every figure carries its denominator; coverage findings are warnings or
+  info, never errors; QA seeds stay sentinels.
+* `ingest` runs every adapter first, then the discovery step, so a page linked from one site and
+  served by another is fetched by its owner; `--replay` re-derives frontier and diagnostics.
+  Preview `2026-10-tk-m2-p16`.
 * Review of the 8 project mentions left for a decision (#7): seven manual `same_as` entries in
   `review/manual_overrides.yaml` (two ReproSoc profile items, three of Tibori Tímea's, Kmetty
   Zoltán's and Acsády Judit's), each with the evidence that decided it. A manual `same_as` keeps

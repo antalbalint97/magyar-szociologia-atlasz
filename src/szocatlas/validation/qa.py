@@ -469,7 +469,9 @@ def render_markdown(findings: list[Finding], manifest: dict[str, Any]) -> str:
     ]
     c = Counter(f.severity for f in findings)
     lines += [f"| {s} | {c.get(s, 0)} |" for s in ("error", "warning", "info")]
-    lines.append("")
+    lines += ["", "Errors measure whether the build is internally consistent (pipeline correctness), not whether it is "
+              "complete. How much of the sources it covers is in `coverage.md`; the `coverage.*` findings below "
+              "summarise it.", ""]
     for f in sorted(findings, key=lambda f: (sev_order[f.severity], f.check)):
         lines.append(f"## [{f.severity}] {f.check}")
         lines.append("")

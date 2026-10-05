@@ -282,9 +282,11 @@ def _prefix(a: str, b: str) -> bool:
 
 # ---------------------------------------------------------------- the resolver
 def resolve_project_mentions(mentions: dict[str, ProjectMention], idx: ProjectIndex, resolver_version: str,
-                             manual: list[ProjectDecision]) -> None:
+                             manual: list[ProjectDecision], links: dict[str, dict[str, Any]] | None = None) -> None:
+    """``links``: the crawl frontier by URL (discovery.merge_frontier); it only explains *why* a linked
+    page has no anchor, it never resolves anything."""
     for m in mentions.values():
-        _resolve_one(m, idx, resolver_version, manual)
+        _resolve_one(m, idx, resolver_version, manual, links or {})
 
 
 def _signals(m: ProjectMention, f: ProjectFacts, idx: ProjectIndex, evidence: dict[str, Any]) -> tuple[list, list, str | None]:
@@ -331,7 +333,8 @@ def _signals(m: ProjectMention, f: ProjectFacts, idx: ProjectIndex, evidence: di
     return pos, neg, match
 
 
-def _resolve_one(m: ProjectMention, idx: ProjectIndex, version: str, manual: list[ProjectDecision]) -> None:
+def _resolve_one(m: ProjectMention, idx: ProjectIndex, version: str, manual: list[ProjectDecision],
+                 links: dict[str, dict[str, Any]]) -> None:
     rejected = {d.project_id for d in manual if d.decision == "not_same_as" and d.applies(m)}
     confirmed = next((d for d in manual if d.decision == "same_as" and d.applies(m)), None)
     deferred = next((d for d in manual if d.decision == "defer" and d.applies(m)), None)
@@ -408,15 +411,30 @@ def _resolve_one(m: ProjectMention, idx: ProjectIndex, version: str, manual: lis
     m.resolution = ProjectMentionResolution(
         status=MentionResolutionStatus.REVIEW_REQUIRED if any(not c.rejected for c in cands)
         else MentionResolutionStatus.UNRESOLVED,
-        reason=_why_not(m, cands, viable, res.reason), decision_source=PROJECT_RESOLVER_DOC,
+        reason=_why_not(m, cands, viable, res.reason, links), decision_source=PROJECT_RESOLVER_DOC,
         resolver_version=version)
 
 
+def link_reason(url: str, links: dict[str, dict[str, Any]]) -> str:
+    """Why a linked page has no anchored Project, from the crawl frontier (#16). Nothing is inferred from the URL."""
+    row = links.get(url)
+    if row is None:
+        return "linked page was not on the crawl frontier"
+    fetch = row.get("fetch") or {}
+    if row["decision"] == "skipped":
+        return f"linked project page not followed ({row['reason']})"
+    if fetch.get("attempted") and fetch.get("error"):
+        return f"linked project page fetch failed ({fetch['error']})"
+    if fetch.get("redirected"):
+        return f"linked project page redirected to {fetch.get('final_url')}"
+    return "linked project page fetched, no Project anchored"
+
+
 def _why_not(m: ProjectMention, cands: list[ProjectCandidate], viable: list[ProjectCandidate],
-             prior: str | None) -> str:
+             prior: str | None, links: dict[str, dict[str, Any]]) -> str:
     if not cands:
         if m.linked_url and not registry_grant_keys(m.linked_url):
-            return "linked project page not fetched; no anchored Project with a compatible title or grant id"
+            return link_reason(m.linked_url, links) + "; no anchored Project with a compatible title or grant id"
         return "no anchored Project with a compatible title or grant id"
     if all(c.rejected for c in cands):
         return "every candidate was rejected manually"

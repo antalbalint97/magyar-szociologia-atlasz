@@ -208,9 +208,10 @@ Statuses are those of ADR-0007:
 * `REVIEW_REQUIRED` (at least one candidate)
 * `UNRESOLVED` (no candidate)
 
-The reason is recorded either way. "linked project page not fetched" and "title on a
-profile, no anchored project with a compatible title or grant id" are coverage findings
-(#12/#16), not resolver failures.
+The reason is recorded either way. "linked project page not followed (external_host)" or
+"...fetch failed (...)" (taken from the crawl frontier, ADR-0009) and "title on a profile, no
+anchored project with a compatible title or grant id" are coverage findings (#12/#16), not
+resolver failures.
 
 ### Order of decisions, and the one-way dependency on people
 

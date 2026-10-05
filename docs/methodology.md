@@ -20,6 +20,24 @@ affiliation, unit, research group, project, topic, method. Co-authorship, PhD ge
 historical affiliations and publications come next, each from a source that actually
 documents them (MTMT, doktori.hu, archives).
 
+**Coverage is measured, and apart from correctness** (ADR-0009, #12). A release with 0 QA
+errors is consistent, not complete. Every release carries `coverage.md` / `coverage.json`
+with separate layers: the document universe (set digest, by source and page type), discovery
+(the pages the sources point at and what became of them), fetch, parse (`ok`, `empty`,
+`error`, unmapped labels), canonicalisation by observing source with an explicit reason for
+every unresolved mention, optional-field coverage, and the structural consequences for network
+analysis (researchers without a project edge; ties missing because a linked page has no
+Project). Every figure names its denominator. A missing optional field is a lower rate, never an
+error. QA seeds are sentinels, never a sample. Coverage is exposed, not corrected: nothing is
+weighted or imputed. Resolution rates are read by source: a high rate where pages were fetched
+and a low one where they were not is a coverage gap, not a resolver result.
+
+**What the crawl fetches.** Pages that a configured listing shows, plus the pages that a
+profile of an enabled source links from its project section when the link's host belongs to an
+enabled source (one hop, project-page path shape, verified host aliases; ADR-0009). Every link
+the crawl did not follow is on the release's frontier with its reason. A page's content is never
+inferred from its URL.
+
 ## 3. Entity resolution
 
 Implemented in `src/szocatlas/resolution/matcher.py`.
@@ -90,6 +108,11 @@ prefix. A decision is one of:
 | Strong | same grant number (OTKA/NKFI/NKFIH share one numbering; labels ignored); compatible title; the page links or names the profile owner | only through `grant_and_title`, `grant_and_owner` or `title_and_owner`: `HIGH_CONFIDENCE_AUTO` |
 | Weak | same site | never |
 | Negative | different grant numbers, disjoint periods (year precision), a link to another page, several viable candidates, manual `not_same_as` | block automatic rules |
+
+Whether a page exists to anchor a Project is a crawl question, not an identity question
+(ADR-0009): a mention that links a page the crawl never fetched stays unresolved however good
+the rules are, so the coverage report says why each unresolved mention is unresolved (no page
+stated, external site, other unit's site, fetch failed, review, deferred to #9).
 
 Title evidence never decides alone. Project rules read only certain evidence and the
 names written on project pages, never an automatic person decision. Person rules may use
