@@ -34,6 +34,11 @@ def main(argv: list[str] | None = None) -> int:
     p = sub.add_parser("validate", help="print the quality report of a release")
     p.add_argument("release")
 
+    p = sub.add_parser("readiness", help="analysis-readiness indicators of a release (#17); any release, old or new")
+    p.add_argument("release", help="release id under data/releases, or a path to a release directory")
+    p.add_argument("--json", action="store_true", help="print JSON instead of markdown")
+    p.add_argument("--write", action="store_true", help="also write analysis_readiness.json/.md into the release")
+
     p = sub.add_parser("neo4j-load", help="idempotently load a release into Neo4j")
     p.add_argument("release")
     p.add_argument("--prune", action="store_true", help="remove nodes/edges not in this release")
@@ -42,8 +47,9 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("action", choices=["capture"])
     p.add_argument("--source", required=True)
     p.add_argument("--url", required=True)
-    p.add_argument("--kind", required=True, choices=["person", "unit", "project", "listing"])
+    p.add_argument("--kind", required=True, choices=["person", "unit", "project", "listing", "project_listing"])
     p.add_argument("--name", required=True, help="fixture file name, e.g. recens_koltai_julia.html")
+    p.add_argument("--status-label", help="project_listing only: the category's status (futó / lezárt)")
 
     args = ap.parse_args(argv)
     logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO, format="%(levelname)s %(message)s")
@@ -74,6 +80,17 @@ def main(argv: list[str] | None = None) -> int:
     if args.cmd == "validate":
         print((REPO_ROOT / "data" / "releases" / args.release / "quality_report.md").read_text(encoding="utf-8"))
         return 0
+    if args.cmd == "readiness":
+        from .validation.readiness import readiness_report, render_readiness_markdown, write_readiness
+        root = Path(args.release) if Path(args.release).is_dir() else REPO_ROOT / "data" / "releases" / args.release
+        cov = root / "coverage.json"
+        labels = json.loads(cov.read_text(encoding="utf-8")).get("labels") if cov.exists() else None
+        report = readiness_report(root, labels=labels)
+        if args.write:
+            write_readiness(root, report)
+        print(json.dumps(report, indent=2, ensure_ascii=False, sort_keys=True) if args.json
+              else render_readiness_markdown(report))
+        return 0
     if args.cmd == "neo4j-load":
         from .graph.loader import load_release_from_env
         print(json.dumps(load_release_from_env(REPO_ROOT / "data" / "releases" / args.release,
@@ -89,18 +106,22 @@ def _capture(args) -> int:
 
     from .fetch import PoliteFetcher, RawStore
     from .models.enums import SourceType
+    from .scrub import scrub_html
 
     reg = load_registry()
     entry = reg.source(args.source)
     fetcher = PoliteFetcher(RawStore(REPO_ROOT / "data" / "raw"), reg.policy(entry), reg.host_aliases())
     page = fetcher.get(args.url, source_id=entry.source_id, source_type=SourceType.INSTITUTIONAL_PROFILE)
     fdir = REPO_ROOT / "tests" / "fixtures" / entry.adapter
-    (fdir / args.name).write_text(page.text, encoding="utf-8")
+    # contact details and scripts are stripped; the rest of the markup is kept as served
+    (fdir / args.name).write_text(scrub_html(page.text), encoding="utf-8")
     spec_path = fdir / "fixtures.yaml"
     spec = yaml.safe_load(spec_path.read_text(encoding="utf-8")) or {}
     spec[args.name] = {"url": args.url, "source_id": entry.source_id, "kind": args.kind,
                        "observed": page.document.retrieved_at.date().isoformat(), "reconstructed": False,
-                       "content_sha256": page.document.content_sha256}
+                       "content_sha256": page.document.content_sha256, "scrubbed": True}
+    if args.status_label:
+        spec[args.name]["status_label"] = args.status_label
     spec_path.write_text(yaml.safe_dump(spec, allow_unicode=True, sort_keys=True), encoding="utf-8")
     print(f"captured {args.url} -> {fdir / args.name}")
     return 0

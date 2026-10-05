@@ -7,12 +7,15 @@ from collections.abc import Iterator
 from urllib.parse import urlsplit
 
 from ...fetch import Page
-from ...models.enums import AssertionType, EntityType, SourceType, TemporalBasis
+from ...models.enums import AssertionType, EntityType, IdentityAnchor, SourceType, TemporalBasis
 from ...models.provenance import EntityRef, SourceRecord
 from ...normalize.names import slugify
 from ...normalize.urls import canonical_url
-from ..base import ClaimFactory, ParseResult, SourceAdapter, local_ref
+from ..base import ClaimFactory, LinkedProject, ParseResult, SourceAdapter, diagnostic, local_ref
 from . import parser as P
+
+# single path segments that are never a project page (menus, staff, categories, news, language switch)
+NON_PROJECT_SEGMENTS = ("kutato", "kutatok", "kategoria", "hirek", "intezet", "kapcsolat", "en")
 
 
 class TKAdapter(SourceAdapter):
@@ -59,6 +62,25 @@ class TKAdapter(SourceAdapter):
     def url(self, path: str) -> str:
         return canonical_url(path, base=self.base + "/", aliases=self.aliases)
 
+    def unit_urls(self) -> set[str]:
+        """Every configured unit page of every TK source: a department is not a project (#16)."""
+        out = set()
+        for s in self.registry.sources:
+            if s.adapter == self.name and s.base_url:
+                for u in s.adapter_config.get("units") or []:
+                    out.add(canonical_url(u["path"], base=s.base_url.rstrip("/") + "/", aliases=self.aliases))
+        return out
+
+    def project_url_problem(self, url: str) -> str | None:
+        """A project page of this CMS has a one-segment path and no query ("/transzformativ-szolidaritas-kutatas")."""
+        parts = urlsplit(url)
+        segs = [x for x in parts.path.split("/") if x]
+        if parts.query or len(segs) != 1 or segs[0] in NON_PROJECT_SEGMENTS:
+            return "not_project_path"
+        if url in self.unit_urls():
+            return "unit_page"
+        return None
+
     # ------------------------------------------------------------ discovery
 
     def _crawl_listings(self, start: str) -> Iterator[tuple[str, str | None]]:
@@ -96,7 +118,8 @@ class TKAdapter(SourceAdapter):
 
     def discover_projects(self) -> Iterator[str]:
         """Project links from category listings (same host, single path segment)."""
-        excluded = ("kutato", "kutatok", "kategoria", "hirek", "intezet", "kapcsolat", "en")
+        excluded = NON_PROJECT_SEGMENTS
+        self._project_listing_docs: list[tuple[Page, str | None]] = []
         for spec in self.cfg.get("project_listings") or []:
             queue, seen = deque([self.url(spec["path"])]), set()
             while queue:
@@ -107,8 +130,12 @@ class TKAdapter(SourceAdapter):
                 page = self.fetch(url, SourceType.INSTITUTIONAL_LISTING)
                 if page is None or page.document.http_status >= 400:
                     continue
+                self._project_listing_docs.append((page, spec.get("status_label")))
                 soup = P.soup_of(page.text)
                 main = P._main(soup)
+                # Article title links are the projects; other single-segment links on the
+                # page (menus, staff pages) are only a fallback for listings without articles.
+                articles = {pp.url for pp in P.parse_project_listing(page.text, page.document.final_url, self.aliases)}
                 for link in P._links(main, page.document.final_url, self.aliases):
                     parts = urlsplit(link.url)
                     segs = [s for s in parts.path.split("/") if s]
@@ -116,6 +143,8 @@ class TKAdapter(SourceAdapter):
                         continue
                     if parts.path == urlsplit(url).path and "page=" in parts.query:
                         queue.append(link.url)
+                    elif articles and link.url not in articles:
+                        continue
                     elif len(segs) == 1 and segs[0] not in excluded and not parts.query:
                         if link.url not in self._project_status:
                             self._project_status[link.url] = spec.get("status_label")
@@ -129,6 +158,9 @@ class TKAdapter(SourceAdapter):
         for page in getattr(self, "_listing_docs", []):
             out.documents.append(page.document)
             out.extend(self.parse_listing(page))
+        for page, status in getattr(self, "_project_listing_docs", []):
+            out.documents.append(page.document)
+            out.extend(self.parse_project_listing(page, status))
         return out
 
     def parse_listing(self, page: Page) -> ParseResult:
@@ -136,11 +168,13 @@ class TKAdapter(SourceAdapter):
         f = ClaimFactory(doc, "tk.listing", self.parser_version)
         res = ParseResult()
         listing = P.parse_listing(page.text, doc.final_url, self.aliases)
+        res.diagnostics.append(diagnostic(doc, f"{self.name}/{self.parser_version}", "listing",
+                                          {"people": len(listing.people), "next_pages": len(listing.next_pages)}))
         for link, position in listing.people:
             ref = self.person_ref(link.url)
             res.records.append(
                 SourceRecord(ref=ref, label=link.text, document_id=doc.document_id,
-                             hints={"profile_url": link.url, "site": self.owner_source(link.url)})
+                             hints={"profile_url": link.url, "stated_url": link.stated_url, "site": self.owner_source(link.url)})
             )
             res.claims.append(f.literal(ref, "name", link.text, locator="listing.link_text", snippet=link.text))
             if self.owner_source(link.url) == self.entry.source_id:
@@ -160,6 +194,12 @@ class TKAdapter(SourceAdapter):
         res = ParseResult()
         prof = P.parse_profile(page.text, doc.final_url, self.aliases, self.entry.unit_name)
         ref = self.person_ref(doc.canonical_url)
+        res.diagnostics.append(diagnostic(
+            doc, f"{self.name}/{self.parser_version}", "profile",
+            {"position": len(prof.positions), "unit": len(prof.unit_lines), "mtmt": bool(prof.mtmt_id),
+             "orcid": bool(prof.orcid), "email": bool(prof.email_domain), "research_areas": len(prof.research_areas),
+             "projects": len(prof.projects), "biography": bool(prof.biography), "cv": bool(prof.cv_url)},
+            prof.unknown_labels))
         hints = {
             "profile_url": doc.canonical_url,
             "site": self.entry.source_id,
@@ -169,7 +209,8 @@ class TKAdapter(SourceAdapter):
         }
         res.records.append(
             SourceRecord(ref=ref, label=prof.name, document_id=doc.document_id,
-                         hints={k: v for k, v in hints.items() if v})
+                         hints={k: v for k, v in hints.items() if v},
+                         identity_anchor=IdentityAnchor.INSTITUTIONAL_PROFILE.value)
         )
         c = res.claims
         c.append(f.literal(ref, "name", prof.name, locator="profile.h1", snippet=prof.name_snippet))
@@ -194,10 +235,13 @@ class TKAdapter(SourceAdapter):
         positions = prof.positions or ([self._listing_positions[doc.canonical_url]]
                                         if doc.canonical_url in self._listing_positions else [])
         for pos in positions:
+            q = {"position_title": pos}
+            if prof.staff_category:
+                q["staff_category"] = prof.staff_category
             c.append(
                 f.relation(
                     ref, "AFFILIATED_WITH", self.site_unit_ref(), locator="profile.position",
-                    snippet=pos, qualifiers={"position_title": pos},
+                    snippet=pos, qualifiers=q,
                 )
             )
         if not positions:
@@ -217,17 +261,41 @@ class TKAdapter(SourceAdapter):
                 f.literal(ref, "stated_research_area", area, locator="profile.section.kutatasi_teruletek",
                           snippet=area, qualifiers={"authorship": "profile page; author not stated"})
             )
+        for pos, line in enumerate(prof.rejected_project_lines):
+            # #7: a metadata line the markup does not tie to one project is kept, unattached;
+            # never attached by proximity (role lines follow the title on some profiles,
+            # precede it on others)
+            c.append(f.literal(ref, "unattached_project_metadata", line, locator="profile.section.projektek.unattached",
+                               snippet=line, confidence=0.8,
+                               qualifiers={"kind": P.metadata_kind(line), "attachment": "unresolved",
+                                           "position": pos}))
         for pm in prof.projects:
             pref = self.project_ref(pm.url, pm.title)
             res.records.append(SourceRecord(ref=pref, label=pm.title, document_id=doc.document_id,
                                             hints={"url": pm.url} if pm.url else {}))
+            if pm.url and self.follows_profile_project_links:
+                # #16: a link written in the project section is discovery evidence for that page
+                self.linked_projects.append(LinkedProject(
+                    url=pm.url, stated_url=pm.stated_url or pm.url, title=pm.title, source_id=self.entry.source_id,
+                    profile_url=doc.canonical_url, document_id=doc.document_id, project_ref=pref.source_ref))
             c.append(f.literal(pref, "title", pm.title, locator="profile.section.projektek", snippet=pm.snippet))
+            if pm.grant_id:
+                c.append(f.literal(pref, "grant_id", pm.grant_id, locator="profile.section.projektek",
+                                   snippet=pm.snippet))
             kw = {}
             if pm.period_from or pm.period_until:
                 kw = dict(valid_from=pm.period_from, valid_until=pm.period_until,
                           temporal_basis=TemporalBasis.EXPLICIT)
+            q = {}
+            if pm.role:
+                q["role"] = pm.role
+            if pm.stated_lead:
+                q["stated_lead"] = pm.stated_lead  # a name only; never resolved to a person here
             c.append(f.relation(ref, "PARTICIPATES_IN", pref, locator="profile.section.projektek",
-                                snippet=pm.snippet, confidence=0.85, **kw))
+                                snippet=pm.snippet, confidence=0.85, qualifiers=q, **kw))
+            if pm.role and P.PROJECT_LEAD_LABEL_RE.match(pm.role):
+                c.append(f.relation(ref, "PRINCIPAL_INVESTIGATOR_OF", pref, locator="profile.section.projektek",
+                                    snippet=pm.snippet, confidence=0.85, **kw))
         return res
 
     def parse_unit(self, page: Page) -> ParseResult:
@@ -235,6 +303,9 @@ class TKAdapter(SourceAdapter):
         f = ClaimFactory(doc, "tk.unit", self.parser_version)
         res = ParseResult()
         unit = P.parse_unit(page.text, doc.final_url, self.aliases)
+        res.diagnostics.append(diagnostic(
+            doc, f"{self.name}/{self.parser_version}", "unit",
+            {"leaders": len(unit.leaders), "members": len(unit.members), "description": bool(unit.description)}))
         uref = local_ref(self.entry, EntityType.ORG_UNIT, doc.canonical_url)
         spec = next((u for u in self.cfg.get("units", []) if self.url(u["path"]) == doc.canonical_url), {})
         res.records.append(SourceRecord(ref=uref, label=unit.name, document_id=doc.document_id,
@@ -251,7 +322,7 @@ class TKAdapter(SourceAdapter):
         for link, label in unit.leaders:
             pref = self.person_ref(link.url)
             res.records.append(SourceRecord(ref=pref, label=link.text, document_id=doc.document_id,
-                                            hints={"profile_url": link.url, "site": self.owner_source(link.url)}))
+                                            hints={"profile_url": link.url, "stated_url": link.stated_url, "site": self.owner_source(link.url)}))
             c.append(f.literal(pref, "name", link.text, locator="unit.leader", snippet=link.text))
             c.append(f.relation(pref, "LEADS", uref, locator="unit.leader", snippet=f"{label}: {link.text}",
                                 qualifiers={"role": label}))
@@ -259,7 +330,7 @@ class TKAdapter(SourceAdapter):
         for link in unit.members:
             pref = self.person_ref(link.url)
             res.records.append(SourceRecord(ref=pref, label=link.text, document_id=doc.document_id,
-                                            hints={"profile_url": link.url, "site": self.owner_source(link.url)}))
+                                            hints={"profile_url": link.url, "stated_url": link.stated_url, "site": self.owner_source(link.url)}))
             c.append(f.literal(pref, "name", link.text, locator="unit.members", snippet=link.text))
             c.append(f.relation(pref, "MEMBER_OF", uref, locator="unit.members", snippet=link.text))
         return res
@@ -270,54 +341,118 @@ class TKAdapter(SourceAdapter):
         res = ParseResult()
         proj = P.parse_project(page.text, doc.final_url, self.aliases)
         pref = self.project_ref(doc.canonical_url, proj.title)
-        res.records.append(SourceRecord(ref=pref, label=proj.title, document_id=doc.document_id,
-                                        hints={"url": doc.canonical_url, "grant_id": proj.grant_id}))
+        res.diagnostics.append(diagnostic(
+            doc, f"{self.name}/{self.parser_version}", "project", _project_fields(proj), proj.unmapped_labels))
+        self._emit_project(res, f, doc, pref, proj, "project", title_locator="project.h1",
+                           anchor=IdentityAnchor.PROJECT_PAGE.value)
         c = res.claims
-        c.append(f.literal(pref, "title", proj.title, locator="project.h1", snippet=proj.title))
         c.append(f.literal(pref, "website", doc.canonical_url, locator="document.url", snippet=doc.canonical_url))
-        if proj.grant_id:
-            c.append(f.literal(pref, "grant_id", proj.grant_id, locator="project.field.azonosito", snippet=proj.grant_snippet))
-        if proj.funder:
-            c.append(f.literal(pref, "funding_body", proj.funder, locator="project.field.funder",
-                               snippet=proj.grant_snippet or proj.funder, confidence=0.85))
-        if proj.start:
-            c.append(f.literal(pref, "start", proj.start, locator="project.field.idotartam",
-                               snippet=proj.period_snippet, temporal_basis=TemporalBasis.EXPLICIT))
-        if proj.end:
-            c.append(f.literal(pref, "end", proj.end, locator="project.field.idotartam",
-                               snippet=proj.period_snippet, temporal_basis=TemporalBasis.EXPLICIT))
         if status := self._project_status.get(doc.canonical_url):
             c.append(f.literal(pref, "status_label", status, locator="listing.category", snippet=status))
         if proj.description:
-            c.append(f.literal(pref, "abstract", proj.description, locator="project.description", snippet=proj.description))
+            c.append(f.literal(pref, "abstract", proj.description,
+                               locator="project.heading.description" if proj.description_heading else "project.description",
+                               snippet=proj.description))
         c.append(f.relation(pref, "HOSTED_BY", self.site_unit_ref(), locator="project.site",
                             snippet=doc.page_title or proj.title, confidence=0.85))
+        return res
+
+    def parse_project_listing(self, page: Page, status: str | None) -> ParseResult:
+        """Project lines on a category listing, attributed to the listing page itself."""
+        doc = page.document
+        f = ClaimFactory(doc, "tk.project_listing", self.parser_version)
+        res = ParseResult()
+        articles = P.parse_project_listing(page.text, doc.final_url, self.aliases)
+        res.diagnostics.append(diagnostic(doc, f"{self.name}/{self.parser_version}", "project_listing",
+                                          {"projects": len(articles)}))
+        for proj in articles:
+            pref = self.project_ref(proj.url, proj.title)
+            self._emit_project(res, f, doc, pref, proj, "listing.article", title_locator="listing.article.title")
+            if status:
+                res.claims.append(f.literal(pref, "status_label", status, locator="listing.category",
+                                            snippet=f"{doc.page_title or ''} {proj.title}".strip()))
+        return res
+
+    def _emit_project(self, res: ParseResult, f: ClaimFactory, doc, pref: EntityRef, proj: P.ProjectPage,
+                      loc: str, *, title_locator: str, anchor: str | None = None) -> None:
+        # ``anchor``: the record comes from the project's own page, which makes it an identity (ADR-0008)
+        res.records.append(SourceRecord(ref=pref, label=proj.title, document_id=doc.document_id,
+                                        hints={k: v for k, v in {"url": proj.url, "grant_id": proj.grant_id}.items() if v},
+                                        identity_anchor=anchor))
+        c = res.claims
+        c.append(f.literal(pref, "title", proj.title, locator=title_locator, snippet=proj.title))
+        if proj.grant_id:
+            c.append(f.literal(pref, "grant_id", proj.grant_id, locator=f"{loc}.field.azonosito", snippet=proj.grant_snippet))
+        if proj.funder:
+            # a bare line above the period ("NKFIH ADVANCED", "Horizon Europe") is the
+            # funding scheme as the site labels it; weaker than a labelled field
+            c.append(f.literal(pref, "funding_body", proj.funder, locator=f"{loc}.field.funder",
+                               snippet=proj.funder_snippet or proj.funder,
+                               confidence=0.85 if proj.funder_labelled else 0.7))
+        if proj.start:
+            c.append(f.literal(pref, "start", proj.start, locator=f"{loc}.field.idotartam",
+                               snippet=proj.period_snippet, temporal_basis=TemporalBasis.EXPLICIT))
+        if proj.end:
+            c.append(f.literal(pref, "end", proj.end, locator=f"{loc}.field.idotartam",
+                               snippet=proj.period_snippet, temporal_basis=TemporalBasis.EXPLICIT))
         period = dict(valid_from=proj.start, valid_until=proj.end, temporal_basis=TemporalBasis.EXPLICIT) \
             if proj.start else {}
+        # A lead or participant read under a heading (#31) carries ``heading`` in its locator and the heading as stated
+        # in its snippet; one read from a "Label: value" line carries ``field``, as before.
         for link in proj.leads:
             per = self.person_ref(link.url)
+            sec = proj.heading_origin.get(("lead", link.url))
+            fld = f"{loc}.{'heading' if sec else 'field'}.vezeto"
+            snip = sec.evidence(link.url) if sec else proj.lead_snippets.get(link.url, f"Kutatásvezető: {link.text}")
             res.records.append(SourceRecord(ref=per, label=link.text, document_id=doc.document_id,
-                                            hints={"profile_url": link.url, "site": self.owner_source(link.url)}))
-            c.append(f.literal(per, "name", link.text, locator="project.field.vezeto", snippet=link.text))
-            c.append(f.relation(per, "PRINCIPAL_INVESTIGATOR_OF", pref, locator="project.field.vezeto",
-                                snippet=f"Projektvezető: {link.text}", **period))
-            c.append(f.relation(per, "PARTICIPATES_IN", pref, locator="project.field.vezeto",
-                                snippet=f"Projektvezető: {link.text}", qualifiers={"role": "projektvezető"}, **period))
-        for link in proj.participants:
-            per = self.person_ref(link.url)
-            res.records.append(SourceRecord(ref=per, label=link.text, document_id=doc.document_id,
-                                            hints={"profile_url": link.url, "site": self.owner_source(link.url)}))
-            c.append(f.literal(per, "name", link.text, locator="project.field.resztvevok", snippet=link.text))
-            c.append(f.relation(per, "PARTICIPATES_IN", pref, locator="project.field.resztvevok",
-                                snippet=link.text, **period))
-        for name, role in proj.unlinked_participants:
+                                            hints={"profile_url": link.url, "stated_url": link.stated_url, "site": self.owner_source(link.url)}))
+            c.append(f.literal(per, "name", link.text, locator=fld, snippet=link.text))
+            c.append(f.relation(per, "PRINCIPAL_INVESTIGATOR_OF", pref, locator=fld,
+                                snippet=snip, **period))
+            c.append(f.relation(per, "PARTICIPATES_IN", pref, locator=fld,
+                                snippet=snip, qualifiers={"role": "kutatásvezető"}, **period))
+        for name, line in proj.unlinked_leads:
             # No profile link: a name-only record that resolution will never auto-merge.
-            per = local_ref(self.entry, EntityType.PERSON, f"name-mention:{slugify(name)}@{doc.canonical_url}")
+            per = self._name_mention(name, pref)
+            sec = proj.heading_origin.get(("lead", name))
+            fld = f"{loc}.{'heading' if sec else 'field'}.vezeto.unlinked"
+            line = sec.evidence(name) if sec else line
             res.records.append(SourceRecord(ref=per, label=name, document_id=doc.document_id,
                                             hints={"unlinked_mention": True}))
-            c.append(f.literal(per, "name", name, locator="project.field.resztvevok.unlinked",
-                               snippet=f"{role}: {name}", confidence=0.8))
-            c.append(f.relation(per, "PARTICIPATES_IN", pref, locator="project.field.resztvevok.unlinked",
-                                snippet=f"{role}: {name}", qualifiers={"role": role}, confidence=0.8,
+            c.append(f.literal(per, "name", name, locator=fld, snippet=line, confidence=0.8))
+            c.append(f.relation(per, "PRINCIPAL_INVESTIGATOR_OF", pref, locator=fld,
+                                snippet=line, confidence=0.8, assertion_type=AssertionType.INSTITUTIONAL, **period))
+        for link in proj.participants:
+            per = self.person_ref(link.url)
+            sec = proj.heading_origin.get(("participant", link.url))
+            fld = f"{loc}.{'heading' if sec else 'field'}.resztvevok"
+            snip = sec.evidence(link.url) if sec else link.text
+            res.records.append(SourceRecord(ref=per, label=link.text, document_id=doc.document_id,
+                                            hints={"profile_url": link.url, "stated_url": link.stated_url, "site": self.owner_source(link.url)}))
+            c.append(f.literal(per, "name", link.text, locator=fld, snippet=link.text))
+            c.append(f.relation(per, "PARTICIPATES_IN", pref, locator=fld,
+                                snippet=snip, **period))
+        for name, role in proj.unlinked_participants:
+            per = self._name_mention(name, pref)
+            sec = proj.heading_origin.get(("participant", name))
+            fld = f"{loc}.{'heading' if sec else 'field'}.resztvevok.unlinked"
+            snip = sec.evidence(name) if sec else f"{role}: {name}"
+            res.records.append(SourceRecord(ref=per, label=name, document_id=doc.document_id,
+                                            hints={"unlinked_mention": True}))
+            c.append(f.literal(per, "name", name, locator=fld,
+                               snippet=snip, confidence=0.8))
+            c.append(f.relation(per, "PARTICIPATES_IN", pref, locator=fld,
+                                snippet=snip, qualifiers={"role": role}, confidence=0.8,
                                 assertion_type=AssertionType.INSTITUTIONAL, **period))
-        return res
+
+    def _name_mention(self, name: str, project: EntityRef) -> EntityRef:
+        # keyed by the project, so the listing and the project page share one mention
+        return local_ref(self.entry, EntityType.PERSON, f"name-mention:{slugify(name)}@{project.source_ref}")
+
+
+def _project_fields(proj: P.ProjectPage) -> dict[str, int | bool]:
+    """What a project page offered besides its title (parse diagnostics, #12)."""
+    return {"period": bool(proj.start), "funder": bool(proj.funder), "grant_id": bool(proj.grant_id),
+            "leads": len(proj.leads) + len(proj.unlinked_leads),
+            "participants": len(proj.participants) + len(proj.unlinked_participants),
+            "description": bool(proj.description)}

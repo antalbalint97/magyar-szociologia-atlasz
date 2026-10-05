@@ -30,6 +30,8 @@ from .registry import CrawlPolicy
 
 FETCHER_VERSION = "fetch/0.1.0"
 log = logging.getLogger(__name__)
+RETRIES = 2
+RETRY_STATUSES = {429, 500, 502, 503, 504}
 
 
 class FetchRefused(Exception):
@@ -131,14 +133,19 @@ class PoliteFetcher:
             follow_redirects=True,
         )
         self._robots: dict[str, urllib.robotparser.RobotFileParser | None] = {}
+        self._robots_unavailable: dict[str, str] = {}  # origin -> why robots.txt could not be read
         self._last_hit: dict[str, float] = {}
         self.pages_fetched = 0
+
+    @staticmethod
+    def _origin(url: str) -> str:
+        u = httpx.URL(url)
+        return f"{u.scheme}://{u.host}"
 
     def _allowed(self, url: str) -> bool:
         if not self.policy.respect_robots:
             return True
-        u = httpx.URL(url)
-        origin = f"{u.scheme}://{u.host}"
+        origin = self._origin(url)
         if origin not in self._robots:
             rp = urllib.robotparser.RobotFileParser()
             try:
@@ -147,9 +154,11 @@ class PoliteFetcher:
                 # Unreachable robots.txt: be conservative and do not crawl the host.
                 log.warning("robots.txt unreachable for %s (%s); refusing host", origin, e)
                 self._robots[origin] = None
+                self._robots_unavailable[origin] = f"robots.txt unreachable ({type(e).__name__})"
                 return False
             if r.status_code >= 500:
                 self._robots[origin] = None
+                self._robots_unavailable[origin] = f"robots.txt answered HTTP {r.status_code}"
             elif r.status_code >= 400:
                 rp.parse([])  # no robots.txt: everything allowed
                 self._robots[origin] = rp
@@ -168,6 +177,24 @@ class PoliteFetcher:
                 time.sleep(remaining)
         self._last_hit[host] = time.monotonic()
 
+    def _get_with_retry(self, url: str) -> httpx.Response:
+        """GET with a few spaced retries on transport errors and 429/5xx (polite backoff)."""
+        host = httpx.URL(url).host
+        for attempt in range(RETRIES + 1):
+            self._wait(host)
+            try:
+                r = self.client.get(url)
+            except httpx.TransportError as e:
+                if attempt == RETRIES:
+                    raise FetchRefused(f"transport error after {RETRIES + 1} attempts: {url} ({e!r})") from e
+                log.warning("transport error on %s (%r); retrying", url, e)
+            else:
+                if r.status_code not in RETRY_STATUSES or attempt == RETRIES:
+                    return r
+                log.warning("HTTP %s on %s; retrying", r.status_code, url)
+            time.sleep(self.policy.min_delay_seconds * 2 ** (attempt + 1))
+        raise AssertionError("unreachable")
+
     def get(self, url: str, *, source_id: str, source_type: SourceType) -> Page:
         canon = canonical_url(url, aliases=self.aliases)
         cached = self.store.latest(source_id, canon)
@@ -178,9 +205,11 @@ class PoliteFetcher:
         if self.pages_fetched >= self.policy.max_pages_per_run:
             raise FetchRefused(f"page budget {self.policy.max_pages_per_run} exhausted")
         if not self._allowed(url):
-            raise FetchRefused(f"robots.txt disallows {url}")
-        self._wait(httpx.URL(url).host)
-        r = self.client.get(url)
+            # not one fact: the site disallows the page, or its robots.txt could not be read (unreachable, HTTP 5xx)
+            # and the host is refused to be safe. The message keeps them apart, because coverage must (#12).
+            why = self._robots_unavailable.get(self._origin(url))
+            raise FetchRefused(f"{why}, host not crawled: {url}" if why else f"robots.txt disallows {url}")
+        r = self._get_with_retry(url)
         self.pages_fetched += 1
         doc = make_document(
             url=url,

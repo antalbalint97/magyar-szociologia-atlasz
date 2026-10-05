@@ -47,9 +47,9 @@ optional Neo4j.
 |---|---|---|---|
 | Source registry | `config/sources.yaml` | YAML, validated by `registry.py` | The only place URLs live. Enabled sources need an adapter. |
 | Raw snapshots | `data/raw/<source>/pages/<sha[:2]>/<sha>.html`, `documents.jsonl`, `runs.jsonl` | bytes + `SourceDocument` JSONL | Byte-exact body, written before parsing. Content-addressed. Never edited. |
-| Staged | `data/staged/<source>/{records,claims,documents,errors}.jsonl` | JSONL | Source-local: refs like `tk_recens\|https://…/kutato/koltai-julia`. No identity decisions. |
+| Staged | `data/staged/<source>/{records,claims,documents,errors,frontier,diagnostics}.jsonl` | JSONL | Source-local: refs like `tk_recens\|https://…/kutato/koltai-julia`. No identity decisions. `frontier` says which linked pages were followed and why (ADR-0009); `diagnostics` says what the parser found in each page. |
 | Curated | `config/`, `review/` | YAML / JSONL in git | Human decisions with reviewer + date. |
-| Canonical release | `data/releases/<id>/` | `entities/<Type>.jsonl`, `relations.jsonl`, `claims.jsonl`, `documents.jsonl`, `matches.jsonl`, `manifest.json`, `quality_report.{md,json}` | Self-contained and portable: everything needed to audit any value. |
+| Canonical release | `data/releases/<id>/` | `entities/<Type>.jsonl`, `relations.jsonl`, `claims.jsonl`, `documents.jsonl`, `matches.jsonl`, `frontier.jsonl`, `parse_report.jsonl`, `manifest.json`, `quality_report.{md,json}`, `coverage.{md,json}`, `analysis_readiness.{md,json}` | Self-contained and portable: everything needed to audit any value, how much of the sources it covers, and what the graph can carry (docs/methodology.md §9). |
 | Graph | Neo4j 5 | nodes/relationships + `:Claim` / `:SourceDocument` | Disposable projection of one release; reloadable at any time. |
 | Serving | `apps/web` | Next.js server components | Read-only; no credentials in the browser. |
 | Analysis | `research/` | notebooks / scripts | Reads releases (or `szocatlas.graph.export.to_networkx`), never the live site. |
@@ -69,7 +69,9 @@ run()                                                        # orchestrates via 
 ```
 
 Adapters fetch only through the shared `Fetcher` (so every page lands in the raw
-store), never resolve identities, and never write canonical data. `ClaimFactory` binds
+store), never resolve identities, and never write canonical data. Besides records and
+claims a `ParseResult` carries a **frontier** (URLs the page told the crawl about and what was
+decided) and **diagnostics** (what the parser found in the page); neither is a claim. `ClaimFactory` binds
 every claim to the document it came from, so a parser cannot emit an unsourced claim.
 
 The TK adapter serves all TK institute sites (one CMS): researcher listings at
@@ -78,12 +80,23 @@ project pages configured per site. Parsers avoid CSS classes and rely on `<h1>`,
 labelled fields ("Osztályvezető:", "Időtartam:"), section headings ("Kutatási
 területek", "Projektek") and URL patterns. See ADR-0004.
 
+### Discovery across sources (ADR-0009)
+
+Listings and unit pages are configured per source. On top of that, `discovery.py` follows
+**one hop** from a profile's project section: a link whose host belongs to an enabled source
+with an adapter, and whose path has the shape of that source's project pages, is fetched by
+the owner source's adapter. Every other link in a project section (other unit sites,
+external sites, grant records) is written to the frontier as skipped, with its reason, and
+not fetched. The registry decides which hosts are crawlable; a profile only supplies the path.
+`ingest` runs every adapter first, then the discovery step, so a page linked from one site's
+profile and served by another is fetched by its owner.
+
 ## 4. Fetching etiquette
 
 `PoliteFetcher`: robots.txt checked per origin (an unreachable robots.txt means *do not
 crawl*), at least 3 s between requests to a host, a per-run page budget (400), a
 descriptive User-Agent, and snapshot reuse for 30 days (`max_age_days`) so re-runs do not
-re-hit sites. `--replay` re-parses from snapshots with no network. Playwright is not
+re-hit sites. `--replay` re-parses from snapshots with no network and re-derives the frontier from them. Playwright is not
 used; none of the TK pages need JavaScript.
 
 ## 5. Identity

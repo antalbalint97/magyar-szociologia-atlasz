@@ -19,6 +19,8 @@ class EntityType(StrEnum):
     METHOD = "Method"
     TRADITION = "IntellectualTradition"
     EVENT = "Event"
+    PERSON_MENTION = "PersonMention"  # evidence: a person-like record observed in one page (ADR-0006)
+    PROJECT_MENTION = "ProjectMention"  # evidence: a project-like record observed in one page (ADR-0008)
 
 
 class RelationType(StrEnum):
@@ -116,6 +118,31 @@ class ReviewStatus(StrEnum):
     CONFIRMED = "CONFIRMED"
     DISPUTED = "DISPUTED"
     REJECTED = "REJECTED"
+
+
+class IdentityAnchor(StrEnum):
+    """Evidence that makes a Person or Project an identity rather than a string (ADR-0006, ADR-0008)."""
+
+    INSTITUTIONAL_PROFILE = "institutional_profile"  # the person's own profile page was fetched
+    MTMT = "mtmt"
+    ORCID = "orcid"
+    PROJECT_PAGE = "project_page"  # the project's own page on an institutional site was fetched
+    MANUAL = "manual"  # a reviewer established the identity
+
+
+class MentionResolutionStatus(StrEnum):
+    """How a PersonMention / ProjectMention is tied to its canonical entity (ADR-0006, ADR-0008)."""
+
+    DETERMINISTIC = "DETERMINISTIC"  # exact profile / project URL (canonical or verified alias host), or hard id + name
+    MANUAL_CONFIRMED = "MANUAL_CONFIRMED"  # mention_decisions / same_as in review/manual_overrides.yaml
+    HIGH_CONFIDENCE_AUTO = "HIGH_CONFIDENCE_AUTO"  # a documented rule of >=2 strong signals (#5)
+    REVIEW_REQUIRED = "REVIEW_REQUIRED"  # candidates exist, evidence is insufficient or contradictory
+    UNRESOLVED = "UNRESOLVED"  # no candidate identity at all
+
+    @property
+    def resolved(self) -> bool:
+        return self in (MentionResolutionStatus.DETERMINISTIC, MentionResolutionStatus.MANUAL_CONFIRMED,
+                        MentionResolutionStatus.HIGH_CONFIDENCE_AUTO)
 
 
 class MatchStatus(StrEnum):

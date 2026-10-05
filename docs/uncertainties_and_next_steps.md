@@ -32,24 +32,10 @@
 9. **Seeds not yet covered by fixtures:** Ságvári Bence, Durst Judit, Virág Tünde.
    Their home units must come from the live crawl (ELTE TáTK, KRTK, TK), not be assumed.
 
-## Next steps, in order
+## Next steps
 
-1. **Run the TK adapter with network access** (a local machine, or a cloud environment
-   that allows `*.tk.elte.hu`, `*.tk.hu`, `*.tk.mta.hu`): `szocatlas ingest`, then
-   `szocatlas fixtures capture …` for one page of each kind, flip the fixtures to real
-   snapshots, re-run `pytest`, fix parsers where real markup differs.
-2. Build the first real release (`szocatlas build --release 2026-10-tk`), review
-   `quality_report.md` and `review/unresolved_people.yaml`, record decisions.
-3. Parser for research-group sites (recens `/en/` group pages, Lendület sites) →
-   `ResearchGroup` + `LEADS` / `MEMBER_OF`.
-4. Adapters for ELTE TáTK, KRTK, TÁRKI, Corvinus, PTE (sociology + Romology), Debrecen,
-   Szeged, Miskolc, PPKE, KSH NKI (see docs/sources.md for observed entry points).
-5. MTMT author records (hard identifiers, publications) → co-authorship, method signals.
-6. doktori.hu → `SUPERVISED_BY`, doctoral schools (academic genealogy).
-7. Wayback snapshots of institutional staff pages → `DERIVED` historical intervals.
-8. Events for institutional history (TK succession, ELTE TáTK units, KRTK) with citable
-   sources.
-9. Frontend: institution tree, topic/method maps, timeline once intervals exist;
-   benchmark Sigma.js vs Cytoscape.js before a community overview.
-10. Ethics: confirm GDPR basis and a correction procedure with the host institution
-    before any public deployment.
+Tracked as GitHub Issues, not here. See `docs/status.md` for the current snapshot and the
+Milestone 2 tracking issue (#3) for the ordered workstreams. Step 1 of the original list
+(the live TK crawl) is done in PR #2 (release `2026-10-tk`). The remaining items map to
+issues: research-group pages #16, other institutions #21, MTMT #23, doktori.hu #22,
+historical sources #24, ethics #25.

@@ -45,3 +45,12 @@ def test_orphan_person_and_contradictory_positions():
     found = checks(ds)
     assert "structure.orphan_person" in found
     assert "conflict.positions" in found
+
+
+def test_project_titled_with_metadata_is_flagged():
+    from szocatlas.models import Project
+    ds = CanonicalDataset()
+    ds.entities = {i: Project(canonical_id=i, label=t, title=t) for i, t in
+                   [("prj_a", "Korábbi projektek:"), ("prj_b", "NKFIH. K147329"), ("prj_c", "Magyar Ifjúság 2016")]}
+    found = checks(ds)["parser.project_title_is_metadata"]
+    assert found.subjects == ["prj_a", "prj_b"]

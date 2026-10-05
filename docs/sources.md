@@ -12,6 +12,7 @@ until an adapter crawls the page and stores a raw snapshot.
 - Default delay 3 s, page budget 400 per run, snapshots younger than 30 days are reused.
 - Our user agent identifies the project and links the repo. We never spoof a browser UA to get past a block.
 - Only public, professional data: names, positions, units, projects, stated research areas. Phone numbers, rooms and personal email local parts are dropped by the parsers.
+- Pages are fetched because a configured listing shows them or because a profile of an enabled source links them from its project section and the link's host belongs to an enabled source (ADR-0009, one hop, one-segment project paths, verified host aliases only). Links to other hosts are never followed; they are recorded in the release's `frontier.jsonl` with the reason.
 
 ## Restrictions found during the inventory
 
@@ -22,6 +23,48 @@ until an adapter crawls the page and stores a raw snapshot.
 | demografia.hu (KSH NKI) | robots.txt itself answered HTTP 429 after a few requests | `min_delay_seconds: 15` on `ksh_nki_web`; the institute was renamed in 2025 (`nki_rename` in `review/unresolved.yaml`). |
 | tatk.elte.hu | robots.txt was unreachable from the reader | The fetcher will refuse until it is reachable; re-check from the crawl environment. |
 | kti.krtk.hu, vki.hu | intermittent timeouts | Low priority. |
+
+## Linked pages the crawl does not follow (#16, observed 2026-10-05)
+
+The four enabled TK sites link 123 distinct pages from the project sections of their profiles
+(208 mentions). 90 are on enabled sites' hosts and are all fetched. The other 33 are not,
+by decision (`frontier.jsonl`: scope, reason). A one-off polite probe (one request per URL,
+robots.txt honoured, nothing stored or parsed) recorded what the other units' hosts answer:
+
+| Linked as written | Registry entry | Mentions / researchers | Probe |
+|---|---|---|---|
+| `jog.tk.hu/a-nemzetiseg-es-etnicitas-jogi-operacionalizalasa` (also `jog.tk.mta.hu`) | `tk_jog` (adapter `tk`, disabled) | 2 / 2 (KI) | HTTP 200 after a redirect to `jog.tk.elte.hu`, same path |
+| `klimacentrum.tk.hu/`, `…/en/visual-persuasion-in-a-transforming-europe-polarvis` | `tk_klimacentrum` (no adapter) | 2 / 2 | HTTP 200 after redirects to `klimacentrum.tk.elte.hu`, same paths |
+| `csaladtudomany.tk.hu/` | `tk_csaladtudomany` (no adapter) | 1 / 1 | HTTP 200, no redirect |
+| `reprosoc.tk.hu/` | `tk_reprosoc` (no adapter) | 2 / 2 | redirects to `reprosoc.tk.elte.hu`; its robots.txt answered HTTP 500, so the fetcher refuses the host |
+| `tk.hun-ren.hu/mobilitas` | `tk_mobilitas` (no adapter) | 3 / 3 | not reachable from the crawl environment (egress policy) |
+| `cap.tk.mta.hu/` | none | 1 / 1 | HTTP 200 after a redirect to `cap.tk.elte.hu/en` |
+| `intersections.tk.mta.hu/index.php/intersections` | none (`journal_intersections` is registered at `intersections.tk.hu`) | 1 / 1 | HTTP 200, no redirect |
+| `www.judicon.tk.mta.hu/` | none | 1 / 1 | redirects to `judicon.tk.hun-ren.hu`, which is not reachable from the environment |
+
+Nothing is inferred from these pages: no fetch of their content was made. Enabling any of
+these units as a source is a Milestone 3 scope decision; `tk_jog` is the only one with an
+adapter, and its own note asks for a scope filter first. The same redirects are evidence for
+promoting `jog.tk.hu`, `klimacentrum.tk.hu` and `cap.tk.mta.hu` host aliases from inferred to
+verified when those units become sources (#14). The remaining 24 links go to 19 external
+project sites (EU consortia, other universities, one academic profile) and five NKFIH grant
+records; they are recorded, not fetched, and the grant records still count as grant
+statements for project resolution (ADR-0008).
+
+## SZI project page templates (#31, observed 2026-10-04, `2026-10-tk-m2-p31`)
+
+The 193 SZI project pages come in two shapes (ADR-0010). 107 state their fields as `Label: value`
+lines (the form the other three sites use). 86 are of the old template: the label is a heading
+(`h2`-`h6`: "Projektvezető", "Kutatásvezető (MTA SZKI)", "Résztvevők (MTA SZKI)") and the value is
+the paragraphs, `<div>`s, `<li>`s or bare text under it, up to the next heading. The parser reads
+both. What it does **not** read on the 86 pages, and why: "Koordinátor(ok)" headings (5 pages; a
+consortium coordinator is not the same role as a project lead, #36), "Partnerek" and "Konzorciumi
+tagok" (organisations), one misspelt heading, two pages whose labels are a `<p>` and not a
+heading, org-first or `Family, Given` name lines, and five pages that use the singular
+"Résztvevő" label (profile links only, as on a label line). Five more pages state a heading and
+leave its value as a placeholder ("..."). Each is a coverage gap listed in the issue, not a
+guess. Plain-text names under these headings are person mentions (ADR-0006): the institute has
+no profile for most collaborators and former staff.
 
 ## Structural changes to model as events, not overwrites
 

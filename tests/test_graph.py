@@ -3,7 +3,7 @@ import re
 
 import pytest
 
-from szocatlas.graph.loader import edge_rows, load_release, node_rows
+from szocatlas.graph.loader import MENTION_REL_TYPES, edge_rows, load_release, node_rows
 from szocatlas.models.enums import RelationType
 from szocatlas.pipeline import build, ingest_fixtures
 from szocatlas.registry import REPO_ROOT
@@ -49,7 +49,7 @@ def test_load_is_merge_only_and_repeatable(release):
     assert writes and all(" CREATE " not in q for q in writes)  # upserts only
     for q, _ in s1.calls:
         for t in re.findall(r"\[r:(\w+)", q):
-            assert t in {x.value for x in RelationType}
+            assert t in {x.value for x in RelationType} | set(MENTION_REL_TYPES)
 
 
 def test_prune_only_when_asked(release):

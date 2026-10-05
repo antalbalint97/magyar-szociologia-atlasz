@@ -2,37 +2,177 @@
   {
     "check": "provenance.synthetic_documents",
     "severity": "warning",
-    "message": "6 documents are reconstructed fixtures; this dataset is NOT a publishable release",
+    "message": "18 documents are reconstructed fixtures; this dataset is NOT a publishable release",
     "subjects": [
-      "doc_22823e53c9258382",
-      "doc_83862ebcce0f6b52",
-      "doc_03432ddd81a615cb",
-      "doc_4b9f0b38411d26e2",
-      "doc_8bbf4da031c7a16f",
-      "doc_32418b0a80b866c2"
+      "doc_4c698cb3a8f64a78",
+      "doc_62b7000d8e05435a",
+      "doc_0dcd3839675f8271",
+      "doc_279ff00150daca95",
+      "doc_0fe7932fa4805f0d",
+      "doc_65230ac67900969a",
+      "doc_d032b10a4c1f89d4",
+      "doc_e8d64bf2307a2e7e",
+      "doc_eaa004ac3e2465f0",
+      "doc_3aac8a563eb16353"
     ],
     "detail": {}
   },
   {
-    "check": "structure.orphan_person",
-    "severity": "warning",
-    "message": "4 people have no affiliation/membership edge",
-    "subjects": [
-      "per_acd20a6bca",
-      "per_79d4a0dda6",
-      "per_fd34cb4e68",
-      "per_b5c4c18c81"
-    ],
-    "detail": {}
+    "check": "identity.mention_resolution",
+    "severity": "info",
+    "message": "7 of 57 person mentions resolved (12.3%); 0 need review, 50 have no candidate Person",
+    "subjects": [],
+    "detail": {
+      "by_status": {
+        "DETERMINISTIC": 6,
+        "HIGH_CONFIDENCE_AUTO": 1,
+        "UNRESOLVED": 50
+      },
+      "resolved_by_method": {
+        "own_profile_project": 1,
+        "profile_url": 6
+      },
+      "by_source": {
+        "tk_kisebbsegkutato": {
+          "DETERMINISTIC": 1,
+          "UNRESOLVED": 13,
+          "resolved": 1,
+          "total": 14,
+          "resolution_rate": 0.071
+        },
+        "tk_recens": {
+          "DETERMINISTIC": 4,
+          "UNRESOLVED": 12,
+          "resolved": 4,
+          "total": 16,
+          "resolution_rate": 0.25
+        },
+        "tk_szociologia": {
+          "DETERMINISTIC": 1,
+          "HIGH_CONFIDENCE_AUTO": 1,
+          "UNRESOLVED": 25,
+          "resolved": 2,
+          "total": 27,
+          "resolution_rate": 0.074
+        }
+      },
+      "by_page_type": {
+        "institutional_listing": {
+          "DETERMINISTIC": 4,
+          "UNRESOLVED": 23,
+          "resolved": 4,
+          "total": 27,
+          "resolution_rate": 0.148
+        },
+        "project_page": {
+          "HIGH_CONFIDENCE_AUTO": 1,
+          "UNRESOLVED": 4,
+          "resolved": 1,
+          "total": 5,
+          "resolution_rate": 0.2
+        },
+        "unit_page": {
+          "DETERMINISTIC": 2,
+          "UNRESOLVED": 23,
+          "resolved": 2,
+          "total": 25,
+          "resolution_rate": 0.08
+        }
+      },
+      "not_resolved_reasons": {
+        "no canonical Person with a compatible name or the linked profile slug": 50
+      }
+    }
   },
   {
-    "check": "review.project_label_suspicious",
-    "severity": "warning",
-    "message": "project 'Intersections journal (Editor-in-Chief)' may be a journal/role listed under Projektek",
-    "subjects": [
-      "prj_cf8f3d1b38"
-    ],
-    "detail": {}
+    "check": "project.activity_cues",
+    "severity": "info",
+    "message": "0 Projects and 4 project mentions carry words suggesting a journal, network, programme, infrastructure, consortium or newsletter (left for #9)",
+    "subjects": [],
+    "detail": {
+      "mentions": {
+        "journal": 1,
+        "research_group": 2,
+        "programme": 1,
+        "network": 1
+      },
+      "projects": {}
+    }
+  },
+  {
+    "check": "project.unattached_metadata",
+    "severity": "info",
+    "message": "27 project-section metadata lines are kept unattached (no structural evidence ties them to one project)",
+    "subjects": [],
+    "detail": {
+      "section_label": 2,
+      "table_row": 1,
+      "grant": 9,
+      "role": 13,
+      "funder": 1,
+      "other": 1
+    }
+  },
+  {
+    "check": "project.mention_resolution",
+    "severity": "info",
+    "message": "1 of 78 project mentions resolved (1.3%); 0 need review, 77 have no candidate Project",
+    "subjects": [],
+    "detail": {
+      "by_status": {
+        "DETERMINISTIC": 1,
+        "UNRESOLVED": 77
+      },
+      "resolved_by_method": {
+        "project_url": 1
+      },
+      "by_source": {
+        "tk_kisebbsegkutato": {
+          "UNRESOLVED": 15,
+          "resolved": 0,
+          "total": 15,
+          "resolution_rate": 0.0
+        },
+        "tk_politikatudomany": {
+          "UNRESOLVED": 17,
+          "resolved": 0,
+          "total": 17,
+          "resolution_rate": 0.0
+        },
+        "tk_recens": {
+          "UNRESOLVED": 22,
+          "resolved": 0,
+          "total": 22,
+          "resolution_rate": 0.0
+        },
+        "tk_szociologia": {
+          "DETERMINISTIC": 1,
+          "UNRESOLVED": 23,
+          "resolved": 1,
+          "total": 24,
+          "resolution_rate": 0.042
+        }
+      },
+      "by_observation": {
+        "profile_list": {
+          "DETERMINISTIC": 1,
+          "UNRESOLVED": 67,
+          "resolved": 1,
+          "total": 68,
+          "resolution_rate": 0.015
+        },
+        "project_listing": {
+          "UNRESOLVED": 10,
+          "resolved": 0,
+          "total": 10,
+          "resolution_rate": 0.0
+        }
+      },
+      "not_resolved_reasons": {
+        "no anchored Project with a compatible title or grant id": 45,
+        "linked project page not fetched": 32
+      }
+    }
   },
   {
     "check": "stats.entities",
@@ -41,12 +181,23 @@
     "subjects": [],
     "detail": {
       "Institution": 15,
-      "OrganisationalUnit": 33,
+      "OrganisationalUnit": 37,
       "ResearchGroup": 2,
       "ResearchTopic": 34,
       "Method": 19,
-      "Person": 22,
-      "Project": 8
+      "Person": 11,
+      "Project": 2
+    }
+  },
+  {
+    "check": "stats.person_mentions",
+    "severity": "info",
+    "message": "person mentions by resolution status",
+    "subjects": [],
+    "detail": {
+      "UNRESOLVED": 50,
+      "DETERMINISTIC": 6,
+      "HIGH_CONFIDENCE_AUTO": 1
     }
   },
   {
@@ -55,15 +206,15 @@
     "message": "relation counts",
     "subjects": [],
     "detail": {
-      "AFFILIATED_WITH": 8,
+      "AFFILIATED_WITH": 11,
       "BROADER": 2,
-      "HOSTED_BY": 1,
-      "LEADS": 1,
-      "MEMBER_OF": 12,
-      "PARTICIPATES_IN": 12,
-      "PART_OF": 39,
+      "HOSTED_BY": 2,
+      "MEMBER_OF": 8,
+      "PARTICIPATES_IN": 1,
+      "PART_OF": 43,
       "PRINCIPAL_INVESTIGATOR_OF": 1,
-      "WORKS_ON_TOPIC": 23
+      "USES_METHOD": 4,
+      "WORKS_ON_TOPIC": 22
     }
   },
   {
@@ -72,8 +223,8 @@
     "message": "relations by epistemic status",
     "subjects": [],
     "detail": {
-      "OBSERVED": 76,
-      "DERIVED": 23
+      "OBSERVED": 68,
+      "DERIVED": 26
     }
   },
   {
@@ -88,7 +239,11 @@
         "TK Számítógépes Társadalomtudomány - CSS-RECENS"
       ],
       "topics": [],
-      "methods": []
+      "methods": [],
+      "resolved_mentions": 1,
+      "resolved_by_method": {
+        "profile_url": 1
+      }
     }
   },
   {
@@ -102,32 +257,44 @@
       "affiliations": [
         "TK Számítógépes Társadalomtudomány - CSS-RECENS"
       ],
-      "topics": [],
-      "methods": []
+      "topics": [
+        "Computational social science",
+        "Political sociology",
+        "Social networks"
+      ],
+      "methods": [
+        "Computational text analysis",
+        "Quantitative methods"
+      ],
+      "resolved_mentions": 2,
+      "resolved_by_method": {
+        "profile_url": 2
+      }
     }
   },
   {
     "check": "seeds.missing",
     "severity": "warning",
-    "message": "QA seed not in dataset: Ságvári Bence",
+    "message": "QA seed not in dataset as a person: Ságvári Bence",
     "subjects": [],
     "detail": {
-      "expect": "Computational/digital sociology and research-centre affiliations."
+      "expect": "Computational/digital sociology and research-centre affiliations.",
+      "mentioned_on": [
+        "https://szociologia.tk.elte.hu/kategoria/futo-kutatasok"
+      ]
     }
   },
   {
-    "check": "seeds.present",
-    "severity": "info",
-    "message": "Kisfalusi Dorottya -> per_ee86a4696a",
-    "subjects": [
-      "per_ee86a4696a"
-    ],
+    "check": "seeds.missing",
+    "severity": "warning",
+    "message": "QA seed not in dataset as a person: Kisfalusi Dorottya",
+    "subjects": [],
     "detail": {
-      "affiliations": [
-        "TK Számítógépes Társadalomtudomány - CSS-RECENS"
-      ],
-      "topics": [],
-      "methods": []
+      "expect": "Social networks, education and discrimination overlap.",
+      "mentioned_on": [
+        "https://recens.tk.elte.hu/kutatok",
+        "https://recens.tk.elte.hu/kutatok/k"
+      ]
     }
   },
   {
@@ -154,25 +321,77 @@
         "Roma studies",
         "Solidarity and civil society"
       ],
-      "methods": []
+      "methods": [],
+      "resolved_mentions": 1,
+      "resolved_by_method": {
+        "profile_url": 1
+      }
     }
   },
   {
     "check": "seeds.missing",
     "severity": "warning",
-    "message": "QA seed not in dataset: Durst Judit",
+    "message": "QA seed not in dataset as a person: Durst Judit",
     "subjects": [],
     "detail": {
-      "expect": "Roma mobility, ethnography, project links."
+      "expect": "Roma mobility, ethnography, project links.",
+      "mentioned_on": [
+        "https://kisebbsegkutato.tk.elte.hu/kisebbsegszociologiai-es-antropologiai-osztaly"
+      ]
     }
   },
   {
     "check": "seeds.missing",
     "severity": "warning",
-    "message": "QA seed not in dataset: Virág Tünde",
+    "message": "QA seed not in dataset as a person: Virág Tünde",
     "subjects": [],
     "detail": {
-      "expect": "Spatial inequality, Roma, locality."
+      "expect": "Spatial inequality, Roma, locality.",
+      "mentioned_on": []
+    }
+  },
+  {
+    "check": "seeds.missing",
+    "severity": "warning",
+    "message": "QA seed not in dataset as a person: Messing Vera",
+    "subjects": [],
+    "detail": {
+      "expect": "Many project mentions across SZI pages; resolution must restore them only with evidence.",
+      "mentioned_on": [
+        "https://szociologia.tk.elte.hu/kategoria/futo-kutatasok"
+      ]
+    }
+  },
+  {
+    "check": "seeds.missing",
+    "severity": "warning",
+    "message": "QA seed not in dataset as a person: Kovách Imre",
+    "subjects": [],
+    "detail": {
+      "expect": "Project lead on SZI pages; resolution must restore observed PI edges.",
+      "mentioned_on": []
+    }
+  },
+  {
+    "check": "seeds.missing",
+    "severity": "warning",
+    "message": "QA seed not in dataset as a person: Gerő Márton",
+    "subjects": [],
+    "detail": {
+      "expect": "No MTMT id; identity rests on the institutional profile only.",
+      "mentioned_on": [
+        "https://szociologia.tk.elte.hu/kategoria/futo-kutatasok"
+      ]
+    }
+  },
+  {
+    "check": "seeds.missing",
+    "severity": "warning",
+    "message": "QA seed not in dataset as a person: Papp Z. Attila",
+    "subjects": [],
+    "detail": {
+      "expect": "Middle initial in the name; initials alone must never resolve a mention.",
+      "mentioned_on": []
     }
   }
 ]

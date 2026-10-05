@@ -56,11 +56,13 @@ padded with `-01-01`.
 
 | Type | Id prefix | Node? | Why a node |
 |---|---|---|---|
-| Person | `per_` | yes | traversal target for every question |
+| Person | `per_` | yes | an identity with evidence (`identity_evidence`: institutional profile, MTMT, ORCID or manual); traversal target for every question (ADR-0006) |
+| PersonMention | `pmn_` | yes, provenance layer only (`:PersonMention`, not `:Entity`) | one person-like name observed on one source page, with its resolution decision; never counted as a person (ADR-0006) |
 | Institution | `ins_` | yes | centrality, mobility, succession |
 | OrganisationalUnit | `unit_` | yes | institutes, departments, research centres; hierarchy via `PART_OF` |
 | ResearchGroup | `grp_` | yes (also labelled `OrgUnit` in Neo4j) | Lendület groups etc.; has funding programme |
-| Project | `prj_` | yes | co-project networks |
+| Project | `prj_` | yes | an identity with evidence (`identity_evidence`: its own page, or manual); co-project networks (ADR-0008) |
+| ProjectMention | `pjm_` | yes, provenance layer only (`:ProjectMention`, not `:Entity`) | one project-like title observed on one page (listing, profile), with its resolution decision; never counted as a project (ADR-0008) |
 | Publication | `pub_` | yes (later) | co-authorship, citation |
 | Journal | `jnl_` | yes | editorial boards, publication venues |
 | ResearchTopic | `top_` | yes | bipartite person–topic analysis |
@@ -109,8 +111,11 @@ All edges carry: `epistemic_status`, `assertion_types`, `confidence`, `claim_ids
 | AUTHORED, PUBLISHED_IN, CITES, COAUTHOR_WITH | | later (MTMT/OpenAlex) | `COAUTHOR_WITH` is a derived projection of `AUTHORED` |
 | CO_PROJECT, COLLABORATES_WITH | Person → Person | derived projections | stored only in analysis exports |
 | PART_OF_TRADITION, INTELLECTUALLY_INFLUENCED_BY | Person → Tradition / Person | later | INTERPRETIVE or HISTORICAL_LITERATURE only |
-| PREDECESSOR_OF, SUCCESSOR_OF, INSTITUTIONAL_SUCCESSOR | Institution/Unit → Institution/Unit | later (Events) | institutional history |
+| PREDECESSOR_OF, SUCCESSOR_OF, INSTITUTIONAL_SUCCESSOR | Institution/Unit → Institution/Unit; Project → Project | later (Events; stated project editions) | institutional history. Between projects only when a page states the relation, never from a shared title (ADR-0008) |
 | PARTICIPATED_IN_EVENT | any → Event | later | |
+
+| RESOLVES_TO | PersonMention → Person, ProjectMention → Project | identity decision | `status` (DETERMINISTIC / MANUAL_CONFIRMED / HIGH_CONFIDENCE_AUTO), `method` (rule), `signals`, `negative_signals`, `decision_source`, `resolver_version` (ADR-0007); stored in the mention record, projected in Neo4j. Candidates of unresolved mentions are stored on the mention, never as edges |
+| MENTIONED_IN | PersonMention / ProjectMention → any | what the observing page said | `relation`, `direction`, `role`; claims about unresolved mentions live only here, never as canonical relations. A project mention on a profile points to the profile owner (`direction: in`) |
 
 Generic `CONNECTED_TO` does not exist.
 

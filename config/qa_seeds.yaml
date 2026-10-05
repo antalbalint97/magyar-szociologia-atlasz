@@ -20,3 +20,12 @@ seeds:
     expect: Roma mobility, ethnography, project links.
   - name: Virág Tünde
     expect: Spatial inequality, Roma, locality.
+  # person-mention resolution cases (#4, #5)
+  - name: Messing Vera
+    expect: Many project mentions across SZI pages; resolution must restore them only with evidence.
+  - name: Kovách Imre
+    expect: Project lead on SZI pages; resolution must restore observed PI edges.
+  - name: Gerő Márton
+    expect: No MTMT id; identity rests on the institutional profile only.
+  - name: Papp Z. Attila
+    expect: Middle initial in the name; initials alone must never resolve a mention.

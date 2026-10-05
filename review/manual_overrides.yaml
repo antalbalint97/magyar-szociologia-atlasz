@@ -6,10 +6,127 @@
 #     reviewer: <name>
 #     date: 2026-10-04
 #     evidence: "Both profiles link the same CV / same MTMT record"
+#     survivor: per_...   # optional: the canonical id to keep when both records already have one
+#                         # (default, ADR-0003: oldest assignment, then stronger anchor, then lowest id)
 # not_same_as:
 #   - refs: [...]
 #     reviewer: <name>
 #     date: ...
 #     evidence: "..."
-same_as: []
+same_as:
+  # #27: one person, two TK profiles served by one CMS record
+  - refs:
+      - "tk_recens|https://recens.tk.elte.hu/kutato/stefkovics-adam"
+      - "tk_szociologia|https://szociologia.tk.elte.hu/kutato/stefkovics-adam"
+    survivor: per_07c6bb757b
+    reviewer: Bálint (antalbalint97)
+    date: 2026-10-04
+    evidence: >-
+      Both profile pages (fetched 2026-10-04) link the same TK CMS record for the CV,
+      /kutato/pdf/615 (https://recens.tk.elte.hu/kutato/pdf/615 and
+      https://szociologia.tk.elte.hu/kutato/pdf/615), and state the same position
+      "Tudományos segédmunkatárs (TK Recens)" and the same research areas. Same slug
+      stefkovics-adam on both sites. Survivor per_07c6bb757b (recens profile): both ids were
+      minted in the same build (no older id) and neither record has MTMT/ORCID (no stronger
+      anchor); the position on both pages names TK Recens, so the recens profile is the
+      home-unit record. per_405c6c90b1 is retired (previous_id in review/identity_map.jsonl).
+      Issue #27.
 not_same_as: []
+
+# Project-mention decisions (ADR-0008, #7), review of the 8 REVIEW_REQUIRED mentions of 2026-10-tk-m2-p7.
+# A same_as is an identity decision about the *mention*; it says nothing about what kind of activity the
+# Project is (that is #9). `defer` holds a mention back without naming a Project: identity is plausible,
+# the canonical entity type is undecided. Every entry records what the automatic rules saw
+# (resolution.evidence.signals_seen), including the blocking signal a reviewer overruled.
+project_decisions:
+  # ReproSoc: the profile list item links the project's own site (reprosoc.tk.hu), which the resolver
+  # reads as "links another page". The reviewer reads it as the dedicated site of the same activity.
+  - mention_id: pjm_851a37e708   # Galántai Júlia, szociologia profile, tk_reprosoc|https://reprosoc.tk.hu/
+    project_id: prj_cae4464c41
+    decision: same_as
+    reviewer: Bálint (antalbalint97)
+    date: 2026-10-05
+    evidence: >-
+      The profile item reads "A reprodukcióval kapcsolatos döntések többszempontú vizsgálata európai
+      összehasonlításban a (poszt)-pandémiás korszakban (MTA Lendület)" and links https://reprosoc.tk.hu/,
+      the dedicated site of this Lendület research activity, not a different project. The title equals the
+      canonical Project's title plus the funder note. Overrules LINKS_OTHER_PAGE. Identity decision only:
+      the activity_cue research_group stays on the mention and is #9's to classify.
+  - mention_id: pjm_f2ac38e263   # Herke Boglárka, szociologia profile, tk_reprosoc|https://reprosoc.tk.hu/
+    project_id: prj_cae4464c41
+    decision: same_as
+    reviewer: Bálint (antalbalint97)
+    date: 2026-10-05
+    evidence: >-
+      Same named Lendület research activity as the Galántai item (title equals the canonical Project's
+      title plus "(MTA Lendület)"; link to its own site reprosoc.tk.hu); the project page also links
+      Herke's profile (PAGE_LINKS_OWNER). Overrules LINKS_OTHER_PAGE. Identity decision only: the
+      activity_cue research_group stays on the mention and is #9's to classify.
+  # Tibori Tímea (szociologia profile)
+  - mention_id: pjm_126f6ba43b
+    project_id: prj_8b1903556e
+    decision: same_as
+    reviewer: Bálint (antalbalint97)
+    date: 2026-10-05
+    evidence: >-
+      Grant match: the profile item states "OTKA 115644" (grant key nkfih:115644) and the Project's grant
+      id is "NKFI K 115644" (GRANT_ID_MATCH). Periods agree: the profile item says 2016–2019, the project
+      page 2016–2019. The titles differ by one word (Diszkontinuitás / Diszkontinuitások); the grant id,
+      not the title, is the evidence.
+  - mention_id: pjm_7bea3c70f5
+    project_id: prj_3f9d206725
+    decision: same_as
+    reviewer: Bálint (antalbalint97)
+    date: 2026-10-05
+    evidence: >-
+      The profile title "Az egyenlő bánásmóddal kapcsolatos jogtudatosság növekedésének mértéke – fókuszban
+      a nők, a romák, a fogyatékos és az LMBT-emberek" equals the project page's title apart from "LMBT
+      emberek" vs "LMBT-emberek" and the appended funder and role note "(Egyenlő Bánásmód Hivatal,
+      Támop-5.5.5/08/0., 2008–2012), részt vevő kutató". The title is long and specific. Periods overlap
+      but are offset by one year (profile 2008–2012, project page 2009–2013); recorded for #11, not a
+      conflict. Title-only manual decision; the generic TITLE_PREFIX rule stays non-automatic.
+  - mention_id: pjm_f0e01791df
+    project_id: prj_41e817632c
+    decision: same_as
+    reviewer: Bálint (antalbalint97)
+    date: 2026-10-05
+    evidence: >-
+      The profile title "Magyar–szlovák összehasonlító komplex képzési program a romák felzárkóztatásáért"
+      equals the project page's title (en dash vs hyphen) with appended programme, years and role "(Nemzeti
+      Kutatási és Fejlesztési Programok, 2004–2007), kutatásvezető". The project page states no period.
+      Title-only manual decision; the generic resolver stays conservative.
+  # Kmetty Zoltán (recens profile)
+  - mention_id: pjm_44e42ad766
+    project_id: prj_6b31b72cc2
+    decision: same_as
+    reviewer: Bálint (antalbalint97)
+    date: 2026-10-05
+    evidence: >-
+      The profile item "Jóléti attitűdök magyarázata" (2016–2018) is the short form of "Jóléti attitűdök
+      magyarázata: általános morális elvek, téma-keretezés és kutatási dizájn"; no other canonical Project
+      starts with this title. The project page states no period, so 2016–2018 does not contradict it.
+      Title-only manual decision; the generic resolver stays conservative (TITLE_PREFIX is not a rule).
+  # Acsády Judit (szociologia profile)
+  - mention_id: pjm_3a7a4a9d0b
+    project_id: prj_706543179e
+    decision: same_as
+    reviewer: Bálint (antalbalint97)
+    date: 2026-10-05
+    evidence: >-
+      The profile item starts with the project's title "Magyarország és az ENSZ", followed by the host
+      institutions "(ELTE Bölcsészettudományi Kutatóközpont és ELTE Társadalomtudományi Kutatóközpont)" and
+      the role "(résztvevő kutató, vezető kutató: Kecskés D. Gusztáv)". Identity decision only: whether the
+      activity is a Project, a ResearchGroup or something else is #9's to decide.
+  # Szabó Andrea (politikatudomany profile): identity plausible, entity type undecided
+  - mention_id: pjm_a96951008d
+    project_id: prj_64181a507d
+    decision: defer
+    blocked_by: "#9"
+    reviewer: Bálint (antalbalint97)
+    date: 2026-10-05
+    evidence: >-
+      "ESS Magyarország" is the exact title of the szociologia page (prj_64181a507d), so the textual
+      identity is plausible, but the activity looks like a recurring survey programme with waves and
+      institutional continuity, not a one-off Project. Resolving it now could put the mention in a
+      canonical entity of the wrong class. Held until #9 decides the activity type; no Project relation
+      is created. Listed in #9 as a concrete case.

@@ -7,9 +7,10 @@ from szocatlas.resolution.matcher import IdentityMap, Overrides, resolve
 NOW = datetime(2026, 10, 4, tzinfo=UTC)
 
 
-def rec(ref, label, **hints):
+def rec(ref, label, anchor="institutional_profile", **hints):
+    """A person record; by default from the person's own profile page (an identity anchor)."""
     return SourceRecord(ref=EntityRef(entity_type=EntityType.PERSON, source_ref=ref), label=label,
-                        document_id="doc", hints=hints)
+                        document_id="doc", hints=hints, identity_anchor=anchor)
 
 
 def mtmt(ref, value):
@@ -95,3 +96,25 @@ def test_canonical_ids_are_stable_across_runs_and_new_sources(tmp_path):
     third, _ = run([rec(A, "Kovács Anna"), rec(B, "Kovács Anna")], [mtmt(A, "1"), mtmt(B, "1")],
                    tmp_path=tmp_path)
     assert third[A] == third[B] == first[A]
+
+
+def test_records_without_identity_evidence_get_no_person_id(tmp_path):
+    # ADR-0006: a name on someone else's page is a mention, not a Person
+    M = "tk_szociologia|name-mention:kovacs-anna@tk_szociologia|https://szociologia.tk.elte.hu/p"
+    ids, dec = run([rec(A, "Kovács Anna"), rec(M, "Kovács Anna", anchor=None)], tmp_path=tmp_path)
+    assert A in ids and M not in ids
+    assert dec[tuple(sorted((A, M)))].status is MatchStatus.POSSIBLE  # stays a review candidate
+
+
+def test_hard_id_alone_anchors_an_identity(tmp_path):
+    ids, _ = run([rec(C, "Kovács Anna", anchor=None)], [mtmt(C, "100")], tmp_path=tmp_path)
+    assert ids[C].startswith("per_")
+
+
+def test_retired_mentions_leave_the_identity_map(tmp_path):
+    M = "tk_szociologia|name-mention:kovacs-anna@tk_szociologia|https://szociologia.tk.elte.hu/p"
+    path = tmp_path / "map.jsonl"
+    path.write_text('{"source_ref": "%s", "entity_type": "Person", "canonical_id": "per_0000000000", '
+                    '"assigned_at": "2026-10-04T00:00:00+00:00"}\n' % M, encoding="utf-8")
+    run([rec(A, "Kovács Anna"), rec(M, "Kovács Anna", anchor=None)], tmp_path=tmp_path)
+    assert M not in path.read_text(encoding="utf-8")
