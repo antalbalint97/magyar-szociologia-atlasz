@@ -76,6 +76,6 @@ writeFileSync(path.join(dir, "ACTIVE"), release);
 try {
   execFileSync(process.execPath, ["--experimental-strip-types", "--no-warnings", path.join("scripts", "verify-release.ts"), path.join(dir, release)], { stdio: "inherit" });
 } catch {
-  fail(`the FileStore could not open ${release} (see above)`);
+  fail(`${release} failed the release check (see the error above)`);
 }
 console.log(`[atlas release] ${release} from ${src} (sha256 ${sha})`);
