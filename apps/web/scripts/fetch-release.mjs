@@ -6,7 +6,8 @@
 // The release is extracted into .release/<id>/ and .release/ACTIVE names it; next.config.ts ships
 // .release/ with the server routes, and lib/graph/index.ts reads only that release.
 // Every failure stops the build: a deployment configured for a real release never falls back to
-// the fixture. Without ATLAS_RELEASE_URL this step does nothing (local dev and CI keep data/releases).
+// the fixture. Without ATLAS_RELEASE_URL this step does nothing (local dev and CI keep data/releases),
+// except on Vercel (VERCEL=1), where a missing release URL stops the build too.
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
@@ -19,6 +20,11 @@ const fail = (msg) => {
 
 const src = process.env.ATLAS_RELEASE_URL?.trim();
 if (!src) {
+  // a hosted deployment must name its release: never ship the fixture to Vercel by omission
+  if (process.env.VERCEL && process.env.ATLAS_ALLOW_FIXTURE !== "1") {
+    fail("ATLAS_RELEASE_URL is not set on this Vercel build (set it, plus GRAPH_RELEASE and ATLAS_RELEASE_SHA256; " +
+      "ATLAS_ALLOW_FIXTURE=1 deploys the fixture on purpose)");
+  }
   console.log("[atlas release] ATLAS_RELEASE_URL not set: no release fetched (local/CI default data/releases)");
   process.exit(0);
 }
