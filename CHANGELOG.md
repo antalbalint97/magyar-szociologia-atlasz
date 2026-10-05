@@ -27,6 +27,11 @@
   (researchers without a project edge, upper bound of ties missing because a linked page has no
   Project), sentinels. Every figure carries its denominator; coverage findings are warnings or
   info, never errors; QA seeds stay sentinels.
+* Fetcher: a refused host says why. `robots.txt disallows <url>` is now only used when the site
+  disallows the page; a robots.txt that answered HTTP 5xx or could not be reached reads
+  `robots.txt answered HTTP 500, host not crawled: <url>` / `robots.txt unreachable (ConnectError), ...`.
+  The three are different facts for coverage (#12). Behaviour is unchanged: the host is refused in
+  all three cases. First fetcher tests (mock transport).
 * `ingest` runs every adapter first, then the discovery step, so a page linked from one site and
   served by another is fetched by its owner; `--replay` re-derives frontier and diagnostics.
   Preview `2026-10-tk-m2-p16`.
