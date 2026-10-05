@@ -1,0 +1,353 @@
+ki_eiler_ferenc.html:
+  content_sha256: 5d94c6b8e18bc7be3332b4c95d7c9c8c96101b6f354f252db1971860cc638ef6
+  kind: person
+  observed: '2026-10-04'
+  reconstructed: false
+  scrubbed: true
+  source_id: tk_kisebbsegkutato
+  url: https://kisebbsegkutato.tk.elte.hu/kutato/eiler-ferenc
+ki_feischmidt_margit.html:
+  content_sha256: 99556522bd930d6383457a74da2a41f4d43be3ba25f341641e325c08c1d6fe3d
+  kind: person
+  observed: '2026-10-04'
+  reconstructed: false
+  scrubbed: true
+  source_id: tk_kisebbsegkutato
+  url: https://kisebbsegkutato.tk.elte.hu/kutato/feischmidt-margit
+ki_project_budapesti_kormanyzatok.html:
+  content_sha256: fbf5a8aca39d3cf59b98e0f12cfb7b7d041e770427a6bb0ecabda57ccf7fb205
+  kind: project
+  observed: '2026-10-05'
+  reconstructed: false
+  scrubbed: true
+  source_id: tk_kisebbsegkutato
+  url: https://kisebbsegkutato.tk.elte.hu/a-budapesti-kormanyzatok-magyarsagpolitikaja
+ki_project_egyhazak_szerepvallalasa.html:
+  content_sha256: 62903612a68d473001b2df1221a6e0d8ef63ec5285d54002c2d1433bb3aec6dc
+  kind: project
+  observed: '2026-10-05'
+  reconstructed: false
+  scrubbed: true
+  source_id: tk_kisebbsegkutato
+  url: https://kisebbsegkutato.tk.elte.hu/az-egyhazak-novekvo-szerepvallalasa
+ki_project_kutterv_narrativ.html:
+  content_sha256: 4ff37cd0b38571e49e931d90d8065d1704860059f3a7dc94778b75b79914a050
+  kind: project
+  observed: '2026-10-05'
+  reconstructed: false
+  scrubbed: true
+  source_id: tk_kisebbsegkutato
+  url: https://kisebbsegkutato.tk.elte.hu/kisebbsegi-magyar-kozossegek-kutterv
+ki_project_parlamenti_kepviselet.html:
+  content_sha256: 089bf4704b9949b9837e7e1ec6cab7b29b777bb4ec607054240fe83e7f31a4ba
+  kind: project
+  observed: '2026-10-05'
+  reconstructed: false
+  scrubbed: true
+  source_id: tk_kisebbsegkutato
+  url: https://kisebbsegkutato.tk.elte.hu/a-kisebbsegek-parlamenti-kepviselete-osszehasonlitasban
+ki_project_zsido_identitasok.html:
+  content_sha256: cc2ff09e8a43495d4f0375d67810e3f1d862c0dfff75e336d32cc0f90ebd2308
+  kind: project
+  observed: '2026-10-05'
+  reconstructed: false
+  scrubbed: true
+  source_id: tk_kisebbsegkutato
+  url: https://kisebbsegkutato.tk.elte.hu/zsido-identitasok-magyarorszagon
+ki_unit_kisebbsegszociologia.html:
+  content_sha256: 06b71ee74c599790f30e86b4957f987667197b01bf41777c072fa5aa55599a82
+  kind: unit
+  observed: '2026-10-04'
+  reconstructed: false
+  scrubbed: true
+  source_id: tk_kisebbsegkutato
+  url: https://kisebbsegkutato.tk.elte.hu/kisebbsegszociologiai-es-antropologiai-osztaly
+pti_adam_zoltan.html:
+  content_sha256: f73ffb8e645f3442377e93e054bba0f1b88605d54e967ab2ec3434d627027df5
+  kind: person
+  observed: '2026-10-04'
+  reconstructed: false
+  scrubbed: true
+  source_id: tk_politikatudomany
+  url: https://politikatudomany.tk.elte.hu/kutato/adam-zoltan
+pti_hajnal_gyorgy.html:
+  content_sha256: d736e5f75e3d3918dedaa45d401a8bfb0993d1e7951605eee30d5e96a52d0f15
+  kind: person
+  observed: '2026-10-04'
+  reconstructed: false
+  scrubbed: true
+  source_id: tk_politikatudomany
+  url: https://politikatudomany.tk.elte.hu/kutato/hajnal-gyorgy
+pti_project_politikai_kozosseg.html:
+  content_sha256: 04bbf09ce5a46be7beae19322551d64d398f6c9a5840305eb3cf37d4635a6961
+  kind: project
+  observed: '2026-10-04'
+  reconstructed: false
+  scrubbed: true
+  source_id: tk_politikatudomany
+  url: https://politikatudomany.tk.elte.hu/a-politikai-kozosseg-hatarai
+pti_project_weberi_vezetok.html:
+  content_sha256: dc821ccb4029da6efd75484d027b5ddb38739083cd11f9da71297bfc8abadb7a
+  kind: project
+  observed: '2026-10-05'
+  reconstructed: false
+  scrubbed: true
+  source_id: tk_politikatudomany
+  url: https://politikatudomany.tk.elte.hu/a-weberi-vezetok-visszaterese
+pti_szabo_andrea.html:
+  content_sha256: 8dd1bf376732301f19866489c94e827269b1f3ceb599ce9bc059edac5fdc0f05
+  kind: person
+  observed: '2026-10-04'
+  reconstructed: false
+  scrubbed: true
+  source_id: tk_politikatudomany
+  url: https://politikatudomany.tk.elte.hu/kutato/szabo-andrea
+recens_freigang_istvan.html:
+  content_sha256: dc1e236514048c2471a7d6493f0a24b98a614bd32d759881c2cdade634de43a2
+  kind: person
+  observed: '2026-10-04'
+  reconstructed: false
+  scrubbed: true
+  source_id: tk_recens
+  url: https://recens.tk.elte.hu/kutato/freigang-istvan
+recens_kmetty_zoltan.html:
+  content_sha256: 708d23289e7b6ac059af90848d2ac1f96d12245506b3f34bd26c9bbbc86f41c2
+  kind: person
+  observed: '2026-10-04'
+  reconstructed: false
+  scrubbed: true
+  source_id: tk_recens
+  url: https://recens.tk.elte.hu/kutato/kmetty-zoltan
+recens_koltai_julia.html:
+  content_sha256: a18325558f91aa2188cfe58f764160211e2b1d9d135bd7e7b8865798417046f5
+  kind: person
+  observed: '2026-10-04'
+  reconstructed: false
+  scrubbed: true
+  source_id: tk_recens
+  url: https://recens.tk.elte.hu/kutato/koltai-julia
+recens_kutatok.html:
+  content_sha256: 3822f7bbf6ce338a2cbe4c516a7d381ef1c8f18264ed7609eb04cc30f217ceef
+  kind: listing
+  observed: '2026-10-04'
+  reconstructed: false
+  scrubbed: true
+  source_id: tk_recens
+  url: https://recens.tk.elte.hu/kutatok
+recens_kutatok_k.html:
+  content_sha256: 3af3dcfe029018a0d7a19054f8ca0684748db4a8c8b4e96bdb4806522b487a6c
+  kind: listing
+  observed: '2026-10-04'
+  reconstructed: false
+  scrubbed: true
+  source_id: tk_recens
+  url: https://recens.tk.elte.hu/kutatok/k
+recens_project_ds4.html:
+  content_sha256: 48d57ab5617701451d4901585ea7b252dcfe4b45b0ef4e963e34c712af836225
+  kind: project
+  observed: '2026-10-05'
+  reconstructed: false
+  scrubbed: true
+  source_id: tk_recens
+  url: https://recens.tk.elte.hu/ds4
+szi_albert_fruzsina.html:
+  content_sha256: 3eb86133b52c840b938a64713c33a14d31378e48426e858afecae5d1ddae068d
+  kind: person
+  observed: '2026-10-04'
+  reconstructed: false
+  scrubbed: true
+  source_id: tk_szociologia
+  url: https://szociologia.tk.elte.hu/kutato/albert-fruzsina
+szi_csizmady_adrienne.html:
+  content_sha256: b5ad0ee806ece89eb399accc6acb9c9b3cdcf14f47a86b60e68ea1fd719be3ce
+  kind: person
+  observed: '2026-10-04'
+  reconstructed: false
+  scrubbed: true
+  source_id: tk_szociologia
+  url: https://szociologia.tk.elte.hu/kutato/csizmady-adrienne
+szi_futo_kutatasok.html:
+  content_sha256: ad858ce6af8ed0ba9876766f44e8cc525341281ba5ab68726b0b540048444d7b
+  kind: project_listing
+  observed: '2026-10-04'
+  reconstructed: false
+  scrubbed: true
+  source_id: tk_szociologia
+  status_label: futó
+  url: https://szociologia.tk.elte.hu/kategoria/futo-kutatasok
+szi_heading_affiliations.html:
+  content_sha256: b9710cfa13fc73fdc5061611d7d59c74d3a6bc5697f5b121c44c0463e712fb51
+  kind: project
+  observed: '2026-10-04'
+  reconstructed: false
+  scrubbed: true
+  source_id: tk_szociologia
+  url: https://szociologia.tk.elte.hu/project-on-intergenerational-equtity
+szi_heading_bare_text.html:
+  content_sha256: a4941e4f8ca51b698b2bc4e52d26605925f858ce881d286a161ffa2975925aad
+  kind: project
+  observed: '2026-10-04'
+  reconstructed: false
+  scrubbed: true
+  source_id: tk_szociologia
+  url: https://szociologia.tk.elte.hu/kint-es-bent-haromszor
+szi_heading_basic.html:
+  content_sha256: e20bec3c400e8d267e64cae1f552ac736cc30c373005e51325a450001a45c142
+  kind: project
+  observed: '2026-10-04'
+  reconstructed: false
+  scrubbed: true
+  source_id: tk_szociologia
+  url: https://szociologia.tk.elte.hu/a-munkaero-es-tudasfelhasznalas-gyakorlata-a-vallalkozasok-munkaszervezeti-jellemzoi
+szi_heading_div_blocks.html:
+  content_sha256: f29bf8ce69023d8f60ed214640e7c17bdc68da6a9d38e790f5fb1e21a29385a6
+  kind: project
+  observed: '2026-10-04'
+  reconstructed: false
+  scrubbed: true
+  source_id: tk_szociologia
+  url: https://szociologia.tk.elte.hu/return-and-escape-forced-migration-between-1938-1956
+szi_heading_duplicate_name.html:
+  content_sha256: 60a68fccb55a19607268cbb504835e88e61be9000379cbfdfa88c4031a044cf0
+  kind: project
+  observed: '2026-10-04'
+  reconstructed: false
+  scrubbed: true
+  source_id: tk_szociologia
+  url: https://szociologia.tk.elte.hu/a-ferfiak-fokozottabb-reszvetelenek-elosegitese
+szi_heading_ilo_leads.html:
+  content_sha256: 297889fb9b57699cd3940439c82c7b7652f3b988f6b35366798fc4dbf962b7cf
+  kind: project
+  observed: '2026-10-04'
+  reconstructed: false
+  scrubbed: true
+  source_id: tk_szociologia
+  url: https://szociologia.tk.elte.hu/munkahelyi-partnersegek-a-gyermekfelugyelet-megoldasara
+szi_heading_junk_after_names.html:
+  content_sha256: adc3c62d1e87fc5b40c5c7c51a6a356ed4bf6adf7e26b388a50caed87756c7a7
+  kind: project
+  observed: '2026-10-04'
+  reconstructed: false
+  scrubbed: true
+  source_id: tk_szociologia
+  url: https://szociologia.tk.elte.hu/ageing-and-employment-identification-of-good
+szi_heading_name_then_prose.html:
+  content_sha256: 68ce270842561abe6b552e44c2cc6915d0596efaebc959c5b84d52e6f0eef84f
+  kind: project
+  observed: '2026-10-04'
+  reconstructed: false
+  scrubbed: true
+  source_id: tk_szociologia
+  url: https://szociologia.tk.elte.hu/halmozott-diszkriminacio-egyeni-es-intezmenyi-perc
+szi_heading_old_site_links.html:
+  content_sha256: 57a0ae13a1818480c6a44ece01ab6ff0f621eb7adf95f99664148ee1aa0a8810
+  kind: project
+  observed: '2026-10-04'
+  reconstructed: false
+  scrubbed: true
+  source_id: tk_szociologia
+  url: https://szociologia.tk.elte.hu/knowandpol
+szi_heading_org_country_tail.html:
+  content_sha256: 5b6c03815d85e284494dd2a635dd44eefa7ab0c71526fded74373db7f3f8b3d7
+  kind: project
+  observed: '2026-10-04'
+  reconstructed: false
+  scrubbed: true
+  source_id: tk_szociologia
+  url: https://szociologia.tk.elte.hu/a-haboru-utan-nomozgalmak-es-aktivistak
+szi_heading_org_prefixed.html:
+  content_sha256: c136a85a36439ada7e91dfd3037a372386003878011a210ab84df0b504325292
+  kind: project
+  observed: '2026-10-04'
+  reconstructed: false
+  scrubbed: true
+  source_id: tk_szociologia
+  url: https://szociologia.tk.elte.hu/talalkozasok-a-kulturaval
+szi_heading_p_pseudo_headings.html:
+  content_sha256: ffac3a1a80e207926cbdccc95d56986e16e98ff63d3e5b050893ad877d17f2f9
+  kind: project
+  observed: '2026-10-04'
+  reconstructed: false
+  scrubbed: true
+  source_id: tk_szociologia
+  url: https://szociologia.tk.elte.hu/prosuite
+szi_heading_placeholder_dots.html:
+  content_sha256: 8a816ec95ce76a1b07d75b5f0bb1ae7b204c4dfa2a9c0ae8450b77d322bb9236
+  kind: project
+  observed: '2026-10-04'
+  reconstructed: false
+  scrubbed: true
+  source_id: tk_szociologia
+  url: https://szociologia.tk.elte.hu/korrupcio-szervezeti-megkozelitesben
+szi_heading_placeholder_ellipsis.html:
+  content_sha256: 09fff05194eb682fe0399d6ee286638d78e96a35f591ac3202b7247c22d8db1c
+  kind: project
+  observed: '2026-10-04'
+  reconstructed: false
+  scrubbed: true
+  source_id: tk_szociologia
+  url: https://szociologia.tk.elte.hu/allamreform-kozigazgatas-hatterintezmenyek-miniszteriumok-es-hatterintezmenyeik
+szi_heading_ul_li.html:
+  content_sha256: 7d6c7e0b5427731ef5257aacc476f5fef3bd3c4505975b5c3d097894e952a014
+  kind: project
+  observed: '2026-10-04'
+  reconstructed: false
+  scrubbed: true
+  source_id: tk_szociologia
+  url: https://szociologia.tk.elte.hu/varostersegek-terbeli-tarsadalmi-egyenlotlensegek-es-konfliktusok
+szi_heading_word_wrapper.html:
+  content_sha256: 0a52c33021dc9a65339d1d94466c0d938d7d5ecdba86fe31562b0b807eb5bb11
+  kind: project
+  observed: '2026-10-04'
+  reconstructed: false
+  scrubbed: true
+  source_id: tk_szociologia
+  url: https://szociologia.tk.elte.hu/elit-es-innovacio
+szi_project_egyenlo_banasmod.html:
+  content_sha256: b62d6b59dbff0e7ddaf442f0531fdb37a17124c90ffe80b7db0fee7c8b226795
+  kind: project
+  observed: '2026-10-04'
+  reconstructed: false
+  scrubbed: true
+  source_id: tk_szociologia
+  url: https://szociologia.tk.elte.hu/az-egyenlo-banasmoddal-kapcsolatos-jogtudatossag
+szi_project_energiaatmenet.html:
+  content_sha256: 20448102106ed5b5470ab805343bfee2514044666e030860265de2309aeaf5cc
+  kind: project
+  observed: '2026-10-04'
+  reconstructed: false
+  scrubbed: true
+  source_id: tk_szociologia
+  url: https://szociologia.tk.elte.hu/az-energiaatmenet-terbeli-tarsadalmi-egyenlotlensegei
+szi_project_etnikai_konfliktusok.html:
+  content_sha256: 679eaf976dc3ea4599d185e2e04aa53ef9bce29d0733dce899881186c5a1dae9
+  kind: project
+  observed: '2026-10-04'
+  reconstructed: false
+  scrubbed: true
+  source_id: tk_szociologia
+  url: https://szociologia.tk.elte.hu/etnikai-konfliktusok-es-bekefolyamatok
+szi_project_vakcinacio.html:
+  content_sha256: 8a4ff65ff12874ab1ced9551b9baac3f6993afc843035796c9f2bae80a828ac1
+  kind: project
+  observed: '2026-10-04'
+  reconstructed: false
+  scrubbed: true
+  source_id: tk_szociologia
+  url: https://szociologia.tk.elte.hu/a-vakcinacios-szandek-megertese
+szi_szalai_julia.html:
+  content_sha256: eae2324cf7892e36f20baa806bffe642c1cc670d8717734e0fd6018ed441cc8c
+  kind: person
+  observed: '2026-10-04'
+  reconstructed: false
+  scrubbed: true
+  source_id: tk_szociologia
+  url: https://szociologia.tk.elte.hu/kutato/szalai-julia
+szi_unit_csalad.html:
+  content_sha256: 067047e2fdebddffb705cfcf6a30eee45ef1a7b655bc35e21207168288bcbe28
+  kind: unit
+  observed: '2026-10-04'
+  reconstructed: false
+  scrubbed: true
+  source_id: tk_szociologia
+  url: https://szociologia.tk.elte.hu/csalad-es-tarsas-kapcsolatok

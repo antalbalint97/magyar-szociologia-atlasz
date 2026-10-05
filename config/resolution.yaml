@@ -1,0 +1,29 @@
+# Person-mention resolution (#5, ADR-0007). Every automatic rule and every domain
+# assumption it relies on is declared here, so a release can say which ones it used.
+
+resolver_version: person-mention-resolver/1.0
+# Project-mention resolution (#7, ADR-0008): rules grant_and_title, grant_and_owner,
+# title_and_owner; title evidence never decides alone.
+project_resolver_version: project-mention-resolver/1.0
+
+# An institution family groups sources whose people share one profile system. Two
+# assumptions are scoped to a family and never applied across families:
+#   * shared_profile_slug_namespace: one /kutato/<slug> names one person on every host
+#     of the family (all TK institute sites run one CMS; the only slug seen on two
+#     sites, stefkovics-adam, carries the same name on both).
+#   * name uniqueness is judged among the family's canonical Persons only (closed world
+#     over people with an institutional profile in that family).
+institution_families:
+  tk:
+    label: ELTE Társadalomtudományi Kutatóközpont (TK) institute sites
+    sources: [tk_szociologia, tk_recens, tk_kisebbsegkutato, tk_politikatudomany, tk_jog,
+              tk_klimacentrum, tk_reprosoc, tk_csaladtudomany, tk_mobilitas]
+    # former umbrella hosts; /kutato/<slug> links on them cannot be fetched or redirected
+    # from the crawl environment, so they are evidence (strong), never a URL identity
+    profile_hosts: [tk.mta.hu, tk.hu]
+    shared_profile_slug_namespace: true
+
+# Frequent Hungarian surnames. Not evidence for anything: a caution flag that switches
+# off the one rule that leans on name uniqueness plus institute alone.
+common_surnames: [nagy, kovacs, toth, szabo, horvath, varga, kiss, molnar, nemeth, farkas,
+                  balogh, papp, takacs, juhasz, lakatos, meszaros, olah, simon, racz, fekete]

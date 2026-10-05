@@ -1,0 +1,43 @@
+# Controlled, extensible vocabulary of substantive research topics (ResearchTopic).
+# Methods live in methods.yaml: a topic is WHAT is studied, a method is HOW.
+#
+# patterns: regular expressions matched against accent-folded, lower-cased stated
+# research areas (e.g. "Romák és magyar kisebbségi közösségek" -> "romak es magyar ...").
+# A match produces a DERIVED WORKS_ON_TOPIC claim pointing back at the stated text;
+# it is never presented as the researcher's own classification.
+version: "0.1.0"
+topics:
+  - {key: stratification, en: Social stratification, hu: Társadalmi rétegződés, patterns: ["retegzod", "stratific", "osztalyszerkezet", "tarsadalomszerkezet", "social structure"]}
+  - {key: social_mobility, en: Social mobility, hu: Társadalmi mobilitás, patterns: ["tarsadalmi mobilit", "social mobility", "(?<!transznacionalis )mobilitas", "intergenerational"]}
+  - {key: inequality, en: Inequality, hu: Egyenlőtlenségek, patterns: ["egyenlotlen", "inequalit"]}
+  - {key: poverty, en: Poverty, hu: Szegénység, patterns: ["szegeny", "poverty", "melyszegeny", "kirekeszt", "exclusion"]}
+  - {key: roma_studies, en: Roma studies, hu: Romakutatás, scope: "Umbrella key only. Distinct Roma-research traditions must emerge from data (spec 12), not from this key.", patterns: ["\\broma", "\\bromak\\b", "cigany", "romologi", "gypsy"]}
+  - {key: ethnicity, en: Ethnicity and interethnic relations, hu: Etnicitás, patterns: ["etnic", "etnikai", "interetnikus", "ethnic"]}
+  - {key: minorities, en: Minorities, hu: Kisebbségek, patterns: ["kisebbseg", "minorit", "nemzetiseg"]}
+  - {key: nationalism, en: Nationalism and national identity, hu: Nacionalizmus, patterns: ["nacionaliz", "nationalis", "nemzeti identit", "nemzeti kultur"]}
+  - {key: migration, en: Migration, hu: Migráció, patterns: ["migraci", "migration", "menekult", "refugee", "transznacional"]}
+  - {key: racism_discrimination, en: Racism and discrimination, hu: Rasszizmus és diszkrimináció, patterns: ["rasszizm", "racism", "diszkrimin", "discriminat", "eloitelet", "prejudice"]}
+  - {key: social_networks, en: Social networks, hu: Társas kapcsolathálózatok, scope: "Networks as an object of study. Network analysis as a technique is methods.yaml#network_analysis.", patterns: ["kapcsolathalo", "tarsas kapcsolat", "social network", "halozatkutat"]}
+  - {key: computational_social_science, en: Computational social science, hu: Számítógépes társadalomtudomány, scope: "A field/research programme. Not identical to network science (spec 32).", patterns: ["szamitogepes tarsadalomtudomany", "computational social", "\\bcss\\b"]}
+  - {key: digital_sociology, en: Digital sociology, hu: Digitális szociológia, patterns: ["digitalis tarsadalom", "digital sociolog", "digitalis szociolog", "kozossegi media", "social media"]}
+  - {key: social_theory, en: Social theory, hu: Társadalomelmélet, patterns: ["tarsadalomelmelet", "social theory", "szociologiaelmelet"]}
+  - {key: social_history, en: Social history, hu: Társadalomtörténet, patterns: ["tarsadalomtortenet", "social history"]}
+  - {key: history_of_sociology, en: History of sociology, hu: A szociológia története, patterns: ["szociologiatortenet", "tudomanytortenet", "history of sociology"]}
+  - {key: collective_memory, en: Collective memory, hu: Kollektív emlékezet, patterns: ["emlekezet", "collective memory", "memory studies"]}
+  - {key: political_sociology, en: Political sociology, hu: Politikai szociológia, patterns: ["politikai szociolog", "political sociolog", "politikai reszvetel", "valasztas", "populizm", "identitaspolitik"]}
+  - {key: gender, en: Gender, hu: Társadalmi nem, patterns: ["gender", "tarsadalmi nem", "nok\\b", "noi\\b", "feminiz", "nomozgalom"]}
+  - {key: family, en: Family, hu: Család, patterns: ["csalad", "family", "termekenyseg", "fertility", "parkapcsolat"]}
+  - {key: education, en: Sociology of education, hu: Oktatásszociológia, patterns: ["oktatas", "iskola", "education", "school", "nevelesszociolog"]}
+  - {key: urban, en: Urban sociology, hu: Városszociológia, patterns: ["varosszociolog", "urban", "lakhatas", "housing", "varosi"]}
+  - {key: rural, en: Rural sociology, hu: Vidékszociológia, patterns: ["videk", "rural", "falu", "agrar"]}
+  - {key: spatial_inequality, en: Spatial inequality and segregation, hu: Területi egyenlőtlenségek, patterns: ["teruleti", "terbeli", "spatial", "szegregaci", "segregat", "lokalit", "regionalis"]}
+  - {key: social_policy, en: Social policy, hu: Szociálpolitika, patterns: ["szocialpolitik", "social policy", "jolleti", "welfare", "kozpolitik", "public policy"]}
+  - {key: labour, en: Labour and employment, hu: Munka és foglalkoztatás, patterns: ["munkaeropiac", "foglalkoztat", "labou?r", "\\bmunka\\b", "employment"]}
+  - {key: elites, en: Elite research, hu: Elitkutatás, patterns: ["\\belit"]}
+  - {key: religion, en: Sociology of religion, hu: Vallásszociológia, patterns: ["vallas", "religio", "egyhaz"]}
+  - {key: youth, en: Youth sociology, hu: Ifjúságszociológia, patterns: ["ifjusag", "youth", "fiatal"]}
+  - {key: health, en: Health sociology, hu: Egészségszociológia, patterns: ["egeszseg", "health", "jarvany", "covid", "pandemi", "vakcin"]}
+  - {key: organisations, en: Organisations, hu: Szervezetszociológia, patterns: ["szervezet", "organi[sz]ation"]}
+  - {key: solidarity_civil_society, en: Solidarity and civil society, hu: Szolidaritás és civil társadalom, patterns: ["szolidarit", "solidarit", "onkentes", "volunteer", "civil"]}
+  - {key: multiculturalism_recognition, en: Multiculturalism and recognition politics, hu: Multikulturalizmus, patterns: ["multikultur", "elismerespolitik", "recognition"]}
+  - {key: climate_energy, en: Climate and energy transition, hu: Klíma és energiaátmenet, patterns: ["klima", "climate", "energiaatmenet", "energy transition", "kornyezet"]}
