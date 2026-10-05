@@ -350,7 +350,9 @@ class TKAdapter(SourceAdapter):
         if status := self._project_status.get(doc.canonical_url):
             c.append(f.literal(pref, "status_label", status, locator="listing.category", snippet=status))
         if proj.description:
-            c.append(f.literal(pref, "abstract", proj.description, locator="project.description", snippet=proj.description))
+            c.append(f.literal(pref, "abstract", proj.description,
+                               locator="project.heading.description" if proj.description_heading else "project.description",
+                               snippet=proj.description))
         c.append(f.relation(pref, "HOSTED_BY", self.site_unit_ref(), locator="project.site",
                             snippet=doc.page_title or proj.title, confidence=0.85))
         return res
@@ -395,39 +397,52 @@ class TKAdapter(SourceAdapter):
                                snippet=proj.period_snippet, temporal_basis=TemporalBasis.EXPLICIT))
         period = dict(valid_from=proj.start, valid_until=proj.end, temporal_basis=TemporalBasis.EXPLICIT) \
             if proj.start else {}
+        # A lead or participant read under a heading (#31) carries ``heading`` in its locator and the heading as stated
+        # in its snippet; one read from a "Label: value" line carries ``field``, as before.
         for link in proj.leads:
             per = self.person_ref(link.url)
-            snip = proj.lead_snippets.get(link.url, f"Kutatásvezető: {link.text}")
+            sec = proj.heading_origin.get(("lead", link.url))
+            fld = f"{loc}.{'heading' if sec else 'field'}.vezeto"
+            snip = sec.evidence(link.url) if sec else proj.lead_snippets.get(link.url, f"Kutatásvezető: {link.text}")
             res.records.append(SourceRecord(ref=per, label=link.text, document_id=doc.document_id,
                                             hints={"profile_url": link.url, "stated_url": link.stated_url, "site": self.owner_source(link.url)}))
-            c.append(f.literal(per, "name", link.text, locator=f"{loc}.field.vezeto", snippet=link.text))
-            c.append(f.relation(per, "PRINCIPAL_INVESTIGATOR_OF", pref, locator=f"{loc}.field.vezeto",
+            c.append(f.literal(per, "name", link.text, locator=fld, snippet=link.text))
+            c.append(f.relation(per, "PRINCIPAL_INVESTIGATOR_OF", pref, locator=fld,
                                 snippet=snip, **period))
-            c.append(f.relation(per, "PARTICIPATES_IN", pref, locator=f"{loc}.field.vezeto",
+            c.append(f.relation(per, "PARTICIPATES_IN", pref, locator=fld,
                                 snippet=snip, qualifiers={"role": "kutatásvezető"}, **period))
         for name, line in proj.unlinked_leads:
             # No profile link: a name-only record that resolution will never auto-merge.
             per = self._name_mention(name, pref)
+            sec = proj.heading_origin.get(("lead", name))
+            fld = f"{loc}.{'heading' if sec else 'field'}.vezeto.unlinked"
+            line = sec.evidence(name) if sec else line
             res.records.append(SourceRecord(ref=per, label=name, document_id=doc.document_id,
                                             hints={"unlinked_mention": True}))
-            c.append(f.literal(per, "name", name, locator=f"{loc}.field.vezeto.unlinked", snippet=line, confidence=0.8))
-            c.append(f.relation(per, "PRINCIPAL_INVESTIGATOR_OF", pref, locator=f"{loc}.field.vezeto.unlinked",
+            c.append(f.literal(per, "name", name, locator=fld, snippet=line, confidence=0.8))
+            c.append(f.relation(per, "PRINCIPAL_INVESTIGATOR_OF", pref, locator=fld,
                                 snippet=line, confidence=0.8, assertion_type=AssertionType.INSTITUTIONAL, **period))
         for link in proj.participants:
             per = self.person_ref(link.url)
+            sec = proj.heading_origin.get(("participant", link.url))
+            fld = f"{loc}.{'heading' if sec else 'field'}.resztvevok"
+            snip = sec.evidence(link.url) if sec else link.text
             res.records.append(SourceRecord(ref=per, label=link.text, document_id=doc.document_id,
                                             hints={"profile_url": link.url, "stated_url": link.stated_url, "site": self.owner_source(link.url)}))
-            c.append(f.literal(per, "name", link.text, locator=f"{loc}.field.resztvevok", snippet=link.text))
-            c.append(f.relation(per, "PARTICIPATES_IN", pref, locator=f"{loc}.field.resztvevok",
-                                snippet=link.text, **period))
+            c.append(f.literal(per, "name", link.text, locator=fld, snippet=link.text))
+            c.append(f.relation(per, "PARTICIPATES_IN", pref, locator=fld,
+                                snippet=snip, **period))
         for name, role in proj.unlinked_participants:
             per = self._name_mention(name, pref)
+            sec = proj.heading_origin.get(("participant", name))
+            fld = f"{loc}.{'heading' if sec else 'field'}.resztvevok.unlinked"
+            snip = sec.evidence(name) if sec else f"{role}: {name}"
             res.records.append(SourceRecord(ref=per, label=name, document_id=doc.document_id,
                                             hints={"unlinked_mention": True}))
-            c.append(f.literal(per, "name", name, locator=f"{loc}.field.resztvevok.unlinked",
-                               snippet=f"{role}: {name}", confidence=0.8))
-            c.append(f.relation(per, "PARTICIPATES_IN", pref, locator=f"{loc}.field.resztvevok.unlinked",
-                                snippet=f"{role}: {name}", qualifiers={"role": role}, confidence=0.8,
+            c.append(f.literal(per, "name", name, locator=fld,
+                               snippet=snip, confidence=0.8))
+            c.append(f.relation(per, "PARTICIPATES_IN", pref, locator=fld,
+                                snippet=snip, qualifiers={"role": role}, confidence=0.8,
                                 assertion_type=AssertionType.INSTITUTIONAL, **period))
 
     def _name_mention(self, name: str, project: EntityRef) -> EntityRef:

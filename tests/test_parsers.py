@@ -421,10 +421,19 @@ def test_prose_with_a_colon_is_not_a_participants_line(fixture_html, aliases):
 
 
 def test_short_participants_label_reads_profile_links_only(fixture_html, aliases):
-    """One SZI page lists countries and groups under "Részvevők": they are not people."""
+    """One SZI page lists countries and groups under "Részvevők": they are not people.
+
+    The same page states its participants under a "Résztvevők" heading, which is read since #31: the participants
+    are those five names and none of the countries."""
     proj = P.parse_project(fixture_html("szi_project_etnikai_konfliktusok.html"),
                            "https://szociologia.tk.elte.hu/etnikai-konfliktusok-es-bekefolyamatok", aliases)
-    assert proj.participants == [] and proj.unlinked_participants == []
+    assert proj.participants == []
+    assert [n for n, _ in proj.unlinked_participants] == ["Tamás Pál", "Erőss Gábor", "Tamási Péter", "Schmidt Andrea",
+                                                          "Csizmady Adrienne"]
+    line = ("<main><h1>Projekt</h1><p>Részvevők: Belgium (flamand-vallon konfliktus), Ciprus (görög-török), "
+            "Ausztria (szlovén kisebbség), Spanyolország (Baszkföld)</p></main>")  # the page's own line, shortened
+    alone = P.parse_project(line, "https://szociologia.tk.elte.hu/projekt", aliases)
+    assert alone.participants == [] and alone.unlinked_participants == []
 
 
 def test_role_chunk_in_a_lead_line_is_not_a_lead(aliases):

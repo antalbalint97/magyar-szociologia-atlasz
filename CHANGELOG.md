@@ -2,6 +2,35 @@
 
 ## Unreleased (Milestone 2 branch)
 
+* TK parser 0.6.0, SZI heading template (#31, ADR-0010): 86 of the 193 SZI project pages write
+  "Projektvezető" / "Kutatásvezető (MTA SZKI)" / "Résztvevők" as headings and the value in the
+  blocks below; the parser only read `Label: value` lines and found no lead or participant on
+  them. A heading (h2-h6, never the title) now counts as a lead or participants label when it
+  matches an existing label (at most three words, one trailing parenthetical and a colon
+  removed); its section is what follows it in its own parent up to the next heading of any level
+  (or a table, rule, form, figure, iframe) or the first block that holds no name. A line is read
+  as names only if it looks like names from its start (two to five capitalised tokens, no
+  organisation, country or programme word, no colon or link; reading stops at the first part
+  that is not a person); the short label "Résztvevő" keeps the profile-links-only rule. A heading
+  with no readable value produces no field and is listed in `unmapped_labels`. Field semantics
+  are the label-line ones, so leads and participants without a profile become PersonMentions;
+  claims carry the locator `project.heading.*`, the heading and the line as snippet, and the
+  label as role. Whole-page search, proximity and new label words ("Koordinátor") were left out
+  on purpose. 16 real, scrubbed fixtures; 64 new tests.
+* **Behaviour change** in the same release: a project description under an explicit `A kutatás`
+  heading takes precedence over "the first long `<p>`" (locator `project.heading.description`).
+  On the 86 pages 30 projects gained an abstract that sat in a `<div>`, and 11 abstracts that
+  were participant or coordinator lists were replaced by the description (37 abstract claims
+  re-issued under a new locator and so a new claim id). No other claim changed: the other 107 SZI
+  pages and every KI, PTI and CSS-RECENS page have the same claim ids as in `p16`.
+* Preview `2026-10-tk-m2-p31` (same 563 web documents as `p16`, source-set digest
+  `6e7fd8757ffc5c44`, replayed from the stored snapshots): SZI project pages with a lead 60 → 138
+  of 193, with participants 17 → 75; person mentions 1,188 → 1,435 (247 new, all plain text),
+  resolved 908 → 1,006 (HIGH_CONFIDENCE_AUTO 150 → 248), review 48 → 67, no candidate 232 → 362;
+  `PRINCIPAL_INVESTIGATOR_OF` 136 → 178, `PARTICIPATES_IN` 341 → 423, co-participation ties
+  551 → 584 (all within SZI; no cross-institute change). No Person or Project id and no earlier
+  resolution changed; three rebuilds are byte-identical apart from the generated timestamp.
+  Edge growth is a better observation of pages already crawled, not new knowledge.
 * Source coverage (#16, ADR-0009): a link in a profile's project section is discovery evidence.
   The crawl follows it one hop when the link's host belongs to an enabled source with an adapter
   that opted in (`follow_profile_project_links` for SZI, CSS-RECENS, KI, PTI), the path has the

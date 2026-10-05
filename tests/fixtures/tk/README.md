@@ -28,3 +28,15 @@ labels, month-name periods, a bare funder or period line in a header block, part
 only as links, and two narrative pages that must produce no funder, period or participants
 (`ki_project_kutterv_narrativ.html`, `ki_project_egyhazak_szerepvallalasa.html`). They are real
 pages, scrubbed like the rest; the tests read what is on the page and nothing else.
+
+Sixteen SZI project-page fixtures (`szi_heading_*.html`) were added for #31. They are real pages
+of the old SZI project template, **written from the stored raw snapshots of the 2026-10-04 crawl
+(no page was fetched again)**: the page body is the snapshot's markup, scrubbed like the rest, and
+the file's `content_sha256` in `fixtures.yaml` is that of the unscrubbed snapshot. Each is there
+for the markup it carries: a heading with `<p>`/`<br>` lines, with `<div>` blocks, with bare text,
+with a Word-pasted wrapper (conditional comments and styles), with `<ul>`/`<li>`, a placeholder
+value ("..."), a duplicate name, an organisation or country after the names, org-first and
+`Family, Given` lines, a `<p>` used as a heading, and old-site profile links. In five of them a
+heading must yield nothing (its value is a placeholder, or organisations and countries, or
+org-prefixed lines); `szi_heading_placeholder_dots.html` yields no lead and no participant at
+all. The tests read what is on the page and nothing else.
