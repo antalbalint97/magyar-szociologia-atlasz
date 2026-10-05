@@ -21,7 +21,7 @@ const fail = (msg) => {
 const src = process.env.ATLAS_RELEASE_URL?.trim();
 if (!src) {
   // a hosted deployment must name its release: never ship the fixture to Vercel by omission
-  if (process.env.VERCEL && process.env.ATLAS_ALLOW_FIXTURE !== "1") {
+  if (process.env.VERCEL === "1" && process.env.ATLAS_ALLOW_FIXTURE !== "1") {
     fail("ATLAS_RELEASE_URL is not set on this Vercel build (set it, plus GRAPH_RELEASE and ATLAS_RELEASE_SHA256; " +
       "ATLAS_ALLOW_FIXTURE=1 deploys the fixture on purpose)");
   }
