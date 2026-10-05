@@ -51,6 +51,21 @@ project sites (EU consortia, other universities, one academic profile) and five 
 records; they are recorded, not fetched, and the grant records still count as grant
 statements for project resolution (ADR-0008).
 
+## SZI project page templates (#31, observed 2026-10-04, `2026-10-tk-m2-p31`)
+
+The 193 SZI project pages come in two shapes (ADR-0010). 107 state their fields as `Label: value`
+lines (the form the other three sites use). 86 are of the old template: the label is a heading
+(`h2`-`h6`: "Projektvezető", "Kutatásvezető (MTA SZKI)", "Résztvevők (MTA SZKI)") and the value is
+the paragraphs, `<div>`s, `<li>`s or bare text under it, up to the next heading. The parser reads
+both. What it does **not** read on the 86 pages, and why: "Koordinátor(ok)" headings (5 pages; a
+consortium coordinator is not the same role as a project lead, #10), "Partnerek" and "Konzorciumi
+tagok" (organisations), one misspelt heading, two pages whose labels are a `<p>` and not a
+heading, org-first or `Family, Given` name lines, and five pages that use the singular
+"Résztvevő" label (profile links only, as on a label line). Five more pages state a heading and
+leave its value as a placeholder ("..."). Each is a coverage gap listed in the issue, not a
+guess. Plain-text names under these headings are person mentions (ADR-0006): the institute has
+no profile for most collaborators and former staff.
+
 ## Structural changes to model as events, not overwrites
 
 - ELTE TK, ELTE KRTK: formerly MTA, then ELKH/HUN-REN research centres; old hosts (`*.tk.mta.hu`, `*.tk.hu`) are registered as host aliases.

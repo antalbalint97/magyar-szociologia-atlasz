@@ -32,6 +32,19 @@ error. QA seeds are sentinels, never a sample. Coverage is exposed, not correcte
 weighted or imputed. Resolution rates are read by source: a high rate where pages were fetched
 and a low one where they were not is a coverage gap, not a resolver result.
 
+**What the parsers read, and what they leave** (ADR-0004, ADR-0010, #31). A parser reads a field
+from where the page states it, never from where it might be. A label is read only if it is an
+existing label (`Label: value` line, or a heading whose text is one); a value under a heading is
+the blocks that follow it in the heading's own parent, up to the next heading, so a name near a
+label elsewhere on the page is nothing. A line under a heading is read as names only if it looks
+like names (two to five capitalised tokens, no organisation, country or programme word; reading
+stops at the first part that is not a person), and when in doubt the name stays unparsed: a
+missed name is a coverage gap that is counted and listed, a wrong name is a wrong edge. A heading
+that is a label but whose value cannot be read is reported in `unmapped_labels`, not guessed.
+Every claim read this way records the heading and the line (`project.heading.*`), so a reader can
+tell a heading-derived value from a label-line one. New labels are added only with a decision on
+what they mean ("Koordinátor" is not "Projektvezető", #10).
+
 **What the crawl fetches.** Pages that a configured listing shows, plus the pages that a
 profile of an enabled source links from its project section when the link's host belongs to an
 enabled source (one hop, project-page path shape, verified host aliases; ADR-0009). Every link

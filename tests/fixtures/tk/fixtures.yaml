@@ -175,6 +175,134 @@ szi_futo_kutatasok.html:
   source_id: tk_szociologia
   status_label: futó
   url: https://szociologia.tk.elte.hu/kategoria/futo-kutatasok
+szi_heading_affiliations.html:
+  content_sha256: b9710cfa13fc73fdc5061611d7d59c74d3a6bc5697f5b121c44c0463e712fb51
+  kind: project
+  observed: '2026-10-04'
+  reconstructed: false
+  scrubbed: true
+  source_id: tk_szociologia
+  url: https://szociologia.tk.elte.hu/project-on-intergenerational-equtity
+szi_heading_bare_text.html:
+  content_sha256: a4941e4f8ca51b698b2bc4e52d26605925f858ce881d286a161ffa2975925aad
+  kind: project
+  observed: '2026-10-04'
+  reconstructed: false
+  scrubbed: true
+  source_id: tk_szociologia
+  url: https://szociologia.tk.elte.hu/kint-es-bent-haromszor
+szi_heading_basic.html:
+  content_sha256: e20bec3c400e8d267e64cae1f552ac736cc30c373005e51325a450001a45c142
+  kind: project
+  observed: '2026-10-04'
+  reconstructed: false
+  scrubbed: true
+  source_id: tk_szociologia
+  url: https://szociologia.tk.elte.hu/a-munkaero-es-tudasfelhasznalas-gyakorlata-a-vallalkozasok-munkaszervezeti-jellemzoi
+szi_heading_div_blocks.html:
+  content_sha256: f29bf8ce69023d8f60ed214640e7c17bdc68da6a9d38e790f5fb1e21a29385a6
+  kind: project
+  observed: '2026-10-04'
+  reconstructed: false
+  scrubbed: true
+  source_id: tk_szociologia
+  url: https://szociologia.tk.elte.hu/return-and-escape-forced-migration-between-1938-1956
+szi_heading_duplicate_name.html:
+  content_sha256: 60a68fccb55a19607268cbb504835e88e61be9000379cbfdfa88c4031a044cf0
+  kind: project
+  observed: '2026-10-04'
+  reconstructed: false
+  scrubbed: true
+  source_id: tk_szociologia
+  url: https://szociologia.tk.elte.hu/a-ferfiak-fokozottabb-reszvetelenek-elosegitese
+szi_heading_ilo_leads.html:
+  content_sha256: 297889fb9b57699cd3940439c82c7b7652f3b988f6b35366798fc4dbf962b7cf
+  kind: project
+  observed: '2026-10-04'
+  reconstructed: false
+  scrubbed: true
+  source_id: tk_szociologia
+  url: https://szociologia.tk.elte.hu/munkahelyi-partnersegek-a-gyermekfelugyelet-megoldasara
+szi_heading_junk_after_names.html:
+  content_sha256: adc3c62d1e87fc5b40c5c7c51a6a356ed4bf6adf7e26b388a50caed87756c7a7
+  kind: project
+  observed: '2026-10-04'
+  reconstructed: false
+  scrubbed: true
+  source_id: tk_szociologia
+  url: https://szociologia.tk.elte.hu/ageing-and-employment-identification-of-good
+szi_heading_name_then_prose.html:
+  content_sha256: 68ce270842561abe6b552e44c2cc6915d0596efaebc959c5b84d52e6f0eef84f
+  kind: project
+  observed: '2026-10-04'
+  reconstructed: false
+  scrubbed: true
+  source_id: tk_szociologia
+  url: https://szociologia.tk.elte.hu/halmozott-diszkriminacio-egyeni-es-intezmenyi-perc
+szi_heading_old_site_links.html:
+  content_sha256: 57a0ae13a1818480c6a44ece01ab6ff0f621eb7adf95f99664148ee1aa0a8810
+  kind: project
+  observed: '2026-10-04'
+  reconstructed: false
+  scrubbed: true
+  source_id: tk_szociologia
+  url: https://szociologia.tk.elte.hu/knowandpol
+szi_heading_org_country_tail.html:
+  content_sha256: 5b6c03815d85e284494dd2a635dd44eefa7ab0c71526fded74373db7f3f8b3d7
+  kind: project
+  observed: '2026-10-04'
+  reconstructed: false
+  scrubbed: true
+  source_id: tk_szociologia
+  url: https://szociologia.tk.elte.hu/a-haboru-utan-nomozgalmak-es-aktivistak
+szi_heading_org_prefixed.html:
+  content_sha256: c136a85a36439ada7e91dfd3037a372386003878011a210ab84df0b504325292
+  kind: project
+  observed: '2026-10-04'
+  reconstructed: false
+  scrubbed: true
+  source_id: tk_szociologia
+  url: https://szociologia.tk.elte.hu/talalkozasok-a-kulturaval
+szi_heading_p_pseudo_headings.html:
+  content_sha256: ffac3a1a80e207926cbdccc95d56986e16e98ff63d3e5b050893ad877d17f2f9
+  kind: project
+  observed: '2026-10-04'
+  reconstructed: false
+  scrubbed: true
+  source_id: tk_szociologia
+  url: https://szociologia.tk.elte.hu/prosuite
+szi_heading_placeholder_dots.html:
+  content_sha256: 8a816ec95ce76a1b07d75b5f0bb1ae7b204c4dfa2a9c0ae8450b77d322bb9236
+  kind: project
+  observed: '2026-10-04'
+  reconstructed: false
+  scrubbed: true
+  source_id: tk_szociologia
+  url: https://szociologia.tk.elte.hu/korrupcio-szervezeti-megkozelitesben
+szi_heading_placeholder_ellipsis.html:
+  content_sha256: 09fff05194eb682fe0399d6ee286638d78e96a35f591ac3202b7247c22d8db1c
+  kind: project
+  observed: '2026-10-04'
+  reconstructed: false
+  scrubbed: true
+  source_id: tk_szociologia
+  url: https://szociologia.tk.elte.hu/allamreform-kozigazgatas-hatterintezmenyek-miniszteriumok-es-hatterintezmenyeik
+szi_heading_ul_li.html:
+  content_sha256: 7d6c7e0b5427731ef5257aacc476f5fef3bd3c4505975b5c3d097894e952a014
+  kind: project
+  observed: '2026-10-04'
+  reconstructed: false
+  scrubbed: true
+  source_id: tk_szociologia
+  url: https://szociologia.tk.elte.hu/varostersegek-terbeli-tarsadalmi-egyenlotlensegek-es-konfliktusok
+szi_heading_word_wrapper.html:
+  content_sha256: 0a52c33021dc9a65339d1d94466c0d938d7d5ecdba86fe31562b0b807eb5bb11
+  kind: project
+  observed: '2026-10-04'
+  reconstructed: false
+  scrubbed: true
+  source_id: tk_szociologia
+  url: https://szociologia.tk.elte.hu/elit-es-innovacio
 szi_project_egyenlo_banasmod.html:
   content_sha256: b62d6b59dbff0e7ddaf442f0531fdb37a17124c90ffe80b7db0fee7c8b226795
   kind: project
