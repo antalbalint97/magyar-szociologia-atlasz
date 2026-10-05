@@ -286,6 +286,8 @@ do not change resolution.
 project_decisions:
   - {mention_id: pjm_..., project_id: prj_..., decision: same_as | not_same_as,
      reviewer: <name>, date: YYYY-MM-DD, evidence: "..."}
+  - {mention_id: pjm_..., decision: defer, blocked_by: "#9",     # identity plausible, entity type undecided
+     reviewer: <name>, date: YYYY-MM-DD, evidence: "..."}
 same_as:        # two anchored project records are one project (e.g. a moved page)
   - {refs: [<ref>, <ref>], reviewer: ..., date: ..., evidence: ...}
 not_same_as:    # keep records apart even if a later rule would join them
@@ -295,6 +297,19 @@ not_same_as:    # keep records apart even if a later rule would join them
 `source_ref` can replace `mention_id` to decide a record on every page. `not_same_as`
 overrides every automatic decision, a certain one included. The review queue is
 `review/project_review.yaml`.
+
+A manual `same_as` is an identity decision about the mention and may overrule a blocking
+signal (for example a link to the activity's own site). The resolution keeps what the rules
+saw (`evidence.signals_seen`, positive and negative), so the overruled signal stays visible.
+It says nothing about the activity's type; `activity_cues` stay untouched (#9).
+
+`defer` is for a mention whose textual identity is plausible but whose canonical entity class
+is not decided (a recurring survey programme is not obviously a one-off Project). It
+resolves nothing, creates no relation and stops every automatic rule from firing on that
+mention. The status stays `REVIEW_REQUIRED` (the candidate stays visible), the method is
+`manual:project_deferred` and the review file lists it under `deferred`, not under
+`review_required`. It never overrules a certain (URL) link. The blocking issue (`blocked_by`)
+is expected to replace it with a `same_as` or `not_same_as` once decided.
 
 ### QA
 
@@ -322,7 +337,7 @@ the project-page anchors.
 | Projects | 606 (291 title-only, 93 unfetched URL, 222 page-backed incl. the Éghajlat merge) | 223, all page-backed |
 | Project mentions | n/a | 783 |
 | Resolved by URL / by rule | | 327 / 28 (26 `title_and_owner`, 2 `grant_and_title`) |
-| Review required / no candidate | | 8 / 420 (131 link an unfetched page, 289 profile titles only) |
+| Review required / no candidate | | 8 / 420 (131 link an unfetched page, 289 profile titles only); after the reviewer's decisions (`2026-10-tk-m2-p7r`): 1 deferred to #9 / 420 |
 | `PARTICIPATES_IN` / `PRINCIPAL_INVESTIGATOR_OF` | 671 / 112 | 225 / 93 |
 | Persons with a project edge | 140 | 92 |
 | Co-participation ties | 491 | 446 (52 lost, 7 gained) |

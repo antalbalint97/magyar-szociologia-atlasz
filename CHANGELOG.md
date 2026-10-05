@@ -2,6 +2,14 @@
 
 ## Unreleased (Milestone 2 branch)
 
+* Review of the 8 project mentions left for a decision (#7): seven manual `same_as` entries in
+  `review/manual_overrides.yaml` (two ReproSoc profile items, three of Tibori Tímea's, Kmetty
+  Zoltán's and Acsády Judit's), each with the evidence that decided it. A manual `same_as` keeps
+  the signals the rules saw, including the blocking one it overruled. New `defer` decision
+  (`blocked_by`): ESS Magyarország stays unresolved until #9 decides its activity type; the
+  review file lists it under `deferred`. Preview `2026-10-tk-m2-p7r`: no automatic or certain
+  decision changed, project ids unchanged, `PARTICIPATES_IN` 225 → 231.
+
 * Project mentions vs canonical Projects (#7, ADR-0008): a Project needs an identity
   anchor (its own page, or a manual decision). Every other project-like observation
   (listing article, profile line, link to an unfetched page) is a `ProjectMention` that

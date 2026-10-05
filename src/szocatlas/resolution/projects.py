@@ -166,13 +166,20 @@ def periods_conflict(a: tuple[int | None, int | None], b: tuple[int | None, int 
 # ---------------------------------------------------------------- manual decisions
 @dataclass
 class ProjectDecision:
-    project_id: str
-    decision: str  # same_as | not_same_as
+    """A reviewer's decision about one mention (or every page of one source record).
+
+    same_as / not_same_as name the Project. `defer` names no identity: it records that the
+    mention is not decided yet because another issue (blocked_by) must settle what kind of
+    canonical entity it would resolve to (#9 for activities that may not be Projects)."""
+
+    project_id: str | None  # None only for defer
+    decision: str  # same_as | not_same_as | defer
     mention_id: str | None = None
     source_ref: str | None = None
     reviewer: str | None = None
     date: str | None = None
     evidence: str | None = None
+    blocked_by: str | None = None  # defer only: the issue that has to decide first, e.g. "#9"
 
     def applies(self, m: ProjectMention) -> bool:
         return self.mention_id == m.canonical_id or (self.source_ref is not None and self.source_ref == m.source_ref)
@@ -182,10 +189,20 @@ def load_project_decisions(path: Path) -> list[ProjectDecision]:
     if not path.exists():
         return []
     data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
-    return [ProjectDecision(project_id=d["project_id"], decision=d["decision"], mention_id=d.get("mention_id"),
-                            source_ref=d.get("source_ref"), reviewer=d.get("reviewer"),
-                            date=str(d["date"]) if d.get("date") else None, evidence=d.get("evidence"))
-            for d in data.get("project_decisions") or []]
+    out = []
+    for d in data.get("project_decisions") or []:
+        if d["decision"] not in ("same_as", "not_same_as", "defer"):
+            raise ValueError(f"project_decisions: unknown decision {d['decision']!r}")
+        if d["decision"] != "defer" and not d.get("project_id"):
+            raise ValueError(f"project_decisions: {d['decision']} needs project_id ({d.get('mention_id')})")
+        if d["decision"] == "defer" and not d.get("blocked_by"):
+            raise ValueError(f"project_decisions: defer needs blocked_by ({d.get('mention_id')})")
+        out.append(ProjectDecision(
+            project_id=d.get("project_id"), decision=d["decision"], mention_id=d.get("mention_id"),
+            source_ref=d.get("source_ref"), reviewer=d.get("reviewer"),
+            date=str(d["date"]) if d.get("date") else None, evidence=d.get("evidence"),
+            blocked_by=d.get("blocked_by")))
+    return out
 
 
 # ---------------------------------------------------------------- project index
@@ -317,13 +334,19 @@ def _signals(m: ProjectMention, f: ProjectFacts, idx: ProjectIndex, evidence: di
 def _resolve_one(m: ProjectMention, idx: ProjectIndex, version: str, manual: list[ProjectDecision]) -> None:
     rejected = {d.project_id for d in manual if d.decision == "not_same_as" and d.applies(m)}
     confirmed = next((d for d in manual if d.decision == "same_as" and d.applies(m)), None)
+    deferred = next((d for d in manual if d.decision == "defer" and d.applies(m)), None)
     res = m.resolution
     if confirmed is not None:
         if confirmed.project_id in idx.projects:
+            # what the automatic rules saw is kept next to the reviewer's evidence: a manual decision
+            # is allowed to overrule a blocking signal, and the record shows which one it overruled
+            seen: dict[str, Any] = {}
+            pos, neg, _ = _signals(m, idx.projects[confirmed.project_id], idx, seen)
             m.resolution = ProjectMentionResolution(
                 status=MentionResolutionStatus.MANUAL_CONFIRMED, project_id=confirmed.project_id,
                 method="manual:project_same_as", signals=[MANUAL_SAME_AS],
-                evidence={k: v for k, v in (("reviewer", confirmed.reviewer), ("evidence", confirmed.evidence)) if v},
+                evidence={k: v for k, v in (("reviewer", confirmed.reviewer), ("evidence", confirmed.evidence)) if v}
+                | {"signals_seen": {"positive": pos, "negative": neg, **seen}},
                 decision_source=OVERRIDES, resolver_version=version,
                 decided_at=datetime.fromisoformat(confirmed.date) if confirmed.date else None)
         else:
@@ -359,6 +382,19 @@ def _resolve_one(m: ProjectMention, idx: ProjectIndex, version: str, manual: lis
             c.negative_signals.append(MULTIPLE_CANDIDATES)
     cands.sort(key=lambda c: (c.rejected, c not in viable, -len(c.signals), c.project_id))
     m.candidates = cands
+    if deferred is not None:
+        # the reviewer holds the identity back until another issue has decided what kind of entity this
+        # is; candidates stay visible, nothing is resolved and no automatic rule may fire
+        m.resolution = ProjectMentionResolution(
+            status=MentionResolutionStatus.REVIEW_REQUIRED if any(not c.rejected for c in cands)
+            else MentionResolutionStatus.UNRESOLVED,
+            method="manual:project_deferred",
+            reason=f"deferred, blocked by {deferred.blocked_by}: the canonical entity type is undecided",
+            evidence={k: v for k, v in (("reviewer", deferred.reviewer), ("evidence", deferred.evidence),
+                                        ("blocked_by", deferred.blocked_by)) if v},
+            decision_source=OVERRIDES, resolver_version=version,
+            decided_at=datetime.fromisoformat(deferred.date) if deferred.date else None)
+        return
     if len(viable) == 1:
         c = viable[0]
         for rule, alternatives in RULES:

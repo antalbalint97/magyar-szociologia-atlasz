@@ -105,6 +105,7 @@ def project_mention_stats(ds) -> dict[str, Any]:
         "by_status": dict(sorted(Counter(m.resolution.status.value for m in pms).items())),
         "resolved_by_method": dict(sorted(Counter(m.resolution.method for m in resolved).items())),
         "review_required": sum(1 for m in pms if m.resolution.status is MentionResolutionStatus.REVIEW_REQUIRED),
+        "review_deferred": sum(1 for m in pms if m.resolution.method == "manual:project_deferred"),
         "no_candidate": sum(1 for m in pms if m.resolution.status is MentionResolutionStatus.UNRESOLVED),
         "with_multiple_viable_candidates": sum(
             1 for m in pms if any("MULTIPLE_CANDIDATES" in c.negative_signals for c in m.candidates)),

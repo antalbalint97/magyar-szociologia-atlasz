@@ -69,7 +69,10 @@ PROJECT_HEADER = (
     "  project_decisions:\n"
     "    - {mention_id: pjm_..., project_id: prj_..., decision: same_as | not_same_as,\n"
     "       reviewer: <name>, date: YYYY-MM-DD, evidence: \"...\"}\n"
-    "Use source_ref instead of mention_id to decide every page of one source record."
+    "Use source_ref instead of mention_id to decide every page of one source record. A mention whose\n"
+    "identity is plausible but whose canonical entity type is undecided is held with\n"
+    "    - {mention_id: pjm_..., decision: defer, blocked_by: \"#9\", reviewer: ..., date: ..., evidence: ...}\n"
+    "and is listed under `deferred`, not `review_required`."
 )
 
 
@@ -95,16 +98,20 @@ def write_project_review(ds, path: Path) -> int:
             "why_not_automatic": m.resolution.reason,
         }
 
-    review = []
+    review, deferred = [], []
     for m in pms:
         if m.resolution.status is not MentionResolutionStatus.REVIEW_REQUIRED:
             continue
-        review.append(item(m) | {"candidates": [
+        entry = item(m) | {"candidates": [
             {"project_id": c.project_id, "title": projects[c.project_id].label if c.project_id in projects else None,
              "period": [projects[c.project_id].start, projects[c.project_id].end] if c.project_id in projects else None,
              "title_match": c.title_match, "positive": c.signals, "negative": c.negative_signals,
              **({"rejected": True} if c.rejected else {})}
-            for c in m.candidates]})
+            for c in m.candidates]}
+        if m.resolution.method == "manual:project_deferred":
+            deferred.append(entry | {"deferred": m.resolution.evidence})
+        else:
+            review.append(entry)
     groups: dict[str, list] = defaultdict(list)
     for m in pms:
         if m.resolution.status is MentionResolutionStatus.UNRESOLVED and m.title_key:
@@ -115,8 +122,10 @@ def write_project_review(ds, path: Path) -> int:
     ]
     payload = {
         "_comment": PROJECT_HEADER,
-        "summary": {"mentions_to_review": len(review), "unresolved_title_groups_on_several_pages": len(title_groups)},
+        "summary": {"mentions_to_review": len(review), "mentions_deferred": len(deferred),
+                    "unresolved_title_groups_on_several_pages": len(title_groups)},
         "review_required": review,
+        "deferred": deferred,
         "unresolved_title_groups": title_groups,
     }
     path.parent.mkdir(parents=True, exist_ok=True)

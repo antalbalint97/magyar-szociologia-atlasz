@@ -425,6 +425,103 @@ def test_manual_same_as_joins_two_project_pages(tmp_path, registry):
     assert ids[a.source_ref] != ids[b.source_ref]
 
 
+def test_manual_same_as_overrules_a_block_and_records_what_the_rules_saw(tmp_path, registry):
+    # #7 review: the profile item links the activity's own site (reprosoc.tk.hu); the reviewer decides
+    # same_as. The identity decision does not touch the activity cue (#9) and the record keeps the
+    # blocking signal that was overruled.
+    w = World(registry)
+    prof = f"{SZI}/kutato/galantai-julia"
+    title = "A reprodukcióval kapcsolatos döntések többszempontú vizsgálata európai összehasonlításban"
+    p = w.page(f"{SZI}/a-reprodukcioval-kapcsolatos-dontesek", title)
+    w.profile(prof, "Galántai Júlia", [(f"{title} (MTA Lendület)", "https://reprosoc.tk.hu/", None, None)])
+    ds, ids = w.build(tmp_path)
+    m = pm_on(ds, prof)
+    assert m.resolution.status is S.REVIEW_REQUIRED and not participates(ds, ids[p.source_ref])
+    d = PR.ProjectDecision(project_id=ids[p.source_ref], decision="same_as", mention_id=m.canonical_id,
+                           reviewer="t", date="2026-10-05", evidence="the activity's own site")
+    ds, ids2 = w.build(tmp_path, decisions=[d])
+    r = pm_on(ds, prof).resolution
+    assert ids2 == ids  # a decision never mints or moves a project id
+    assert r.status is S.MANUAL_CONFIRMED and r.project_id == ids[p.source_ref] and r.signals == [PR.MANUAL_SAME_AS]
+    assert PR.LINKS_OTHER_PAGE in r.evidence["signals_seen"]["negative"]
+    assert r.evidence["signals_seen"]["positive"] and r.evidence["reviewer"] == "t"
+    assert pm_on(ds, prof).activity_cues == ["research_group"]  # not pre-empted
+    assert len(participates(ds, ids[p.source_ref])) == 1
+
+
+def test_manual_decision_is_per_mention_and_the_generic_rule_stays_conservative(tmp_path, registry):
+    # the same short title on two profiles: deciding one does not decide the other, and without a
+    # decision a title prefix never resolves
+    w = World(registry)
+    p = w.page(f"{SZI}/joleti", "Jóléti attitűdök magyarázata: általános morális elvek, téma-keretezés és dizájn")
+    a, b = f"{RECENS_HOST}/kutato/kmetty-zoltan", f"{SZI}/kutato/janky-bela"
+    w.profile(a, "Kmetty Zoltán", [("Jóléti attitűdök magyarázata", None, "2016", None)])
+    w.profile(b, "Janky Béla", [("Jóléti attitűdök magyarázata", None, "2016", None)])
+    ds, ids = w.build(tmp_path)
+    assert {pm_on(ds, a).resolution.status, pm_on(ds, b).resolution.status} == {S.REVIEW_REQUIRED}
+    d = PR.ProjectDecision(project_id=ids[p.source_ref], decision="same_as", mention_id=pm_on(ds, a).canonical_id)
+    ds, _ = w.build(tmp_path, decisions=[d])
+    assert pm_on(ds, a).resolution.status is S.MANUAL_CONFIRMED
+    assert pm_on(ds, b).resolution.status is S.REVIEW_REQUIRED
+
+
+def test_defer_holds_a_mention_back_without_naming_a_project(tmp_path, registry):
+    # #7 review, ESS Magyarország: the identity is plausible, the entity type is #9's to decide
+    w = World(registry)
+    page = f"{SZI}/essmagyarorszag"
+    p = w.page(page, "ESS Magyarország")
+    prof = f"{PTI}/kutato/szabo-andrea"
+    w.profile(prof, "Szabó Andrea", [("ESS Magyarország", None, None, "résztvevő kutató")])
+    ds, ids = w.build(tmp_path)
+    m = pm_on(ds, prof)
+    assert m.resolution.status is S.REVIEW_REQUIRED  # exact title only: not automatic
+    d = PR.ProjectDecision(project_id=ids[p.source_ref], decision="defer", mention_id=m.canonical_id,
+                           blocked_by="#9", reviewer="t", date="2026-10-05", evidence="recurring survey")
+    ds, _ = w.build(tmp_path, decisions=[d])
+    r = pm_on(ds, prof).resolution
+    assert r.status is S.REVIEW_REQUIRED and r.project_id is None and r.method == "manual:project_deferred"
+    assert r.evidence["blocked_by"] == "#9" and "#9" in r.reason
+    assert pm_on(ds, prof).candidates[0].project_id == ids[p.source_ref]  # candidate stays visible
+    assert not participates(ds, ids[p.source_ref])  # no Project relation is fabricated
+    assert not [rel for rel in ds.relations if rel.type.value == "RESOLVES_TO"
+                and rel.source_id == m.canonical_id]
+    # the review file lists it separately from the open review items
+    import yaml
+
+    from szocatlas.resolution.review import write_project_review
+    out = tmp_path / "project_review.yaml"
+    assert write_project_review(ds, out) == 0
+    review = yaml.safe_load(out.read_text(encoding="utf-8"))
+    assert review["summary"]["mentions_deferred"] == 1 and review["review_required"] == []
+    assert review["deferred"][0]["deferred"]["blocked_by"] == "#9"
+
+
+def test_defer_never_overrules_a_certain_link(tmp_path, registry):
+    w = World(registry)
+    page = f"{SZI}/essmagyarorszag"
+    w.page(page, "ESS Magyarország")
+    prof = f"{PTI}/kutato/szabo-andrea"
+    w.profile(prof, "Szabó Andrea", [("ESS Magyarország", page, None, None)])
+    ds, ids = w.build(tmp_path)
+    m = pm_on(ds, prof)
+    assert m.resolution.status is S.DETERMINISTIC
+    d = PR.ProjectDecision(project_id=None, decision="defer", mention_id=m.canonical_id, blocked_by="#9")
+    ds, _ = w.build(tmp_path, decisions=[d])
+    assert pm_on(ds, prof).resolution.status is S.DETERMINISTIC
+
+
+def test_project_decisions_are_validated_on_load(tmp_path):
+    f = tmp_path / "o.yaml"
+    for body in ("- {mention_id: pjm_1, decision: defer}",  # no blocked_by
+                 "- {mention_id: pjm_1, decision: same_as}",  # no project_id
+                 "- {mention_id: pjm_1, project_id: prj_1, decision: maybe}"):
+        f.write_text("project_decisions:\n  " + body + "\n", encoding="utf-8")
+        with pytest.raises(ValueError):
+            PR.load_project_decisions(f)
+    f.write_text("project_decisions:\n  - {mention_id: pjm_1, decision: defer, blocked_by: '#9'}\n", encoding="utf-8")
+    assert PR.load_project_decisions(f)[0].project_id is None
+
+
 def _rich_world(registry) -> World:
     w = World(registry)
     prof = f"{PTI}/kutato/kopasz-marianna"
