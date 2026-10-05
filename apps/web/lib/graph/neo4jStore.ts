@@ -4,7 +4,7 @@ import neo4j, { type Driver } from "neo4j-driver";
 import { toMention } from "./mentions.ts";
 import { fold } from "./search.ts";
 import type {
-  Edge, Entity, EntitySummary, Evidence, GraphStore, Mention, Neighbourhood, ReleaseInfo,
+  CoverageData, Edge, Entity, EntitySummary, Evidence, GraphStore, Mention, Neighbourhood, ReleaseInfo, Snapshot,
 } from "./types.ts";
 
 const NON_FIELDS = new Set(["canonical_id", "label", "provenance_json", "conflicts_json", "search_text",
@@ -28,6 +28,7 @@ function nodeToEntity(props: Record<string, any>): Entity {
     provenance: JSON.parse(props.provenance_json ?? "{}"),
     conflicts: JSON.parse(props.conflicts_json ?? "{}"),
     lastVerifiedAt: props.last_verified_at ?? null,
+    sourceRefs: props.source_refs ?? [],
   };
 }
 
@@ -145,5 +146,26 @@ export class Neo4jStore implements GraphStore {
                status: c.epistemic_status, url: s.canonical_url, retrievedAt: s.retrieved_at,
                synthetic: Boolean(s.synthetic) };
     });
+  }
+
+  // Not yet exercised against a live database (#30): same shapes as the file backend.
+  async snapshot(): Promise<Snapshot> {
+    const info = await this.release();
+    const nodes = await this.q("MATCH (n:Entity) RETURN n");
+    const rels = await this.q(
+      "MATCH (a:Entity)-[r]->(b:Entity) RETURN type(r) AS t, a.canonical_id AS s, b.canonical_id AS o, r");
+    const ments = await this.q("MATCH (m) WHERE m:PersonMention OR m:ProjectMention RETURN m");
+    return {
+      info,
+      entities: nodes.map((r) => nodeToEntity(r.get("n").properties)),
+      edges: rels.map((r) => relToEdge(r.get("t"), r.get("s"), r.get("o"), r.get("r").properties)),
+      mentions: ments.map((r) => toMention(r.get("m").properties)),
+    };
+  }
+
+  // The coverage report is a release file, not part of the graph projection.
+  async coverage(): Promise<CoverageData> {
+    const [r] = await this.q("MATCH (m:ReleaseInfo {key: 'current'}) RETURN m");
+    return { coverage: null, manifest: r?.get("m").properties ?? {} };
   }
 }

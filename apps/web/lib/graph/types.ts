@@ -15,6 +15,7 @@ export interface Entity extends EntitySummary {
   provenance: Record<string, string[]>; // field -> claim ids
   conflicts: Record<string, { value: unknown; claim_ids: string[] }[]>;
   lastVerifiedAt: string | null;
+  sourceRefs: string[]; // "<source_id>|<url or key>": which enabled source observed the entity
 }
 
 export interface Edge {
@@ -90,6 +91,7 @@ export interface Mention {
   signals: string[];
   negativeSignals: string[];
   reason: string | null; // why it is not resolved
+  blockedBy: string | null; // a manual deferral names the issue that must decide first (e.g. "#9")
   candidates: MentionCandidate[];
   context: MentionContext[];
   claimIds: string[];
@@ -102,6 +104,23 @@ export interface ReleaseInfo {
   sources: string[];
 }
 
+// Everything the atlas views aggregate over: canonical entities, their relations and the
+// mentions. Claims and documents are not part of it (they are fetched per relation).
+// The canonical release is small (hundreds of entities), so views aggregate in memory.
+export interface Snapshot {
+  info: ReleaseInfo;
+  entities: Entity[]; // canonical entities only (no PersonMention / ProjectMention)
+  edges: Edge[];
+  mentions: Mention[];
+}
+
+// The release's own coverage report (coverage.json, ADR-0009) and manifest counts, passed
+// through unchanged: the UI renders these numbers, it never recomputes or restates them.
+export interface CoverageData {
+  coverage: Record<string, any> | null;
+  manifest: Record<string, any>;
+}
+
 export interface GraphStore {
   release(): Promise<ReleaseInfo>;
   search(query: string, limit?: number): Promise<EntitySummary[]>;
@@ -111,4 +130,6 @@ export interface GraphStore {
   mention(id: string): Promise<Mention | null>;
   mentionsOf(id: string): Promise<Mention[]>; // mentions resolved to this Person or Project
   statedProjectsOf(personId: string): Promise<Mention[]>; // project mentions on the person's own profile
+  snapshot(): Promise<Snapshot>;
+  coverage(): Promise<CoverageData>;
 }

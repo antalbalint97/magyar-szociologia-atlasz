@@ -6,6 +6,12 @@ export const RESOLVED_MENTION: ReadonlySet<MentionStatus> = new Set([
   "DETERMINISTIC", "MANUAL_CONFIRMED", "HIGH_CONFIDENCE_AUTO",
 ]);
 
+// A manual decision that holds a mention back until another issue decides (ADR-0008, e.g. an
+// activity whose entity type #9 has not settled). Such a mention is open, not an identity.
+export function isDeferred(m: Mention): boolean {
+  return m.method === "manual:project_deferred" || (m.blockedBy !== null && !RESOLVED_MENTION.has(m.status));
+}
+
 type Row = Record<string, any>;
 
 export function toMention(r: Row): Mention {
@@ -38,6 +44,7 @@ export function toMention(r: Row): Mention {
     signals: res.signals ?? [],
     negativeSignals: res.negative_signals ?? [],
     reason: res.reason ?? null,
+    blockedBy: res.evidence?.blocked_by ?? null,
     candidates: cands.map((c): MentionCandidate => ({
       targetId: c.person_id ?? c.project_id,
       match: c.name_match ?? c.title_match ?? null,

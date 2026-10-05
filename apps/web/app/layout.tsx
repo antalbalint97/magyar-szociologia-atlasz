@@ -1,35 +1,56 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import Link from "next/link";
-import { graph } from "@/lib/graph";
+import "@fontsource-variable/inter";
+import "@fontsource-variable/source-serif-4";
+import SiteHeader from "@/components/SiteHeader";
+import { atlas } from "@/lib/atlas/server";
+import { SOURCE_LABEL } from "@/lib/atlas/vocab";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Magyar Szociológia Atlasz",
-  description: "A provenance-aware knowledge graph of Hungarian sociology",
+  title: { default: "Magyar Szociológia Atlasz", template: "%s · Magyar Szociológia Atlasz" },
+  description:
+    "A magyar szociológia intézményeinek, kutatóinak, projektjeinek és tudáskapcsolatainak interaktív, forrásokhoz kötött térképe (pilot).",
 };
 
+export const viewport: Viewport = { width: "device-width", initialScale: 1 };
+// every page reads the configured release at request time (GRAPH_RELEASE), never at build time
+export const dynamic = "force-dynamic";
+
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const release = await graph().release();
+  const a = await atlas();
+  const { info } = a;
+  const labels = info.sources.map((s) => SOURCE_LABEL[s]?.short ?? s);
   return (
     <html lang="hu">
       <body>
-        <header className="site">
-          <div className="inner">
-            <Link href="/" className="brand">Magyar Szociológia Atlasz</Link>
-            <form className="search" action="/" method="get">
-              <input name="q" placeholder="Személy, intézmény, téma, módszer… (pl. koltai, hálózatelemzés)" aria-label="Keresés" />
-              <button type="submit">Keresés</button>
-            </form>
-            <span className="muted" style={{ fontSize: 13 }}>release {release.releaseId}</span>
-          </div>
-        </header>
-        {release.kind === "fixture" && (
-          <div className="banner">
-            Fixture dataset: built from hand-reconstructed test pages, not from a live crawl. It demonstrates the
-            data model only and is not a statement about the field.
-          </div>
+        <a href="#main" className="skip">Ugrás a tartalomra</a>
+        <SiteHeader />
+        {info.kind === "fixture" ? (
+          <div className="pilot" role="note"><div className="wrap">
+            <strong>Teszt-adatkészlet:</strong> kézzel rekonstruált tesztoldalakból épült, nem élő gyűjtésből. Csak az
+            adatmodellt mutatja be, a szakterületről nem állít semmit.
+          </div></div>
+        ) : (
+          <div className="pilot" role="note"><div className="wrap">
+            <strong>Pilot adatbázis</strong>
+            <span>— jelenleg a TK {info.sources.length} intézményi forrásának ({labels.join(", ")}) snapshotja ({info.generatedAt.slice(0, 10)}), nem a teljes magyar szociológia.</span>
+            <Link href="/about/data">Mit tartalmaz?</Link>
+          </div></div>
         )}
-        <main>{children}</main>
+        <main id="main">{children}</main>
+        <footer className="site-footer">
+          <div className="wrap cols">
+            <div>
+              <div style={{ fontFamily: "var(--serif)", color: "var(--ink)", fontSize: "1.05rem" }}>Magyar Szociológia Atlasz</div>
+              <div>Forrásokhoz kötött, időben bővíthető tudásgráf. Minden állítás egy letöltött forrásoldalra vezethető vissza.</div>
+            </div>
+            <div>
+              <div>Kiadás: <code>{info.releaseId}</code> · készült {info.generatedAt.slice(0, 10)}</div>
+              <div><Link href="/about/data">Módszertan és lefedettség</Link> · <a href="https://github.com/antalbalint97/magyar-szociologia-atlasz" rel="noreferrer">Forráskód</a></div>
+            </div>
+          </div>
+        </footer>
       </body>
     </html>
   );

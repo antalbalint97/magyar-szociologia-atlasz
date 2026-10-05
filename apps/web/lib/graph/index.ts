@@ -13,7 +13,7 @@ export function graph(): GraphStore {
   } else {
     const release = process.env.GRAPH_RELEASE ?? "fixture-sample";
     const root = process.env.GRAPH_RELEASES_DIR ?? path.join(/*turbopackIgnore: true*/ process.cwd(), "..", "..", "data", "releases");
-    store = new FileStore(path.join(root, release));
+    store = new FileStore(path.join(/*turbopackIgnore: true*/ root, release));
   }
   return store;
 }
