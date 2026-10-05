@@ -21,3 +21,10 @@ handful of hand-picked pages, so it can never pose as a release snapshot.
 
 The earlier hand-reconstructed fixtures were replaced by these snapshots; the
 parser differences that the real markup exposed are listed in CHANGELOG.md.
+
+Ten project-page fixtures were added for #16 (captured 2026-10-04/05, kind `project`), each
+because it carries markup the parser had not seen: "Támogatási forrás" and "Kutatás időtartama"
+labels, month-name periods, a bare funder or period line in a header block, participants given
+only as links, and two narrative pages that must produce no funder, period or participants
+(`ki_project_kutterv_narrativ.html`, `ki_project_egyhazak_szerepvallalasa.html`). They are real
+pages, scrubbed like the rest; the tests read what is on the page and nothing else.

@@ -14,6 +14,46 @@ ki_feischmidt_margit.html:
   scrubbed: true
   source_id: tk_kisebbsegkutato
   url: https://kisebbsegkutato.tk.elte.hu/kutato/feischmidt-margit
+ki_project_budapesti_kormanyzatok.html:
+  content_sha256: fbf5a8aca39d3cf59b98e0f12cfb7b7d041e770427a6bb0ecabda57ccf7fb205
+  kind: project
+  observed: '2026-10-05'
+  reconstructed: false
+  scrubbed: true
+  source_id: tk_kisebbsegkutato
+  url: https://kisebbsegkutato.tk.elte.hu/a-budapesti-kormanyzatok-magyarsagpolitikaja
+ki_project_egyhazak_szerepvallalasa.html:
+  content_sha256: 62903612a68d473001b2df1221a6e0d8ef63ec5285d54002c2d1433bb3aec6dc
+  kind: project
+  observed: '2026-10-05'
+  reconstructed: false
+  scrubbed: true
+  source_id: tk_kisebbsegkutato
+  url: https://kisebbsegkutato.tk.elte.hu/az-egyhazak-novekvo-szerepvallalasa
+ki_project_kutterv_narrativ.html:
+  content_sha256: 4ff37cd0b38571e49e931d90d8065d1704860059f3a7dc94778b75b79914a050
+  kind: project
+  observed: '2026-10-05'
+  reconstructed: false
+  scrubbed: true
+  source_id: tk_kisebbsegkutato
+  url: https://kisebbsegkutato.tk.elte.hu/kisebbsegi-magyar-kozossegek-kutterv
+ki_project_parlamenti_kepviselet.html:
+  content_sha256: 089bf4704b9949b9837e7e1ec6cab7b29b777bb4ec607054240fe83e7f31a4ba
+  kind: project
+  observed: '2026-10-05'
+  reconstructed: false
+  scrubbed: true
+  source_id: tk_kisebbsegkutato
+  url: https://kisebbsegkutato.tk.elte.hu/a-kisebbsegek-parlamenti-kepviselete-osszehasonlitasban
+ki_project_zsido_identitasok.html:
+  content_sha256: cc2ff09e8a43495d4f0375d67810e3f1d862c0dfff75e336d32cc0f90ebd2308
+  kind: project
+  observed: '2026-10-05'
+  reconstructed: false
+  scrubbed: true
+  source_id: tk_kisebbsegkutato
+  url: https://kisebbsegkutato.tk.elte.hu/zsido-identitasok-magyarorszagon
 ki_unit_kisebbsegszociologia.html:
   content_sha256: 06b71ee74c599790f30e86b4957f987667197b01bf41777c072fa5aa55599a82
   kind: unit
@@ -38,6 +78,22 @@ pti_hajnal_gyorgy.html:
   scrubbed: true
   source_id: tk_politikatudomany
   url: https://politikatudomany.tk.elte.hu/kutato/hajnal-gyorgy
+pti_project_politikai_kozosseg.html:
+  content_sha256: 04bbf09ce5a46be7beae19322551d64d398f6c9a5840305eb3cf37d4635a6961
+  kind: project
+  observed: '2026-10-04'
+  reconstructed: false
+  scrubbed: true
+  source_id: tk_politikatudomany
+  url: https://politikatudomany.tk.elte.hu/a-politikai-kozosseg-hatarai
+pti_project_weberi_vezetok.html:
+  content_sha256: dc821ccb4029da6efd75484d027b5ddb38739083cd11f9da71297bfc8abadb7a
+  kind: project
+  observed: '2026-10-05'
+  reconstructed: false
+  scrubbed: true
+  source_id: tk_politikatudomany
+  url: https://politikatudomany.tk.elte.hu/a-weberi-vezetok-visszaterese
 pti_szabo_andrea.html:
   content_sha256: 8dd1bf376732301f19866489c94e827269b1f3ceb599ce9bc059edac5fdc0f05
   kind: person
@@ -86,6 +142,14 @@ recens_kutatok_k.html:
   scrubbed: true
   source_id: tk_recens
   url: https://recens.tk.elte.hu/kutatok/k
+recens_project_ds4.html:
+  content_sha256: 48d57ab5617701451d4901585ea7b252dcfe4b45b0ef4e963e34c712af836225
+  kind: project
+  observed: '2026-10-05'
+  reconstructed: false
+  scrubbed: true
+  source_id: tk_recens
+  url: https://recens.tk.elte.hu/ds4
 szi_albert_fruzsina.html:
   content_sha256: 3eb86133b52c840b938a64713c33a14d31378e48426e858afecae5d1ddae068d
   kind: person
@@ -111,6 +175,14 @@ szi_futo_kutatasok.html:
   source_id: tk_szociologia
   status_label: futó
   url: https://szociologia.tk.elte.hu/kategoria/futo-kutatasok
+szi_project_egyenlo_banasmod.html:
+  content_sha256: b62d6b59dbff0e7ddaf442f0531fdb37a17124c90ffe80b7db0fee7c8b226795
+  kind: project
+  observed: '2026-10-04'
+  reconstructed: false
+  scrubbed: true
+  source_id: tk_szociologia
+  url: https://szociologia.tk.elte.hu/az-egyenlo-banasmoddal-kapcsolatos-jogtudatossag
 szi_project_energiaatmenet.html:
   content_sha256: 20448102106ed5b5470ab805343bfee2514044666e030860265de2309aeaf5cc
   kind: project
@@ -119,6 +191,14 @@ szi_project_energiaatmenet.html:
   scrubbed: true
   source_id: tk_szociologia
   url: https://szociologia.tk.elte.hu/az-energiaatmenet-terbeli-tarsadalmi-egyenlotlensegei
+szi_project_etnikai_konfliktusok.html:
+  content_sha256: 679eaf976dc3ea4599d185e2e04aa53ef9bce29d0733dce899881186c5a1dae9
+  kind: project
+  observed: '2026-10-04'
+  reconstructed: false
+  scrubbed: true
+  source_id: tk_szociologia
+  url: https://szociologia.tk.elte.hu/etnikai-konfliktusok-es-bekefolyamatok
 szi_project_vakcinacio.html:
   content_sha256: 8a4ff65ff12874ab1ced9551b9baac3f6993afc843035796c9f2bae80a828ac1
   kind: project

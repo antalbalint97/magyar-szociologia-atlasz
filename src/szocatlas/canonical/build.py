@@ -87,6 +87,9 @@ LABEL_FIELD = {
     EntityType.METHOD: "name_en",
 }
 
+# single-valued fields whose values are ISO partial dates: a coarser date agrees with a finer one it prefixes
+PARTIAL_DATE_FIELDS = {"start", "end"}
+
 # preference when choosing a displayed value among conflicting ones
 LOCATOR_RANK = {"profile.h1": 3, "unit.h1": 3, "project.h1": 3}
 
@@ -108,23 +111,43 @@ class CanonicalDataset:
         return [e for e in self.entities.values() if e.entity_type is etype]
 
 
-def _choose(claims: list[Claim]) -> tuple[Any, list[ConflictingValue]]:
-    by_value: dict[str, list[Claim]] = defaultdict(list)
+def _merge_partial_dates(groups: dict[str, tuple[Any, list[Claim]]]) -> dict[str, tuple[Any, list[Claim]]]:
+    """"2021", "2021-12" and "2021-12-01" state one date at different precision, not three disagreeing dates.
+
+    A less precise value joins the group of the single more precise value it is a prefix of; when two different
+    precise values both extend it (2021-06 and 2021-12), it stays apart, because it cannot be said to agree
+    with either."""
+    values = {k: v for k, (v, _) in groups.items()}
+    out = {k: (v, list(cs)) for k, (v, cs) in groups.items()}
+    for k, v in sorted(values.items(), key=lambda kv: len(str(kv[1]))):
+        if not isinstance(v, str) or k not in out:
+            continue
+        longer = [k2 for k2, v2 in values.items()
+                  if k2 in out and isinstance(v2, str) and v2 != v and v2.startswith(v + "-")]
+        if len(longer) == 1:
+            out[longer[0]][1].extend(out.pop(k)[1])
+    return out
+
+
+def _choose(claims: list[Claim], *, partial_dates: bool = False) -> tuple[Any, list[ConflictingValue]]:
+    groups: dict[str, tuple[Any, list[Claim]]] = {}
     for c in claims:
-        by_value[repr(c.value)].append(c)
+        groups.setdefault(repr(c.value), (c.value, []))[1].append(c)
+    if partial_dates:
+        groups = _merge_partial_dates(groups)
     ranked = sorted(
-        by_value.values(),
-        key=lambda cs: (
-            max(LOCATOR_RANK.get(c.evidence.locator, 0) for c in cs),
-            len({c.evidence.document_id for c in cs}),
-            max(c.confidence for c in cs),
-            max(c.observed_at for c in cs),
+        groups.values(),
+        key=lambda g: (
+            max(LOCATOR_RANK.get(c.evidence.locator, 0) for c in g[1]),
+            len({c.evidence.document_id for c in g[1]}),
+            max(c.confidence for c in g[1]),
+            max(c.observed_at for c in g[1]),
         ),
         reverse=True,
     )
-    chosen = ranked[0][0].value
+    chosen = ranked[0][0]
     conflicts = (
-        [ConflictingValue(value=cs[0].value, claim_ids=[c.claim_id for c in cs]) for cs in ranked]
+        [ConflictingValue(value=v, claim_ids=[c.claim_id for c in cs]) for v, cs in ranked]
         if len(ranked) > 1
         else []
     )
@@ -262,7 +285,7 @@ def build_canonical(
                     if c.value not in vals:
                         vals.append(c.value)
             else:
-                chosen, conf = _choose(cs)
+                chosen, conf = _choose(cs, partial_dates=fname in PARTIAL_DATE_FIELDS)
                 values[fname] = chosen
                 if conf:
                     conflicts[fname] = conf

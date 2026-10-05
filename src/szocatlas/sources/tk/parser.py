@@ -24,7 +24,7 @@ from bs4 import BeautifulSoup, NavigableString, Tag
 from ...normalize.names import clean_display_name, normalise_whitespace
 from ...normalize.urls import canonical_url, mtmt_id, orcid_id, scholar_id
 
-PARSER_VERSION = "tk/0.4.0"
+PARSER_VERSION = "tk/0.5.0"
 
 PROFILE_PATH_RE = re.compile(r"^/kutato/(?!pdf/)([a-z0-9][a-z0-9-]*)/?$")
 CV_PATH_RE = re.compile(r"^/kutato/pdf/(\d+)$")
@@ -63,9 +63,19 @@ PARTICIPANTS_LABEL_RE = re.compile(
     r"kutatók|munkatársak|kutatócsoport|kutatócsoport tagjai|a kutatás résztvevői|közreműködők)",
     re.I,
 )
+# Short or misspelt forms of the participants label ("Résztvevő", "Részvevők", #16). Only profile links count on
+# such a line: one SZI page lists countries and groups under "Részvevők", so its text is never read as names.
+PARTICIPANTS_LINKS_ONLY_RE = re.compile(r"^(részt?vevő|részt?vevők)\s*$", re.I)
 GRANT_LABEL_RE = re.compile(r"^(projektazonosító|azonosító|pályázati azonosító|projektszám)", re.I)
-PERIOD_LABEL_RE = re.compile(r"^(időtartam|futamidő|projekt időtartama|időszak)", re.I)
-FUNDER_LABEL_RE = re.compile(r"^(finanszírozó|támogató|forrás)", re.I)
+# "Időtartam", and the longer labels the KI / PTI / RECENS project pages use ("Kutatás időtartama",
+# "A kutatás futamideje", "Ösztöndíj időtartama", "Pályázat időtartama")
+PERIOD_LABEL_RE = re.compile(
+    r"^(((a |az )?(kutatás|projekt|pályázat|ösztöndíj|program) )?(időtartam|futamid|időszak))", re.I)
+# "Finanszírozó", "Támogató", and the KI / PTI template label "Támogatási forrás" (also "...források",
+# "Támogatás forrása", "Projektfinanszírozás"). A bare "Forrás" is a data source ("Forrás: KSH adatok") and a
+# "Forrásfeltárás: ..." line is an activity: neither is a funder, so there is no prefix match on "forrás" (#16).
+FUNDER_LABEL_RE = re.compile(
+    r"^(finanszírozó|támogató|támogatási forrás(ok)?\s*$|támogatás forrása\s*$|projektfinanszírozás\s*$)", re.I)
 DATE_SPAN_RE = re.compile(
     r"(\d{4})(?:[.\-/](\d{1,2})(?:[.\-/](\d{1,2}))?)?\.?\s*[-–—]\s*(?:(\d{4})(?:[.\-/](\d{1,2})(?:[.\-/](\d{1,2}))?)?)?"
 )
@@ -92,6 +102,8 @@ ORG_WORD_RE = re.compile(
     re.I,
 )
 SENTENCE_LABEL_SPLIT_RE = re.compile(r"(?<=[a-záéíóöőúüű)])\.\s+(?=[A-ZÁÉÍÓÖŐÚÜŰ][\w -]{2,40}:)")
+PROSE_LINE_LEN = 150  # a longer line is a paragraph: the header block of a project page is over
+NUMBERED_HEADING_RE = re.compile(r"^\d+(\.\d+)*\.?\s")
 GRANT_IN_LABEL_RE = re.compile(r"^(NKFIH|OTKA|NKFI)\s+([A-Z]{0,4}\s?-?\d{5,6})$")
 AFFIL_SUFFIX_RE = re.compile(r"\s*\(([^()]*)\)\s*$")
 
@@ -194,6 +206,7 @@ class ProjectMention:
     role: str | None = None          # e.g. "Kutatásvezető" when the person is the lead
     stated_lead: str | None = None   # "(kutatásvezető: Kovách Imre)" -> someone else leads
     grant_id: str | None = None      # from a grant cell in the same table row
+    stated_url: str | None = None    # the link as written (host aliases not applied): alias evidence (#16)
 
 
 @dataclass
@@ -251,6 +264,7 @@ class ProjectPage:
     participants: list[Link] = field(default_factory=list)
     unlinked_participants: list[tuple[str, str]] = field(default_factory=list)  # (name, role)
     description: str | None = None
+    unmapped_labels: list[str] = field(default_factory=list)  # "Label: value" lines no field took (parser QA, #12)
 
 
 # ---------------------------------------------------------------- helpers
@@ -306,13 +320,42 @@ def _partial_date(y: str | None, m: str | None, d: str | None) -> str | None:
     return out
 
 
+# Hungarian month names and the abbreviations the sites use ("2022. nov. 1.", "2019. október")
+MONTHS = {
+    "jan": 1, "január": 1, "feb": 2, "február": 2, "márc": 3, "március": 3, "ápr": 4, "április": 4,
+    "máj": 5, "május": 5, "jún": 6, "június": 6, "júl": 7, "július": 7, "aug": 8, "augusztus": 8,
+    "szept": 9, "szeptember": 9, "sze": 9, "okt": 10, "október": 10, "nov": 11, "november": 11,
+    "dec": 12, "december": 12,
+}
+_MONTH_WORD = r"([a-záéíóöőúüű]+)\.?"
+# a start such as "2022. nov. 1." or "2019. október"; an end that is a month date or a bare year, or nothing
+MONTH_SPAN_RE = re.compile(
+    r"(\d{4})\.?\s+" + _MONTH_WORD + r"(?:\s+(\d{1,2})\.?)?\s*[-–—]\s*"
+    r"(?:(\d{4})\.?(?:\s+" + _MONTH_WORD + r"(?:\s+(\d{1,2})\.?)?)?)?",
+    re.I,
+)
+
+
 def parse_period(text: str) -> tuple[str | None, str | None]:
     m = DATE_SPAN_RE.search(text)
+    if m:
+        return _partial_date(m.group(1), m.group(2), m.group(3)), _partial_date(m.group(4), m.group(5), m.group(6))
+    # "2022. nov. 1. – 2026. okt. 1.", "2019. október - 2020. június". Every month word must be a real month: a
+    # period is never guessed from a sentence, and an end that cannot be read is not read as "still open".
+    m = MONTH_SPAN_RE.search(text)
     if not m:
         return None, None
-    return _partial_date(m.group(1), m.group(2), m.group(3)), _partial_date(
-        m.group(4), m.group(5), m.group(6)
-    )
+    y1, w1, d1, y2, w2, d2 = m.groups()
+    if w1.lower() not in MONTHS:
+        return None, None
+    start = _partial_date(y1, str(MONTHS[w1.lower()]), d1)
+    if not y2:
+        return start, None
+    if not w2:
+        return start, y2
+    if w2.lower() not in MONTHS:
+        return None, None
+    return start, _partial_date(y2, str(MONTHS[w2.lower()]), d2)
 
 
 def _split_lines(block: Tag, base: str, aliases: dict[str, str]) -> list[Line]:
@@ -368,6 +411,18 @@ def _split_names(value: str) -> list[str]:
         if n and len(n) < 60 and not re.search(r"\d", n) and not ORG_WORD_RE.search(n) and len(n.split()) >= 2:
             out.append(n)
     return out
+
+
+def _split_lead_value(value: str) -> tuple[str, list[tuple[str, str]]]:
+    """'A; résztvevő kutató: B' -> ('A', [('résztvevő kutató', 'B')]): a ';' chunk with a short "role:" head is no lead."""
+    lead, others = [], []
+    for chunk in value.split(";"):
+        role, sep, rest = chunk.partition(":")
+        if sep and rest.strip() and 0 < len(role.split()) <= 3:
+            others.append((role.strip(), rest.strip()))
+        else:
+            lead.append(chunk)
+    return "; ".join(lead), others
 
 
 def _split_sentences(line: Line) -> list[Line]:
@@ -612,7 +667,8 @@ def _project_mention(line: Line) -> ProjectMention:
     if m := TRAILING_LEAD_RE.search(t):
         stated, t = m.group(2).strip(), t[: m.start()].strip()
     title = link.text if link and link.text else t
-    pm = ProjectMention(title=title, url=link.url if link else None, snippet=line.text, stated_lead=stated)
+    pm = ProjectMention(title=title, url=link.url if link else None, snippet=line.text, stated_lead=stated,
+                        stated_url=link.stated_url if link else None)
     rest = t[len(link.text):] if link and t.startswith(link.text) else t
     if m := LEADING_PERIOD_RE.match(rest):
         # "2023-2027 – Title", "2024-jelenleg – Title"
@@ -812,15 +868,34 @@ def parse_unit(html: str, base: str, aliases: dict[str, str]) -> UnitPage:
     return UnitPage(text_of(title), leaders, members, description)
 
 
+def _is_label_head(label: str) -> bool:
+    """Short enough to be a field label; a longer head before a colon is the start of a sentence (#16)."""
+    return 0 < len(label) <= 48 and len(label.split()) <= 6
+
+
+def _looks_like_label(label: str) -> bool:
+    """A short "Label:" head, not the opening of a sentence (parser QA only, never a field)."""
+    return 0 < len(label) <= 40 and len(label.split()) <= 5 and label[:1].isupper() and not label.endswith(".")
+
+
 def _apply_project_lines(page: ProjectPage, lines: list[Line]) -> None:
     """Fill project fields from labelled lines and the bare funder / period lines."""
-    pending_label: tuple[str, str] | None = None  # bare line seen before the period line
+    # Bare lines, in the page's header block only: a short line above a bare period line is the funding scheme as
+    # the site labels it ("NKFIH ADVANCED" / "2022 - 2024"), and the period line is the project's period. Once the
+    # page turns to prose, a short heading or a bare year range is not a funder or a project period (a numbered
+    # heading "3.1. Levéltári források" above "1918-1945" is a source period, #16). Labelled lines count anywhere.
+    in_header = True
+    pending_label: tuple[str, str] | None = None
     for line in [x for ln in lines for x in _split_sentences(ln)]:
         t = line.text
         if not t and not line.links:
             continue
+        if len(t) > PROSE_LINE_LEN:
+            in_header = False
         lab = _labelled_line(line)
         if lab is None:
+            if not in_header:
+                continue
             if PERIOD_LINE_RE.match(t):
                 if page.start is None:
                     page.start, page.end = parse_period(t)
@@ -828,10 +903,12 @@ def _apply_project_lines(page: ProjectPage, lines: list[Line]) -> None:
                 if pending_label and page.funder is None:
                     page.funder, page.funder_snippet = pending_label
                 pending_label = None
-            elif len(t) <= 60 and not line.links and page.start is None:
+            elif len(t) <= 60 and not line.links and page.start is None and not NUMBERED_HEADING_RE.match(t):
                 pending_label = (t, t)
             continue
         label, value = lab
+        if not _is_label_head(label):
+            continue  # "Kutatócsoportunk a következő alapkérdésre keresi a választ: ..." is prose, not a field
         if GRANT_LABEL_RE.match(label):
             page.grant_id, page.grant_snippet = value, t
             if m := FUNDER_PREFIX_RE.match(value):
@@ -843,14 +920,25 @@ def _apply_project_lines(page: ProjectPage, lines: list[Line]) -> None:
         elif FUNDER_LABEL_RE.match(label):
             page.funder, page.funder_snippet, page.funder_labelled = value, t, True
         elif PROJECT_LEAD_LABEL_RE.match(label):
+            # "Kutatásvezető: A; résztvevő kutató: B": the chunk with its own role label is not a lead (#16)
+            lead_value, role_chunks = _split_lead_value(value)
+            role_text = " ".join(rest for _, rest in role_chunks)
             linked = [lk for lk in line.links if is_profile_url(lk.url)]
+            other = [lk for lk in linked if lk.text in role_text and lk.text not in lead_value]
             for lk in linked:
-                if lk.url not in page.lead_snippets:
+                if lk in other:
+                    if lk.url not in {x.url for x in page.participants}:
+                        page.participants.append(lk)
+                elif lk.url not in page.lead_snippets:
                     page.leads.append(lk)
                     page.lead_snippets[lk.url] = t
-            for n in _split_names(value):
+            for n in _split_names(lead_value):
                 if not any(n == lk.text for lk in linked) and n not in {x for x, _ in page.unlinked_leads}:
                     page.unlinked_leads.append((n, t))
+            for role, rest in role_chunks:
+                for n in _split_names(rest):
+                    if not any(n == lk.text for lk in linked) and (n, role) not in page.unlinked_participants:
+                        page.unlinked_participants.append((n, role))
         elif PARTICIPANTS_LABEL_RE.match(label):
             linked = [lk for lk in line.links if is_profile_url(lk.url)]
             page.participants += [lk for lk in linked if lk.url not in {p.url for p in page.participants}]
@@ -866,8 +954,11 @@ def _apply_project_lines(page: ProjectPage, lines: list[Line]) -> None:
                 for n in _split_names(chunk):
                     if not any(n == lk.text for lk in linked) and (n, role.strip()) not in page.unlinked_participants:
                         page.unlinked_participants.append((n, role.strip()))
-    if pending_label and page.funder is None and page.start is not None:
-        page.funder, page.funder_snippet = pending_label
+        elif PARTICIPANTS_LINKS_ONLY_RE.match(label):
+            linked = [lk for lk in line.links if is_profile_url(lk.url)]
+            page.participants += [lk for lk in linked if lk.url not in {p.url for p in page.participants}]
+        elif _looks_like_label(label):
+            page.unmapped_labels.append(label)
     if page.funder and page.grant_id is None and (m := GRANT_IN_LABEL_RE.match(page.funder)):
         # "NKFIH K147304": the funder line carries the grant number
         page.grant_id, page.grant_snippet = page.funder, page.funder_snippet
