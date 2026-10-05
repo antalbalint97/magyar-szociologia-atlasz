@@ -34,6 +34,11 @@ def main(argv: list[str] | None = None) -> int:
     p = sub.add_parser("validate", help="print the quality report of a release")
     p.add_argument("release")
 
+    p = sub.add_parser("readiness", help="analysis-readiness indicators of a release (#17); any release, old or new")
+    p.add_argument("release", help="release id under data/releases, or a path to a release directory")
+    p.add_argument("--json", action="store_true", help="print JSON instead of markdown")
+    p.add_argument("--write", action="store_true", help="also write analysis_readiness.json/.md into the release")
+
     p = sub.add_parser("neo4j-load", help="idempotently load a release into Neo4j")
     p.add_argument("release")
     p.add_argument("--prune", action="store_true", help="remove nodes/edges not in this release")
@@ -74,6 +79,17 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if args.cmd == "validate":
         print((REPO_ROOT / "data" / "releases" / args.release / "quality_report.md").read_text(encoding="utf-8"))
+        return 0
+    if args.cmd == "readiness":
+        from .validation.readiness import readiness_report, render_readiness_markdown, write_readiness
+        root = Path(args.release) if Path(args.release).is_dir() else REPO_ROOT / "data" / "releases" / args.release
+        cov = root / "coverage.json"
+        labels = json.loads(cov.read_text(encoding="utf-8")).get("labels") if cov.exists() else None
+        report = readiness_report(root, labels=labels)
+        if args.write:
+            write_readiness(root, report)
+        print(json.dumps(report, indent=2, ensure_ascii=False, sort_keys=True) if args.json
+              else render_readiness_markdown(report))
         return 0
     if args.cmd == "neo4j-load":
         from .graph.loader import load_release_from_env

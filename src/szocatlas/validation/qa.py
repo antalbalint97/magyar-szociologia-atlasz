@@ -27,6 +27,7 @@ from ..normalize.names import name_key, order_free_key
 from ..resolution.matcher import MatchDecision
 from ..sources.tk.parser import is_project_metadata
 from ..resolution.projects import activity_cues, grant_keys, title_key
+from .coverage import _pct
 from .mention_stats import mention_stats, project_mention_stats
 
 AFFILIATION_TYPES = {RelationType.AFFILIATED_WITH, RelationType.MEMBER_OF, RelationType.LEADS,
@@ -472,6 +473,22 @@ def render_markdown(findings: list[Finding], manifest: dict[str, Any]) -> str:
     lines += ["", "Errors measure whether the build is internally consistent (pipeline correctness), not whether it is "
               "complete. How much of the sources it covers is in `coverage.md`; the `coverage.*` findings below "
               "summarise it.", ""]
+    ar = manifest.get("analysis_readiness")
+    if ar:  # #17: a pointer and the headline figures; definitions, denominators and the threatened analyses are in the report
+        lines += ["## Analysis readiness", "",
+                  "Diagnostics of what the structure of this release can carry (#17), not a verdict and not a QA "
+                  f"finding: definitions, denominators and the analysis each indicator threatens are in "
+                  f"`{ar['report']}`; the graded assessment is `docs/analysis_readiness.md`.", "",
+                  f"- co-participation ties: {ar['co_participation_ties']} between persons on "
+                  f"{ar['projects_with_two_or_more_persons']} projects with two or more persons in the graph",
+                  f"- project edges resting only on automatic identity rules: "
+                  f"{_pct(ar['edges_resting_only_on_automatic_identity_rules'])}",
+                  f"- ties that exist only through projects with 10 or more persons: "
+                  f"{ar['ties_only_through_projects_with_10_or_more_persons']['n']} of "
+                  f"{ar['ties_only_through_projects_with_10_or_more_persons']['of']}",
+                  f"- person mentions outside the graph: {_pct(ar['person_mentions_outside_the_graph'])}",
+                  f"- person-like nodes that would be mention-only names: "
+                  f"{_pct(ar['mention_only_share_of_person_like_nodes'])}", ""]
     for f in sorted(findings, key=lambda f: (sev_order[f.severity], f.check)):
         lines.append(f"## [{f.severity}] {f.check}")
         lines.append("")

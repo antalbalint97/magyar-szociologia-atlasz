@@ -43,6 +43,7 @@ from .resolution.projects import (
 )
 from .resolution.review import write_mention_review, write_project_review
 from .validation.coverage import coverage_findings, coverage_report, render_coverage_markdown
+from .validation.readiness import readiness_report, readiness_summary, write_readiness
 from .validation.mention_stats import mention_stats, project_mention_stats
 from .sources.base import ParseResult, SourceAdapter
 from .sources.tk.adapter import TKAdapter
@@ -276,6 +277,10 @@ def build(release_id: str, *, source_ids: list[str] | None = None, paths: Paths 
     dump_jsonl(out / "parse_report.jsonl", sorted(combined.diagnostics, key=lambda r: (r["source_id"], r["page_type"], r["url"], r["document_id"])))
     (out / "coverage.json").write_text(json.dumps(coverage, indent=2, ensure_ascii=False, default=str), encoding="utf-8")
     (out / "coverage.md").write_text(render_coverage_markdown(coverage, release_id), encoding="utf-8")
+    # #17: what the structure of this release can carry; read back from the files just written
+    readiness = readiness_report(out, manifest=manifest, sources=used_sources, labels=coverage["labels"])
+    write_readiness(out, readiness)
+    manifest["analysis_readiness"] = readiness_summary(readiness)
     (out / "manifest.json").write_text(json.dumps(manifest, indent=2, ensure_ascii=False), encoding="utf-8")
     (out / "quality_report.json").write_text(
         json.dumps([asdict(f) for f in findings], indent=2, ensure_ascii=False, default=str), encoding="utf-8")

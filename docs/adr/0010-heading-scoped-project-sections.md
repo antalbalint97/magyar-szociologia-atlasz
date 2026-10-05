@@ -160,6 +160,6 @@ Each is a coverage gap with a name in this list, not a silent loss.
 ## Known limits
 
 The resolver does not use an affiliation the page states for a plain-text name ("Kovács János
-Mátyás (IWM, Bécs)"). In this release none of the 44 heading mentions with a parenthetical
-resolved automatically, so no false merge exists, but the protection is incidental. Tracked as a
-separate issue; the resolver is not changed here.
+Mátyás (IWM, Bécs)"). In this release none of the 43 heading mentions with a parenthetical
+(41 unresolved, 2 in review) resolved automatically, so no false merge exists, but the protection
+is incidental. Tracked as a separate issue; the resolver is not changed here.
