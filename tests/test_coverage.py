@@ -36,6 +36,16 @@ def test_share_always_carries_its_denominator():
     assert C.share(0, 0) == {"n": 0, "of": 0, "rate": None}  # no denominator, no rate
 
 
+def test_displayed_percent_comes_from_the_counts_not_from_the_rounded_rate():
+    # the stored rate has 3 decimals; rounding it again showed 298 of 417 (71.46%) as 72%
+    s = C.share(298, 417)
+    assert s["rate"] == 0.715 and C._percent(s) == "71%"
+    assert C._percent(C.share(147, 280)) == "53%"  # exactly 52.5%: half up, not banker's rounding
+    assert C._percent(C.share(1, 3)) == "33%" and C._percent(C.share(2, 3)) == "67%"
+    assert C._percent(C.share(0, 0)) == "" and C._pct(C.share(0, 0)) == "0 of 0"
+    assert C._pct(s) == "298 of 417 (71%)"
+
+
 def test_every_reported_rate_names_its_denominator(workdir, registry):
     out, _ = ingest_and_build(workdir, registry, "r", PAGE)
     shares = list(walk_shares(cov(out)))

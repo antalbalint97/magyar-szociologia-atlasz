@@ -573,12 +573,14 @@ def coverage_findings(cov: dict[str, Any]):
     return out
 
 
-def _rate(rate: float | None) -> str:
-    return "" if rate is None else f"{round(100 * rate)}%"
+def _percent(s: dict[str, Any]) -> str:
+    """Whole percent, half up, from the counts. The stored 3-decimal rate is for machines: rounding it again
+    would show 71.46% as 72% and 52.5% as 52%."""
+    return f"{(200 * s['n'] + s['of']) // (2 * s['of'])}%" if s["of"] else ""
 
 
 def _pct(s: dict[str, Any]) -> str:
-    return f"{s['n']} of {s['of']}" + (f" ({_rate(s['rate'])})" if s["rate"] is not None else "")
+    return f"{s['n']} of {s['of']}" + (f" ({_percent(s)})" if s["of"] else "")
 
 
 def render_coverage_markdown(cov: dict[str, Any], release_id: str) -> str:
@@ -607,7 +609,7 @@ def render_coverage_markdown(cov: dict[str, Any], release_id: str) -> str:
           "| source (owner of the linked host) | distinct URLs | fetched | not fetched | rate |", "|---|---|---|---|---|"]
     for s, v in ins["by_source"].items():
         L.append(f"| {lab.get(s, s)} | {v['urls']} | {v['fetched']} | {v['not_fetched']} | "
-                 f"{_rate(v['fetched_share']['rate'])} |")
+                 f"{_percent(v['fetched_share'])} |")
     L += ["", "Status of those URLs: " + ", ".join(f"{k} {v}" for k, v in ins["by_status"].items()) + ".", ""]
     pll = cov["discovery"]["project_listing_links"]
     L.append(f"Category listings show {pll['distinct_urls']} distinct project URLs; {_pct(pll['fetched'])} were fetched.")
@@ -672,7 +674,7 @@ def render_coverage_markdown(cov: dict[str, Any], release_id: str) -> str:
         cols = [k for k in next(iter(by.values())) if k != "total"]
         L += ["| source | total | " + " | ".join(cols) + " |", "|---|---|" + "---|" * len(cols)]
         for s, v in by.items():
-            L.append(f"| {lab.get(s, s)} | {v['total']} | " + " | ".join(_rate(v[c]["rate"]) for c in cols) + " |")
+            L.append(f"| {lab.get(s, s)} | {v['total']} | " + " | ".join(_percent(v[c]) for c in cols) + " |")
         L.append("")
 
     nb = cov["network_bias"]
