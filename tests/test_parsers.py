@@ -1,5 +1,7 @@
 """Parser tests against real TK page snapshots (contact details scrubbed; see tests/fixtures/tk/README.md)."""
 
+from bs4 import BeautifulSoup
+
 from szocatlas.normalize.urls import canonical_url, mtmt_id
 from szocatlas.scrub import scrub_html
 from szocatlas.sources.tk import parser as P
@@ -294,3 +296,168 @@ def test_is_project_metadata_is_conservative():
               "Comparative Agendas Project", "Adaptációs mechanizmusok", "Kutatási projektek értékelése"]
     assert [t for t in meta if not P.is_project_metadata(t)] == []
     assert [t for t in titles if P.is_project_metadata(t)] == []
+
+
+def test_person_links_keep_the_url_as_written(aliases):
+    # #5: identity rules must know whether a link reached the canonical host only through an alias
+    html = ('<div><a href="https://politikatudomany.tk.hun-ren.hu/kutato/ujlaki-anna">Ujlaki Anna</a>'
+            '<a href="/kutato/gyulai-attila">Gyulai Attila</a></div>')
+    links = P._links(BeautifulSoup(html, "html.parser").div, "https://politikatudomany.tk.elte.hu/p", aliases)
+    assert [(lk.url, lk.stated_url) for lk in links] == [
+        ("https://politikatudomany.tk.elte.hu/kutato/ujlaki-anna",
+         "https://politikatudomany.tk.hun-ren.hu/kutato/ujlaki-anna"),
+        ("https://politikatudomany.tk.elte.hu/kutato/gyulai-attila",
+         "https://politikatudomany.tk.elte.hu/kutato/gyulai-attila"),
+    ]
+
+
+def test_registry_alias_status(registry):
+    assert registry.alias_status("szociologia.tk.elte.hu") == "canonical"
+    assert registry.alias_status("szociologia.tk.mta.hu") == "verified"
+    assert registry.alias_status("szociologia.tk.hun-ren.hu") == "inferred"
+    assert registry.alias_status("example.org") == "unknown"
+
+
+# ---------------------------------------------------------------------------------------------------------------
+# #16: project pages the profile links brought in (KI, PTI, RECENS pages observed 2026-10-05)
+KI = "https://kisebbsegkutato.tk.elte.hu/"
+PTI = "https://politikatudomany.tk.elte.hu/"
+
+
+def test_parse_period_with_hungarian_month_names():
+    assert P.parse_period("2022. nov. 1. – 2026. okt. 1.") == ("2022-11-01", "2026-10-01")
+    assert P.parse_period("2019. október - 2020. június") == ("2019-10", "2020-06")
+    assert P.parse_period("2020. november - 2024. december 31.") == ("2020-11", "2024-12-31")
+    assert P.parse_period("2016. október 1. – 2020. március 31.") == ("2016-10-01", "2020-03-31")
+    assert P.parse_period("2024. jún. 1. – 2025. november. 30.") == ("2024-06-01", "2025-11-30")
+    assert P.parse_period("2018. január –") == ("2018-01", None)
+    assert P.parse_period("2018. január – 2019") == ("2018-01", "2019")
+    # numeric periods are unchanged
+    assert P.parse_period("2018.12.01.-2023.09.30.") == ("2018-12-01", "2023-09-30")
+
+
+def test_period_is_never_guessed_from_words_that_are_not_months():
+    assert P.parse_period("2018. tavasz – 2019") == (None, None)
+    # an end that cannot be read is not read as "still open"
+    assert P.parse_period("2018. január – 2019. ősz") == (None, None)
+    assert P.parse_period("In 2018. május a dolog – 2020. xyz") == (None, None)
+    assert P.parse_period("24 hónap") == (None, None)
+    assert P.parse_period("2021.11.01.") == (None, None)
+
+
+def test_funder_and_period_labels_of_the_ki_template(fixture_html, aliases):
+    """"Támogatási forrás :" carries funder and grant, "Időtartam :" the period, "Vezető kutató :" the lead."""
+    proj = P.parse_project(fixture_html("ki_project_parlamenti_kepviselet.html"),
+                           KI + "a-kisebbsegek-parlamenti-kepviselete-osszehasonlitasban", aliases)
+    assert (proj.funder, proj.funder_labelled, proj.grant_id) == ("NKFIH", True, "NKFIH K143523")
+    assert (proj.start, proj.end) == ("2022", "2027")
+    assert [lk.text for lk in proj.leads] == ["Dobos Balázs"]
+    assert {lk.text for lk in proj.participants} >= {"Vizi Balázs", "Eiler Ferenc", "Fedinec Csilla"}
+
+
+def test_longer_funder_and_period_labels(fixture_html, aliases):
+    """"Támogatás forrása:" and "Kutatás időtartama:" (with month names) are the same fields under longer labels."""
+    proj = P.parse_project(fixture_html("ki_project_egyhazak_szerepvallalasa.html"),
+                           KI + "az-egyhazak-novekvo-szerepvallalasa", aliases)
+    assert proj.funder == '"OTKA" posztdoktori kiválósági program' and proj.funder_labelled
+    assert (proj.start, proj.end) == ("2020-11", "2024-12-31")
+    assert [lk.text for lk in proj.leads] == ["Neumann Eszter"]
+
+
+def test_month_name_period_and_funder_label_on_a_pti_page(fixture_html, aliases):
+    proj = P.parse_project(fixture_html("pti_project_politikai_kozosseg.html"),
+                           PTI + "a-politikai-kozosseg-hatarai", aliases)
+    assert (proj.start, proj.end) == ("2022-11-01", "2026-10-01")
+    assert (proj.funder, proj.grant_id) == ("NKFIH", "NKFIH PD 143603")
+    assert [lk.text for lk in proj.leads] == ["Tóth Szilárd"]
+
+
+def test_recens_period_label_with_month_names(fixture_html, aliases):
+    proj = P.parse_project(fixture_html("recens_project_ds4.html"), "https://recens.tk.elte.hu/ds4", aliases)
+    assert (proj.start, proj.end) == ("2022-09-01", "2027-08-31")
+    assert proj.funder == "Magyar Tudományos Akadémia" and proj.funder_labelled
+
+
+def test_narrative_page_gets_no_funder_and_no_period(fixture_html, aliases):
+    """A work plan: "3.1. Levéltári források" above "1918-1945" is a source period, "Forrásfeltárás:" an activity."""
+    proj = P.parse_project(fixture_html("ki_project_kutterv_narrativ.html"),
+                           KI + "kisebbsegi-magyar-kozossegek-kutterv", aliases)
+    assert proj.funder is None and proj.grant_id is None
+    assert (proj.start, proj.end) == (None, None)
+    assert [lk.text for lk in proj.leads] == ["Bárdi Nándor"]
+
+
+def test_short_heading_is_not_a_funder_when_the_period_is_labelled(fixture_html, aliases):
+    """"A kutatás a következő kérdésekre kíván válaszolni" above a labelled "Kutatás időtartama" is no funder."""
+    proj = P.parse_project(fixture_html("pti_project_weberi_vezetok.html"), PTI + "a-weberi-vezetok-visszaterese", aliases)
+    assert proj.funder is None
+    assert (proj.start, proj.end) == ("2018", "2022")
+    assert [lk.text for lk in proj.leads] == ["Körösényi András"]
+
+
+def test_bare_forras_label_is_a_data_source_not_a_funder(fixture_html, aliases):
+    proj = P.parse_project(fixture_html("szi_project_egyenlo_banasmod.html"),
+                           "https://szociologia.tk.elte.hu/az-egyenlo-banasmoddal-kapcsolatos-jogtudatossag", aliases)
+    assert proj.funder is None and proj.grant_id is None
+    assert "Forrás" in proj.unmapped_labels  # recorded for parse coverage, never a field
+
+
+def test_funder_label_does_not_match_forras_prefixes():
+    for label in ("Forrás", "Forrásfeltárás", "Forráskiadás", "Forrásközlés"):
+        assert not P.FUNDER_LABEL_RE.match(label)
+    for label in ("Támogatási forrás", "Támogatási források", "Támogatás forrása", "Projektfinanszírozás",
+                  "Finanszírozó", "Támogató"):
+        assert P.FUNDER_LABEL_RE.match(label)
+
+
+def test_prose_with_a_colon_is_not_a_participants_line(fixture_html, aliases):
+    """"Kutatócsoportunk a következő alapkérdésre keresi a választ: ..." must not yield names ("mit tettek")."""
+    proj = P.parse_project(fixture_html("ki_project_zsido_identitasok.html"),
+                           KI + "zsido-identitasok-magyarorszagon", aliases)
+    assert proj.unlinked_participants == [] and proj.unlinked_leads == []
+    # the misspelt "Részvevők:" counts for profile links only
+    assert [lk.text for lk in proj.participants] == ["Bányai Viktória"]
+    assert (proj.funder, proj.grant_id) == ("NKFIH", "NKFIH K 143231")
+
+
+def test_short_participants_label_reads_profile_links_only(fixture_html, aliases):
+    """One SZI page lists countries and groups under "Részvevők": they are not people.
+
+    The same page states its participants under a "Résztvevők" heading, which is read since #31: the participants
+    are those five names and none of the countries."""
+    proj = P.parse_project(fixture_html("szi_project_etnikai_konfliktusok.html"),
+                           "https://szociologia.tk.elte.hu/etnikai-konfliktusok-es-bekefolyamatok", aliases)
+    assert proj.participants == []
+    assert [n for n, _ in proj.unlinked_participants] == ["Tamás Pál", "Erőss Gábor", "Tamási Péter", "Schmidt Andrea",
+                                                          "Csizmady Adrienne"]
+    line = ("<main><h1>Projekt</h1><p>Részvevők: Belgium (flamand-vallon konfliktus), Ciprus (görög-török), "
+            "Ausztria (szlovén kisebbség), Spanyolország (Baszkföld)</p></main>")  # the page's own line, shortened
+    alone = P.parse_project(line, "https://szociologia.tk.elte.hu/projekt", aliases)
+    assert alone.participants == [] and alone.unlinked_participants == []
+
+
+def test_role_chunk_in_a_lead_line_is_not_a_lead(aliases):
+    html = ("<main><h1>Összehasonlító kampánydinamika</h1>"
+            "<p>Kutatásvezető: Bene Márton; résztvevő kutató: Farkas Xénia</p></main>")
+    proj = P.parse_project(html, PTI + "osszehasonlito-kampanydinamika-kutatas", aliases)
+    assert [n for n, _ in proj.unlinked_leads] == ["Bene Márton"]
+    assert proj.unlinked_participants == [("Farkas Xénia", "résztvevő kutató")]
+
+
+def test_bare_funder_and_period_lines_count_in_the_header_only(aliases):
+    header = ("<main><h1>Projekt</h1><p>NKFIH ADVANCED</p><p>2022 - 2024</p>"
+              "<p>Kutatásvezető: Bene Márton</p></main>")
+    proj = P.parse_project(header, PTI + "projekt", aliases)
+    assert (proj.funder, proj.funder_labelled, proj.start, proj.end) == ("NKFIH ADVANCED", False, "2022", "2024")
+    prose = "A kutatás hosszabb leírása, amely több mondatból áll, és már nem a fejléc része. " * 3
+    later = f"<main><h1>Projekt</h1><p>{prose}</p><p>3.1. Levéltári források</p><p>1918-1945</p></main>"
+    proj = P.parse_project(later, PTI + "projekt", aliases)
+    assert (proj.funder, proj.start, proj.end) == (None, None, None)
+
+
+def test_unmapped_labels_are_recorded_for_parse_coverage(fixture_html, aliases):
+    proj = P.parse_project(fixture_html("ki_project_egyhazak_szerepvallalasa.html"),
+                           KI + "az-egyhazak-novekvo-szerepvallalasa", aliases)
+    assert "Kutatás célja" in proj.unmapped_labels and "Publikációk, adatbázisok" in proj.unmapped_labels
+    # a field the parser took is never listed as unmapped
+    assert "Kutatás időtartama" not in proj.unmapped_labels

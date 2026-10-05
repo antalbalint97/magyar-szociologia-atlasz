@@ -2,10 +2,13 @@
 // static deployments and whenever Neo4j is not running. Server-side only.
 import { readFile, readdir } from "node:fs/promises";
 import path from "node:path";
+import { RESOLVED_MENTION, toMention } from "./mentions.ts";
 import { score } from "./search.ts";
 import type {
-  Edge, Entity, EntitySummary, Evidence, GraphStore, Neighbourhood, ReleaseInfo,
+  CoverageData, Edge, Entity, EntitySummary, Evidence, GraphStore, Mention, Neighbourhood, ReleaseInfo, Snapshot,
 } from "./types.ts";
+
+const MENTION_TYPES = new Set(["PersonMention", "ProjectMention"]);
 
 type Row = Record<string, any>;
 
@@ -32,6 +35,7 @@ function toEntity(type: string, r: Row): Entity {
     provenance: r.provenance ?? {},
     conflicts: r.conflicts ?? {},
     lastVerifiedAt: r.last_verified_at ?? null,
+    sourceRefs: r.source_refs ?? [],
   };
 }
 
@@ -61,19 +65,41 @@ interface Loaded {
   byNode: Map<string, Edge[]>;
   claims: Map<string, Row>;
   docs: Map<string, Row>;
+  mentions: Map<string, Mention>;
+  mentionsByTarget: Map<string, Mention[]>;
+  projectsByOwner: Map<string, Mention[]>;
+  manifest: Row;
+}
+
+function push<K, V>(m: Map<K, V[]>, k: K, v: V) {
+  if (!m.has(k)) m.set(k, []);
+  m.get(k)!.push(v);
 }
 
 export class FileStore implements GraphStore {
   private loaded: Promise<Loaded> | null = null;
-  constructor(private dir: string) {}
+  private dir: string;
+  constructor(dir: string) {
+    this.dir = dir;
+  }
 
   private load(): Promise<Loaded> {
     this.loaded ??= (async () => {
       const manifest = JSON.parse(await readFile(path.join(this.dir, "manifest.json"), "utf-8"));
       const entities = new Map<string, Entity>();
+      const mentions = new Map<string, Mention>();
+      const mentionsByTarget = new Map<string, Mention[]>();
+      const projectsByOwner = new Map<string, Mention[]>();
       for (const f of await readdir(path.join(this.dir, "entities"))) {
         const type = f.replace(/\.jsonl$/, "");
-        for (const r of await jsonl(path.join(this.dir, "entities", f))) entities.set(r.canonical_id, toEntity(type, r));
+        for (const r of await jsonl(path.join(this.dir, "entities", f))) {
+          entities.set(r.canonical_id, toEntity(type, r));
+          if (type !== "PersonMention" && type !== "ProjectMention") continue;
+          const m = toMention(r);
+          mentions.set(m.id, m);
+          if (m.resolvedTo) push(mentionsByTarget, m.resolvedTo, m);
+          if (m.observedOnProfileOf) push(projectsByOwner, m.observedOnProfileOf, m);
+        }
       }
       const edges = (await jsonl(path.join(this.dir, "relations.jsonl"))).map(toEdge);
       const byNode = new Map<string, Edge[]>();
@@ -92,7 +118,7 @@ export class FileStore implements GraphStore {
           generatedAt: manifest.generated_at,
           sources: manifest.sources ?? [],
         },
-        entities, edges, byNode, claims, docs,
+        entities, edges, byNode, claims, docs, mentions, mentionsByTarget, projectsByOwner, manifest,
       };
     })();
     return this.loaded;
@@ -103,13 +129,25 @@ export class FileStore implements GraphStore {
   }
 
   async search(query: string, limit = 25): Promise<EntitySummary[]> {
-    const { entities } = await this.load();
-    return [...entities.values()]
-      .map((e) => ({ e, s: score(query, [e.label, ...e.alternateNames, String(e.fields.name_hu ?? "")]) }))
+    const { entities, mentions } = await this.load();
+    // unresolved mentions are searchable (ranked below identities); resolved ones are reached via their Person
+    const pool: { e: EntitySummary; s: number }[] = [
+      // mention rows are loaded into `entities` too (for entity()); they enter the pool only below
+      ...[...entities.values()].filter((e) => !MENTION_TYPES.has(e.type)).map((e) => ({
+        e: { id: e.id, type: e.type, label: e.label, alternateNames: e.alternateNames },
+        s: score(query, [e.label, ...e.alternateNames, String(e.fields.name_hu ?? "")]),
+      })),
+      ...[...mentions.values()].filter((m) => !RESOLVED_MENTION.has(m.status)).map((m) => ({
+        e: { id: m.id, type: m.kind === "project" ? "ProjectMention" : "PersonMention", label: m.statedName,
+             alternateNames: [] },
+        s: score(query, [m.statedName]) * 0.9,
+      })),
+    ];
+    return pool
       .filter((x) => x.s > 0)
       .sort((a, b) => b.s - a.s || a.e.label.localeCompare(b.e.label, "hu"))
       .slice(0, limit)
-      .map(({ e }) => ({ id: e.id, type: e.type, label: e.label, alternateNames: e.alternateNames }));
+      .map(({ e }) => e);
   }
 
   async entity(id: string) {
@@ -142,6 +180,39 @@ export class FileStore implements GraphStore {
     const nodes = [...seen].map((n) => entities.get(n)!).filter(Boolean)
       .map((e) => ({ id: e.id, type: e.type, label: e.label, alternateNames: e.alternateNames }));
     return { center, nodes, edges: [...edges.values()] };
+  }
+
+  async mention(id: string): Promise<Mention | null> {
+    return (await this.load()).mentions.get(id) ?? null;
+  }
+
+  async mentionsOf(id: string): Promise<Mention[]> {
+    return (await this.load()).mentionsByTarget.get(id) ?? [];
+  }
+
+  async statedProjectsOf(personId: string): Promise<Mention[]> {
+    return (await this.load()).projectsByOwner.get(personId) ?? [];
+  }
+
+  async snapshot(): Promise<Snapshot> {
+    const { info, entities, edges, mentions } = await this.load();
+    return {
+      info,
+      entities: [...entities.values()].filter((e) => !MENTION_TYPES.has(e.type)),
+      edges,
+      mentions: [...mentions.values()],
+    };
+  }
+
+  async coverage(): Promise<CoverageData> {
+    const { manifest } = await this.load();
+    let coverage: Row | null = null;
+    try {
+      coverage = JSON.parse(await readFile(path.join(this.dir, "coverage.json"), "utf-8"));
+    } catch {
+      coverage = null; // older releases and the fixture have no coverage report
+    }
+    return { coverage, manifest };
   }
 
   async evidence(claimIds: string[]): Promise<Evidence[]> {

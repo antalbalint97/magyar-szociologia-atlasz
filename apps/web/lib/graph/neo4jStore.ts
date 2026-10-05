@@ -1,13 +1,14 @@
 // Neo4j backend. Runs only on the server (route handlers / server components);
 // credentials come from env vars and are never sent to the browser.
 import neo4j, { type Driver } from "neo4j-driver";
+import { toMention } from "./mentions.ts";
 import { fold } from "./search.ts";
 import type {
-  Edge, Entity, EntitySummary, Evidence, GraphStore, Neighbourhood, ReleaseInfo,
+  CoverageData, Edge, Entity, EntitySummary, Evidence, GraphStore, Mention, Neighbourhood, ReleaseInfo, Snapshot,
 } from "./types.ts";
 
 const NON_FIELDS = new Set(["canonical_id", "label", "provenance_json", "conflicts_json", "search_text",
-  "release_id", "entity_type", "has_conflicts", "source_refs"]);
+  "release_id", "entity_type", "has_conflicts", "source_refs", "context_json", "resolution_json", "candidates_json"]);
 
 function plain(v: any): any {
   if (neo4j.isInt(v)) return v.toNumber();
@@ -27,6 +28,7 @@ function nodeToEntity(props: Record<string, any>): Entity {
     provenance: JSON.parse(props.provenance_json ?? "{}"),
     conflicts: JSON.parse(props.conflicts_json ?? "{}"),
     lastVerifiedAt: props.last_verified_at ?? null,
+    sourceRefs: props.source_refs ?? [],
   };
 }
 
@@ -74,8 +76,13 @@ export class Neo4jStore implements GraphStore {
     const terms = fold(query).split(" ").filter(Boolean).map((t) => `${t}~ OR ${t}*`).join(" AND ");
     if (!terms) return [];
     const rows = await this.q(
-      "CALL db.index.fulltext.queryNodes('entity_search', $terms) YIELD node, score " +
-      "RETURN node LIMIT $limit", { terms, limit: neo4j.int(limit) });
+      "CALL db.index.fulltext.queryNodes('entity_search', $terms) YIELD node, score RETURN node, score " +
+      "UNION CALL db.index.fulltext.queryNodes('mention_search', $terms) YIELD node, score " +
+      "WITH node, score WHERE node.resolution_status IN ['REVIEW_REQUIRED', 'UNRESOLVED'] " +
+      "RETURN node, score * 0.5 AS score " +
+      "UNION CALL db.index.fulltext.queryNodes('project_mention_search', $terms) YIELD node, score " +
+      "WITH node, score WHERE node.resolution_status IN ['REVIEW_REQUIRED', 'UNRESOLVED'] " +
+      "RETURN node, score * 0.5 AS score ORDER BY score DESC LIMIT $limit", { terms, limit: neo4j.int(limit) });
     return rows.map((r) => {
       const p = r.get("node").properties;
       return { id: p.canonical_id, type: p.entity_type, label: p.label, alternateNames: p.alternate_names ?? [] };
@@ -83,13 +90,34 @@ export class Neo4jStore implements GraphStore {
   }
 
   async entity(id: string) {
-    const [r] = await this.q("MATCH (n:Entity {canonical_id: $id}) RETURN n", { id });
+    const [r] = await this.q(
+      "MATCH (n {canonical_id: $id}) WHERE n:Entity OR n:PersonMention OR n:ProjectMention RETURN n", { id });
     return r ? nodeToEntity(r.get("n").properties) : null;
+  }
+
+  async mention(id: string): Promise<Mention | null> {
+    const [r] = await this.q(
+      "MATCH (m {canonical_id: $id}) WHERE m:PersonMention OR m:ProjectMention RETURN m", { id });
+    return r ? toMention(r.get("m").properties) : null;
+  }
+
+  async mentionsOf(id: string): Promise<Mention[]> {
+    const rows = await this.q(
+      "MATCH (m)-[:RESOLVES_TO]->(:Entity {canonical_id: $id}) WHERE m:PersonMention OR m:ProjectMention " +
+      "RETURN m ORDER BY m.source_url", { id });
+    return rows.map((r) => toMention(r.get("m").properties));
+  }
+
+  async statedProjectsOf(personId: string): Promise<Mention[]> {
+    const rows = await this.q(
+      "MATCH (m:ProjectMention {observed_on_profile_of: $id}) RETURN m ORDER BY m.stated_title", { id: personId });
+    return rows.map((r) => toMention(r.get("m").properties));
   }
 
   async neighbourhood(id: string, depth: 1 | 2): Promise<Neighbourhood | null> {
     const center = await this.entity(id);
     if (!center) return null;
+    if (center.type === "PersonMention" || center.type === "ProjectMention") return { center, nodes: [center], edges: [] };
     const hop2 = depth === 2
       ? "UNION MATCH (c:Entity {canonical_id: $id})-[:MEMBER_OF|AFFILIATED_WITH|LEADS|PARTICIPATES_IN]->(h)" +
         "<-[r:MEMBER_OF|AFFILIATED_WITH|LEADS|PARTICIPATES_IN]-(o:Person) RETURN o AS a, r, h AS b, startNode(r) = o AS fwd"
@@ -118,5 +146,26 @@ export class Neo4jStore implements GraphStore {
                status: c.epistemic_status, url: s.canonical_url, retrievedAt: s.retrieved_at,
                synthetic: Boolean(s.synthetic) };
     });
+  }
+
+  // Not yet exercised against a live database (#30): same shapes as the file backend.
+  async snapshot(): Promise<Snapshot> {
+    const info = await this.release();
+    const nodes = await this.q("MATCH (n:Entity) RETURN n");
+    const rels = await this.q(
+      "MATCH (a:Entity)-[r]->(b:Entity) RETURN type(r) AS t, a.canonical_id AS s, b.canonical_id AS o, r");
+    const ments = await this.q("MATCH (m) WHERE m:PersonMention OR m:ProjectMention RETURN m");
+    return {
+      info,
+      entities: nodes.map((r) => nodeToEntity(r.get("n").properties)),
+      edges: rels.map((r) => relToEdge(r.get("t"), r.get("s"), r.get("o"), r.get("r").properties)),
+      mentions: ments.map((r) => toMention(r.get("m").properties)),
+    };
+  }
+
+  // The coverage report is a release file, not part of the graph projection.
+  async coverage(): Promise<CoverageData> {
+    const [r] = await this.q("MATCH (m:ReleaseInfo {key: 'current'}) RETURN m");
+    return { coverage: null, manifest: r?.get("m").properties ?? {} };
   }
 }

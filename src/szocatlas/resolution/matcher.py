@@ -32,11 +32,13 @@ import yaml
 from pydantic import BaseModel, Field
 
 from ..models.entities import ID_PREFIX
-from ..models.enums import EntityType, MatchStatus
+from ..models.enums import EntityType, IdentityAnchor, MatchStatus
 from ..models.provenance import Claim, SourceRecord
 from ..normalize.names import name_key, order_free_key
 
 HARD_IDS = ("mtmt_id", "orcid")
+HARD_ID_ANCHOR = {"mtmt_id": IdentityAnchor.MTMT, "orcid": IdentityAnchor.ORCID}
+ANCHORED_TYPES = (EntityType.PERSON, EntityType.PROJECT)  # canonical only with identity evidence
 
 
 class MatchDecision(BaseModel):
@@ -55,6 +57,9 @@ class MatchDecision(BaseModel):
 class Overrides:
     same_as: list[tuple[str, str]] = field(default_factory=list)
     not_same_as: list[tuple[str, str]] = field(default_factory=list)
+    # canonical ids a reviewer chose to keep when a same_as joins records that already
+    # had different ids (ADR-0003: otherwise the oldest id survives)
+    survivors: set[str] = field(default_factory=set)
 
     @classmethod
     def load(cls, path: Path) -> Overrides:
@@ -69,7 +74,8 @@ class Overrides:
                 out += [(refs[0], r) for r in refs[1:]]
             return out
 
-        return cls(pairs("same_as"), pairs("not_same_as"))
+        survivors = {str(item["survivor"]) for item in data.get("same_as") or [] if item.get("survivor")}
+        return cls(pairs("same_as"), pairs("not_same_as"), survivors)
 
 
 class _UF:
@@ -194,11 +200,14 @@ def match_people(ents: dict[str, SourceEntity], overrides: Overrides) -> list[Ma
 
 
 def match_structural(ents: dict[str, SourceEntity]) -> list[MatchDecision]:
-    """Units and projects: the same name/title within one site is the same thing."""
+    """Units and research groups: the same name within one site is the same thing.
+
+    Projects are excluded (ADR-0008): editions share titles, so a same-title pair is a
+    candidate for the project resolver, never an automatic merge."""
     out = []
     groups: dict[tuple, list[SourceEntity]] = defaultdict(list)
     for e in ents.values():
-        if e.entity_type in (EntityType.ORG_UNIT, EntityType.PROJECT, EntityType.RESEARCH_GROUP):
+        if e.entity_type in (EntityType.ORG_UNIT, EntityType.RESEARCH_GROUP):
             site = e.ref.split("|", 1)[0]
             for lab in e.labels:
                 groups[(e.entity_type, site, name_key(lab))].append(e)
@@ -210,6 +219,23 @@ def match_structural(ents: dict[str, SourceEntity]) -> list[MatchDecision]:
             out.append(MatchDecision(left=left, right=right, entity_type=etype, status=MatchStatus.CONFIRMED,
                                      method="auto:same_site_same_name", score=0.95,
                                      left_label=a.labels[0], right_label=b.labels[0]))
+    return out
+
+
+def match_manual(ents: dict[str, SourceEntity], overrides: Overrides) -> list[MatchDecision]:
+    """Reviewer same_as / not_same_as between records of other types (projects, ADR-0008)."""
+    out = []
+    for pairs, status, method in ((overrides.same_as, MatchStatus.CONFIRMED, "manual:same_as"),
+                                  (overrides.not_same_as, MatchStatus.REJECTED, "manual:not_same_as")):
+        for a, b in pairs:
+            ea, eb = ents.get(a), ents.get(b)
+            if ea is None or eb is None or ea.entity_type is EntityType.PERSON or ea.entity_type is not eb.entity_type:
+                continue
+            left, right = sorted((a, b))
+            la, lb = (ea, eb) if a == left else (eb, ea)
+            out.append(MatchDecision(left=left, right=right, entity_type=ea.entity_type, status=status,
+                                     method=method, score=1.0 if status is MatchStatus.CONFIRMED else 0.0,
+                                     left_label=la.labels[0], right_label=lb.labels[0]))
     return out
 
 
@@ -229,21 +255,35 @@ class IdentityMap:
     def mint(etype: EntityType, seed: str) -> str:
         return f"{ID_PREFIX[etype]}_{hashlib.sha1(seed.encode()).hexdigest()[:10]}"
 
-    def assign(self, clusters: dict[str, list[SourceEntity]]) -> dict[str, str]:
+    def assign(self, clusters: dict[str, list[SourceEntity]], survivors: set[str] = frozenset(),
+               strength: dict[str, int] | None = None) -> dict[str, str]:
+        """Give every cluster a canonical id. When a merge joins records that already carry
+        different ids, the survivor is, in order: the id a reviewer named (``survivors``),
+        the oldest assignment, the id whose records carry the stronger identity anchor
+        (``strength`` per source ref), the lowest id. The other ids are recorded as
+        ``previous_id`` on the rows that move (ADR-0003)."""
+        strength = strength or {}
         now = datetime.now(UTC).isoformat(timespec="seconds")
         ref_to_id: dict[str, str] = {}
         used: set[str] = set()
         # clusters whose members already have ids keep the oldest one
-        ordered = sorted(clusters.values(), key=lambda ms: min(
-            (self.rows[m.ref]["assigned_at"] for m in ms if m.ref in self.rows), default="~"))
+        ordered = sorted(clusters.values(), key=lambda ms: (min(
+            (self.rows[m.ref]["assigned_at"] for m in ms if m.ref in self.rows), default="~"),
+            min(m.ref for m in ms)))
         for members in ordered:
             etype = members[0].entity_type
-            known = sorted(
-                (self.rows[m.ref]["assigned_at"], self.rows[m.ref]["canonical_id"])
-                for m in members if m.ref in self.rows
-                and self.rows[m.ref]["canonical_id"].startswith(ID_PREFIX[etype] + "_")
-            )
-            cid = next((c for _, c in known if c not in used), None)
+            ids: dict[str, list[str]] = defaultdict(list)
+            for m in members:
+                row = self.rows.get(m.ref)
+                if row and row["canonical_id"].startswith(ID_PREFIX[etype] + "_"):
+                    ids[row["canonical_id"]].append(m.ref)
+            known = sorted(ids, key=lambda c: (
+                c not in survivors,
+                min(self.rows[r]["assigned_at"] for r in ids[c]),
+                -max(strength.get(r, 0) for r in ids[c]),
+                c,
+            ))
+            cid = next((c for c in known if c not in used), None)
             if cid is None:
                 cid = self.mint(etype, min(m.ref for m in members))
                 while cid in used:
@@ -260,6 +300,11 @@ class IdentityMap:
                     }
         return ref_to_id
 
+    def retire(self, refs: list[str]) -> None:
+        """Forget assignments of records that no longer map to a canonical entity."""
+        for ref in refs:
+            self.rows.pop(ref, None)
+
     def save(self) -> None:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         with open(self.path, "w", encoding="utf-8") as fh:
@@ -274,7 +319,7 @@ def resolve(
     identity: IdentityMap,
 ) -> tuple[dict[str, str], list[MatchDecision]]:
     ents = collect(records, claims)
-    decisions = match_people(ents, overrides) + match_structural(ents)
+    decisions = match_people(ents, overrides) + match_structural(ents) + match_manual(ents, overrides)
     uf = _UF()
     for e in ents:
         uf.find(e)
@@ -293,11 +338,50 @@ def resolve(
     clusters: dict[str, list[SourceEntity]] = defaultdict(list)
     for ref, e in ents.items():
         clusters[uf.find(ref)].append(e)
-    return identity.assign(clusters), decisions
+    # A person or project cluster becomes a canonical entity only with identity evidence;
+    # its other records are mentions of it. Clusters without evidence stay mentions
+    # (ADR-0006, ADR-0008).
+    anchors = identity_anchors(records, claims, overrides)
+    keep = {k: ms for k, ms in clusters.items()
+            if ms[0].entity_type not in ANCHORED_TYPES or any(m.ref in anchors for m in ms)}
+    identity.retire([m.ref for k, ms in clusters.items() if k not in keep for m in ms])
+    strength = {ref: len(kinds & {IdentityAnchor.MTMT, IdentityAnchor.ORCID}) for ref, kinds in anchors.items()}
+    return identity.assign(keep, overrides.survivors, strength), decisions
 
 
-def write_review_queue(decisions: list[MatchDecision], path: Path) -> int:
-    pending = [d for d in decisions if d.status is MatchStatus.POSSIBLE and d.entity_type is EntityType.PERSON]
+def identity_anchors(records: list[SourceRecord], claims: list[Claim],
+                     overrides: Overrides | None = None) -> dict[str, set[IdentityAnchor]]:
+    """Person / project source ref -> the identity evidence it carries (ADR-0006, ADR-0008).
+
+    A record from the entity's own page (``identity_anchor``: a researcher's profile, a
+    project's page) or a stated hard identifier anchors an identity. A name or title on
+    someone else's page does not. A project record a reviewer joined to another with
+    ``same_as`` is anchored by that decision.
+    """
+    out: dict[str, set[IdentityAnchor]] = defaultdict(set)
+    projects = set()
+    for r in records:
+        if r.ref.entity_type in ANCHORED_TYPES and r.ref.source_ref and r.identity_anchor:
+            out[r.ref.source_ref].add(IdentityAnchor(r.identity_anchor))
+        if r.ref.entity_type is EntityType.PROJECT and r.ref.source_ref:
+            projects.add(r.ref.source_ref)
+    for c in claims:
+        if (c.subject.entity_type is EntityType.PERSON and c.subject.source_ref and c.object is None
+                and c.predicate in HARD_ID_ANCHOR and c.value):
+            out[c.subject.source_ref].add(HARD_ID_ANCHOR[c.predicate])
+    for a, b in (overrides.same_as if overrides else []):
+        if a in projects and b in projects:
+            out[a].add(IdentityAnchor.MANUAL)
+            out[b].add(IdentityAnchor.MANUAL)
+    return out
+
+
+def write_review_queue(decisions: list[MatchDecision], path: Path, only_refs: set[str] | None = None) -> int:
+    """Possible person-person matches. With ``only_refs``, only pairs of identity-anchored
+    records (two profiles that may be one person); name mentions are reviewed per mention
+    in review/mention_review.yaml instead (#5)."""
+    pending = [d for d in decisions if d.status is MatchStatus.POSSIBLE and d.entity_type is EntityType.PERSON
+               and (only_refs is None or (d.left in only_refs and d.right in only_refs))]
     payload = {
         "_comment": (
             "Generated. Do not edit: record decisions in review/manual_overrides.yaml "
@@ -306,7 +390,7 @@ def write_review_queue(decisions: list[MatchDecision], path: Path) -> int:
         "possible_matches": [
             {"refs": [d.left, d.right], "labels": [d.left_label, d.right_label],
              "method": d.method, "score": d.score, "signals": d.signals}
-            for d in sorted(pending, key=lambda d: -d.score)
+            for d in sorted(pending, key=lambda d: (-d.score, d.left, d.right))
         ],
     }
     path.parent.mkdir(parents=True, exist_ok=True)

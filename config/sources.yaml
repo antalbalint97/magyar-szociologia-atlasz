@@ -35,6 +35,8 @@ institutions:
     website: https://tk.elte.hu
     parent: elte
     verify_url: https://tk.elte.hu/
+    # sites of the centre under its current and former hosts; classification of linked pages only (#16)
+    host_suffixes: [tk.elte.hu, tk.hu, tk.mta.hu, tk.hun-ren.hu]
     notes: >
       tk.hu redirects to tk.elte.hu (observed 2026-10-04). Profile links on the sites
       still use tk.mta.hu and tk.hu hosts, which are evidence of earlier institutional
@@ -172,12 +174,18 @@ sources:
     unit_type: institute
     base_url: https://szociologia.tk.elte.hu
     host_aliases: [szociologia.tk.hu, szociologia.tk.mta.hu, szociologia.tk.hun-ren.hu, socio.mta.hu]
+    # 301 to the same path on base_url, checked 2026-10-04 (#14); other aliases are inferred
+    verified_host_aliases: [szociologia.tk.hu, szociologia.tk.mta.hu]
     adapter: tk
     enabled: true
     verified: true
     adapter_config:
       institute_code: SZI
       people_listing: /kutatok
+      # #16 (ADR-0009): a link in a profile's project section is discovery evidence for that page. It is
+      # followed one hop, only for hosts of an enabled source of this adapter and for one-segment project
+      # paths; every decision is written to the frontier.
+      follow_profile_project_links: true
       units:
         - {path: /csalad-es-tarsas-kapcsolatok, unit_type: research_department}
         - {path: /tarsadalom-es-kozpolitika-osztaly, unit_type: research_department}
@@ -198,12 +206,15 @@ sources:
     unit_type: research_centre
     base_url: https://recens.tk.elte.hu
     host_aliases: [recens.tk.hu, recens.tk.mta.hu, recens.tk.hun-ren.hu]
+    # 301 to the same path on base_url, checked 2026-10-04 (#14); other aliases are inferred
+    verified_host_aliases: [recens.tk.hu, recens.tk.mta.hu]
     adapter: tk
     enabled: true
     verified: true
     adapter_config:
       institute_code: Recens
       people_listing: /kutatok
+      follow_profile_project_links: true
       units: []
       project_listings: []
     notes: >
@@ -219,12 +230,15 @@ sources:
     unit_type: institute
     base_url: https://kisebbsegkutato.tk.elte.hu
     host_aliases: [kisebbsegkutato.tk.hu, kisebbsegkutato.tk.mta.hu, kisebbsegkutato.tk.hun-ren.hu]
+    # 301 to the same path on base_url, checked 2026-10-04 (#14); other aliases are inferred
+    verified_host_aliases: [kisebbsegkutato.tk.hu, kisebbsegkutato.tk.mta.hu]
     adapter: tk
     enabled: true
     verified: true
     adapter_config:
       institute_code: KI
       people_listing: /kutatok
+      follow_profile_project_links: true
       units:
         - {path: /kisebbsegszociologiai-es-antropologiai-osztaly, unit_type: research_department}
         - {path: /kisebbsegtorteneti-es-etnopolitikai-osztaly, unit_type: research_department}
@@ -241,6 +255,8 @@ sources:
     unit_type: institute
     base_url: https://politikatudomany.tk.elte.hu
     host_aliases: [politikatudomany.tk.hu, politikatudomany.tk.mta.hu, politikatudomany.tk.hun-ren.hu, politologia.tk.mta.hu, politologia.tk.hu, politologia.tk.elte.hu]
+    # 301 to the same path on base_url, checked 2026-10-04 (#14); other aliases are inferred
+    verified_host_aliases: [politikatudomany.tk.hu, politikatudomany.tk.mta.hu, politologia.tk.mta.hu, politologia.tk.hu]
     adapter: tk
     enabled: true
     verified: true
@@ -248,6 +264,7 @@ sources:
     adapter_config:
       institute_code: PTI
       people_listing: /kutatok
+      follow_profile_project_links: true
       units:
         - {path: /demokracia-es-politikaelmeleti-osztaly, unit_type: research_department}
         - {path: /kormanyzas-es-kozpolitika-osztaly, unit_type: research_department}
@@ -267,6 +284,8 @@ sources:
     unit_type: institute
     base_url: https://jog.tk.elte.hu
     host_aliases: [jog.tk.hu, jog.tk.mta.hu]
+    # 301 to the same path on base_url, checked 2026-10-04 (#14); other aliases are inferred
+    verified_host_aliases: [jog.tk.mta.hu]
     adapter: tk
     enabled: false
     verified: false

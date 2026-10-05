@@ -1,0 +1,144 @@
+import Link from "next/link";
+import type { Evidence, GraphStore, Mention } from "@/lib/graph";
+import { RESOLVED_MENTION } from "@/lib/graph/mentions";
+import { whyOpen } from "@/lib/atlas/mentionText";
+
+// ADR-0006/0007/0008: a mention page shows what one source page said about a person-like name
+// or a project-like title and the identity decision behind it, with the evidence for and against
+// each candidate. It never shows a biography or an unestablished identity.
+
+const STATUS_HU: Record<string, string> = {
+  DETERMINISTIC: "azonosítva (profil-link vagy azonosító)",
+  MANUAL_CONFIRMED: "kézzel megerősítve",
+  HIGH_CONFIDENCE_AUTO: "automatikusan azonosítva (szabály)",
+  REVIEW_REQUIRED: "azonosítatlan, ellenőrzésre vár",
+  UNRESOLVED: "azonosítatlan említés",
+};
+
+function Signals({ pos, neg }: { pos: string[]; neg: string[] }) {
+  return (
+    <span style={{ fontSize: 13 }}>
+      {pos.map((s) => <code key={s} style={{ marginRight: 4 }}>{s}</code>)}
+      {neg.map((s) => <code key={s} style={{ marginRight: 4, color: "var(--derived)" }}>−{s}</code>)}
+    </span>
+  );
+}
+
+const REL_HU: Record<string, string> = {
+  PARTICIPATES_IN: "résztvevő", PRINCIPAL_INVESTIGATOR_OF: "projektvezető", LEADS: "vezető",
+  MEMBER_OF: "tag", AFFILIATED_WITH: "munkatárs", EDITOR_OF: "szerkesztő",
+};
+
+export function statusLabel(m: Mention) {
+  return STATUS_HU[m.status] ?? m.status;
+}
+
+export default async function MentionView({ m, g }: { m: Mention; g: GraphStore }) {
+  const ids = [...new Set([m.resolvedTo, m.observedOnProfileOf, ...m.candidates.map((c) => c.targetId),
+    ...m.context.map((c) => c.targetId)].filter(Boolean))] as string[];
+  const labels = new Map((await Promise.all(ids.map((i) => g.entity(i)))).filter(Boolean).map((e) => [e!.id, e!.label]));
+  const evidence: Evidence[] = await g.evidence(m.claimIds);
+  const resolved = RESOLVED_MENTION.has(m.status) && m.resolvedTo;
+  const project = m.kind === "project";
+  return (
+    <>
+      <header className="entity-head">
+        <div className="eyebrow">
+          <span className="kind">{project ? "Projektemlítés a forrásban" : "Személyemlítés a forrásban"}</span>
+          <span className={`badge ${resolved ? "observed" : "open"}`}>{statusLabel(m)}</span>
+        </div>
+        <h1 style={{ fontStyle: "italic", fontWeight: 500 }}>„{m.statedName}”</h1>
+        {!resolved && (
+          <p className="note" style={{ maxWidth: "75ch" }}>
+            <strong>Ez nem {project ? "projekt" : "kutató"}i adatlap.</strong> Egy forrásoldal ezt a{" "}
+            {project ? "címet" : "nevet"} írja; az atlasz megőrzi, de amíg nincs elég bizonyíték az azonosításhoz, nem
+            kezeli {project ? "projektként" : "kutatóként"}, és nem szerepel a hálózatban.
+            {whyOpen(m) && <> Ok: {whyOpen(m)}.</>}
+          </p>
+        )}
+      </header>
+      <div className="split even" style={{ marginTop: 24 }}>
+        <div>
+          <section className="section" style={{ marginTop: 0, marginBottom: 32 }}>
+            <h2>Azonosítás</h2>
+            {resolved ? (
+              <div>{project ? "Ugyanaz a projekt" : "Ugyanaz a személy"}:{" "}
+                <Link href={`/entity/${m.resolvedTo}`}>{labels.get(m.resolvedTo!) ?? m.resolvedTo}</Link></div>
+            ) : project ? (
+              <p className="muted">
+                Ez a projektcím egy forrásoldalon szerepel, de a bizonyítékok nem elegendők ahhoz, hogy egy
+                azonosított projekthez kössük (saját projektoldal, pályázati azonosító, dokumentált szabály vagy kézi
+                döntés). Nem számít projektnek a hálózatban; a cím egyezése önmagában nem azonosítás.
+              </p>
+            ) : (
+              <p className="muted">
+                Ez a név egy forrásoldalon szerepel, de a bizonyítékok nem elegendők ahhoz, hogy egy azonosított
+                személyhez kössük (profil-link, azonosító, dokumentált szabály vagy kézi döntés). Nem számít
+                személynek a hálózatban.
+              </p>
+            )}
+            {m.method && <div><span className="muted">Módszer:</span> <code>{m.method}</code></div>}
+            {(m.signals.length > 0 || m.negativeSignals.length > 0) && (
+              <div><span className="muted">Bizonyítékok:</span> <Signals pos={m.signals} neg={m.negativeSignals} /></div>
+            )}
+            {m.reason && <div><span className="muted">Miért nem automatikus:</span> {m.reason}</div>}
+            {m.decisionSource && <div><span className="muted">Döntés forrása:</span> <code>{m.decisionSource}</code></div>}
+            {m.candidates.length > 0 && (
+              <div style={{ marginTop: 6 }}>
+                <span className="muted">Jelöltek (egy jelölt önmagában nem azonosítás):</span>
+                <ul>
+                  {m.candidates.map((c) => (
+                    <li key={c.targetId}>
+                      <Link href={`/entity/${c.targetId}`}>{labels.get(c.targetId) ?? c.targetId}</Link>
+                      {c.rejected && <span className="muted"> (kézzel elutasítva)</span>}
+                      <div><Signals pos={c.signals} neg={c.negativeSignals} /></div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </section>
+          <section className="section" style={{ marginTop: 0, marginBottom: 32 }}>
+            <h2>Mit mond a forrás</h2>
+            <div><span className="muted">Oldal:</span> <a href={m.sourceUrl} rel="noreferrer">{m.sourceUrl}</a></div>
+            {m.linkedProfileUrl && (
+              <div><span className="muted">{project ? "Hivatkozott oldal:" : "Hivatkozott profil:"}</span>{" "}
+                <a href={m.linkedProfileUrl} rel="noreferrer">{m.linkedProfileUrl}</a></div>
+            )}
+            {m.observedOnProfileOf && (
+              <div><span className="muted">Saját profilján sorolja fel:</span>{" "}
+                <Link href={`/entity/${m.observedOnProfileOf}`}>{labels.get(m.observedOnProfileOf) ?? m.observedOnProfileOf}</Link></div>
+            )}
+            {m.activityCues.length > 0 && (
+              <div><span className="muted">Lehet, hogy nem projekt (#9 dönti el):</span>{" "}
+                {m.activityCues.map((c) => <code key={c} style={{ marginRight: 4 }}>{c}</code>)}</div>
+            )}
+            {m.context.length > 0 && (
+              <ul className="edge-list">
+                {m.context.map((c, i) => (
+                  <li key={i}>
+                    {REL_HU[c.relation] ?? c.relation}
+                    {c.role && <span className="muted"> ({c.role})</span>}:{" "}
+                    {c.targetId ? <Link href={`/entity/${c.targetId}`}>{labels.get(c.targetId) ?? c.targetId}</Link>
+                      : <span className="muted">{c.targetRef ?? "?"}</span>}
+                    {c.snippet && <div className="muted">„{c.snippet}”</div>}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        </div>
+        <div>
+          <section className="section" style={{ marginTop: 0, marginBottom: 32 }}>
+            <h2>Forrásállítások</h2>
+            <ul style={{ paddingLeft: 18 }}>
+              {evidence.slice(0, 20).map((ev) => (
+                <li key={ev.claimId}><code>{ev.predicate}</code>: „{ev.snippet}” <span className="muted">{ev.retrievedAt.slice(0, 10)}</span></li>
+              ))}
+            </ul>
+          </section>
+        </div>
+      </div>
+    </>
+  );
+}

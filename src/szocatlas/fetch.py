@@ -133,14 +133,19 @@ class PoliteFetcher:
             follow_redirects=True,
         )
         self._robots: dict[str, urllib.robotparser.RobotFileParser | None] = {}
+        self._robots_unavailable: dict[str, str] = {}  # origin -> why robots.txt could not be read
         self._last_hit: dict[str, float] = {}
         self.pages_fetched = 0
+
+    @staticmethod
+    def _origin(url: str) -> str:
+        u = httpx.URL(url)
+        return f"{u.scheme}://{u.host}"
 
     def _allowed(self, url: str) -> bool:
         if not self.policy.respect_robots:
             return True
-        u = httpx.URL(url)
-        origin = f"{u.scheme}://{u.host}"
+        origin = self._origin(url)
         if origin not in self._robots:
             rp = urllib.robotparser.RobotFileParser()
             try:
@@ -149,9 +154,11 @@ class PoliteFetcher:
                 # Unreachable robots.txt: be conservative and do not crawl the host.
                 log.warning("robots.txt unreachable for %s (%s); refusing host", origin, e)
                 self._robots[origin] = None
+                self._robots_unavailable[origin] = f"robots.txt unreachable ({type(e).__name__})"
                 return False
             if r.status_code >= 500:
                 self._robots[origin] = None
+                self._robots_unavailable[origin] = f"robots.txt answered HTTP {r.status_code}"
             elif r.status_code >= 400:
                 rp.parse([])  # no robots.txt: everything allowed
                 self._robots[origin] = rp
@@ -198,7 +205,10 @@ class PoliteFetcher:
         if self.pages_fetched >= self.policy.max_pages_per_run:
             raise FetchRefused(f"page budget {self.policy.max_pages_per_run} exhausted")
         if not self._allowed(url):
-            raise FetchRefused(f"robots.txt disallows {url}")
+            # not one fact: the site disallows the page, or its robots.txt could not be read (unreachable, HTTP 5xx)
+            # and the host is refused to be safe. The message keeps them apart, because coverage must (#12).
+            why = self._robots_unavailable.get(self._origin(url))
+            raise FetchRefused(f"{why}, host not crawled: {url}" if why else f"robots.txt disallows {url}")
         r = self._get_with_retry(url)
         self.pages_fetched += 1
         doc = make_document(

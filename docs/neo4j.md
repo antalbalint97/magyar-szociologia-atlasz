@@ -62,3 +62,42 @@ All in `src/szocatlas/graph/cypher/queries.cypher`:
 
 Queries 6 and 7 are included to prove the model supports them; they return nothing until
 the corresponding sources are ingested, rather than returning guesses.
+
+
+## Person mentions (ADR-0006)
+
+`:PersonMention` nodes are evidence, not entities, and deliberately lack the `:Entity`
+label. A mention is one person-like record observed on one page (a linked or unlinked
+name on a listing, unit or project page).
+
+* `(:PersonMention)-[:RESOLVES_TO {status, method, signals, negative_signals, evidence_json,
+  decision_source, resolver_version, decided_at}]->(:Person)` exists only for resolved
+  mentions (`DETERMINISTIC`, `MANUAL_CONFIRMED`, `HIGH_CONFIDENCE_AUTO`; ADR-0007). Filter
+  on `status` to exclude rule-based decisions from a sensitivity analysis.
+* `(:PersonMention)-[:MENTIONED_IN {relation, role, snippet, claim_ids}]->(target)` records
+  what the page said about the person (e.g. a participant role in a project).
+* Mentions that are not resolved have `resolution_status` `REVIEW_REQUIRED` (candidates in
+  `candidates_json`, with their evidence) or `UNRESOLVED` (no candidate), and no `RESOLVES_TO`.
+
+Structural queries match `(:Person)` and never traverse mentions. Provenance queries walk
+`SourceDocument ← Claim`, `PersonMention -[:RESOLVES_TO]-> Person` (queries 11–13).
+
+## Project mentions (ADR-0008)
+
+`:ProjectMention` nodes are evidence as well, without `:Entity`. A project mention is one
+project-like record observed on one page other than the project's own: a category-listing
+article, a line in a researcher profile's "Projektek" section.
+
+* `(:ProjectMention)-[:RESOLVES_TO {status, method, signals, negative_signals, ...}]->(:Project)`
+  for resolved mentions (`project_url`, `grant_and_title`, `grant_and_owner`,
+  `title_and_owner`, manual).
+* `(:ProjectMention)-[:MENTIONED_IN {relation, direction: 'in', role}]->(:Person)` for the
+  profile owner who lists the project. `observed_on_profile_of` carries the same id, so
+  "projects X lists but that have no page" is
+  `MATCH (m:ProjectMention {observed_on_profile_of: $id}) WHERE NOT (m)-[:RESOLVES_TO]->() RETURN m`.
+* `stated_title`, `stated_period_from/until`, `stated_grant_ids`, `grant_keys`,
+  `stated_roles` and `activity_cues` are properties. Candidates and evidence are JSON strings.
+
+Co-participation queries match `(:Person)-[:PARTICIPATES_IN]->(:Project)` and therefore
+see only anchored projects. Unresolved profile titles never create a tie.
+
