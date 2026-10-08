@@ -12,6 +12,15 @@ scripts, iframes and HTML comments are removed. Everything else is the markup as
 served, so the tests exercise the real structure (an `<h2>` page title, `<h5>`
 section headings, `<br>`-separated project lines, `<article>` project listings).
 
+What the scrubber recognises (`src/szocatlas/scrub.py`, #43): the value after a contact label
+(`Telefon`, `Telefonszám`, `Mobil`, `Fax`, `Épület`, `Szoba`, `Iroda`) in its own element, or a number
+after such a label in the same text node; a number with `+36`, `0036` or `06`; a number written
+`(1) 224 6700` or `1/224-6700`; `mailto:` and `tel:` links. It does not recognise an unlabelled
+`(1) 224-6700` (a reference's `(2) 400-422` has the same shape), a value in an attribute other than
+`href`, or a table with the label in one cell and the value in the next. **It is a safety net, not a
+guarantee: read every new capture for contact details before committing it.** `tests/test_scrub.py`
+scrubs every committed fixture and fails if anything is left to change.
+
 `fixtures.yaml` records each file's origin URL, observation date, kind and the
 sha256 of the unscrubbed response. The raw responses themselves live only in
 `data/raw/` and are never committed.
