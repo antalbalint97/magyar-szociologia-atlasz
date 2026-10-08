@@ -271,8 +271,11 @@ class TKAdapter(SourceAdapter):
                                            "position": pos}))
         for pm in prof.projects:
             pref = self.project_ref(pm.url, pm.title)
+            # the link as written next to the alias-normalised one: a link that exists only through an
+            # inferred host alias is no certain identity decision (#14, #40)
             res.records.append(SourceRecord(ref=pref, label=pm.title, document_id=doc.document_id,
-                                            hints={"url": pm.url} if pm.url else {}))
+                                            hints={"url": pm.url, "stated_url": pm.stated_url or pm.url}
+                                            if pm.url else {}))
             if pm.url and self.follows_profile_project_links:
                 # #16: a link written in the project section is discovery evidence for that page
                 self.linked_projects.append(LinkedProject(

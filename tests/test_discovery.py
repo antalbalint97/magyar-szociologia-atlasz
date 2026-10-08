@@ -12,7 +12,7 @@ import pytest
 
 from szocatlas import discovery as D
 from szocatlas.fetch import FixtureFetcher
-from szocatlas.models.enums import SourceType
+from szocatlas.models.enums import EntityType, SourceType
 from szocatlas.pipeline import build, write_staged
 from szocatlas.registry import REPO_ROOT, load_registry
 from szocatlas.sources.base import LinkedProject, ParseResult
@@ -24,6 +24,7 @@ KI_ID = "tk_kisebbsegkutato"
 KI = "https://kisebbsegkutato.tk.elte.hu/"
 EILER = KI + "kutato/eiler-ferenc"
 PARLAMENTI = KI + "a-kisebbsegek-parlamenti-kepviselete-osszehasonlitasban"
+PARLAMENTI_PATH = PARLAMENTI.removeprefix(KI)
 # the other project links of the same profile section
 OTHER_LINKS = [KI + "a-magyarorszagi-nemet-szervezetek", KI + "a-bevandorlas-kerdesenek-helye",
                KI + "etnicitas-helyi-tarsadalom-es-hatalom-egy-magyarorszagi"]
@@ -41,17 +42,21 @@ class Recorder(FixtureFetcher):
         return super().get(url, **kw)
 
 
-def ki_adapter(registry, project_fixtures=None, *, follow=True):
+def ki_adapter(registry, project_fixtures=None, *, follow=True, profiles=None):
+    """``profiles``: more profile pages of the source (URL -> file), e.g. a second researcher linking the same pages."""
     registry = load_registry() if not follow else registry
     if not follow:
         registry.source(KI_ID).adapter_config["follow_profile_project_links"] = False
-    mapping = {EILER: FIXTURES / "ki_eiler_ferenc.html"}
+    mapping = {EILER: FIXTURES / "ki_eiler_ferenc.html"} | (profiles or {})
     mapping |= {url: FIXTURES / name for url, name in (project_fixtures or {}).items()}
     fetcher = Recorder(mapping, registry.host_aliases(), OBSERVED)
     adapter = TKAdapter(registry.source(KI_ID), registry, fetcher)
-    page = fetcher.get(EILER, source_id=KI_ID, source_type=SourceType.INSTITUTIONAL_PROFILE)
-    res = adapter.parse_person(page)
-    res.documents.append(page.document)
+    res = ParseResult()
+    for url in (EILER, *(profiles or {})):
+        page = fetcher.get(url, source_id=KI_ID, source_type=SourceType.INSTITUTIONAL_PROFILE)
+        parsed = adapter.parse_person(page)
+        parsed.documents.append(page.document)
+        res.extend(parsed)
     fetcher.asked.clear()
     return adapter, res, fetcher
 
@@ -213,6 +218,39 @@ def test_an_inferred_alias_host_is_not_fetched(registry):
     assert fetcher.asked == []
 
 
+@pytest.mark.parametrize("hosts, decision, reason", [
+    # one profile wrote the page on the canonical host or on a verified alias: that is enough to fetch it (#40)
+    (["kisebbsegkutato.tk.elte.hu", "kisebbsegkutato.tk.hun-ren.hu"], "enqueued", None),
+    (["kisebbsegkutato.tk.hun-ren.hu", "kisebbsegkutato.tk.hu"], "enqueued", None),
+    # every profile wrote it on the inferred alias: the path mapping was never verified
+    (["kisebbsegkutato.tk.hun-ren.hu", "kisebbsegkutato.tk.hun-ren.hu"], "skipped", "alias_unverified"),
+])
+def test_a_page_is_fetched_when_any_profile_wrote_it_on_a_trusted_host(registry, hosts, decision, reason):
+    """The decision is per page, not per statement. The row keeps every written form and reports the least certain host."""
+    adapter, res, fetcher = ki_adapter(registry, {PARLAMENTI: "ki_project_parlamenti_kepviselet.html"})
+    adapter.linked_projects[:] = [LinkedProject(
+        url=PARLAMENTI, stated_url=f"https://{host}/{PARLAMENTI_PATH}", title="x", source_id=KI_ID,
+        profile_url=f"{KI}kutato/profile-{i}", document_id=f"doc_{i}", project_ref=f"{KI_ID}|x")
+        for i, host in enumerate(hosts)]
+    D.follow_profile_project_links({KI_ID: adapter}, {KI_ID: res}, registry)
+    row = frontier_row(res, PARLAMENTI)
+    assert (row["decision"], row["reason"]) == (decision, reason)
+    assert row["host_status"] == "inferred"
+    assert row["stated_urls"] == sorted({f"https://{h}/{PARLAMENTI_PATH}" for h in hosts})
+    assert len(row["discovered_via"]) == len(hosts)
+    fetched = decision == "enqueued"
+    assert fetcher.asked == ([PARLAMENTI] if fetched else [])
+    assert any(d.canonical_url == PARLAMENTI for d in res.documents) is fetched
+
+
+def test_a_profile_project_record_keeps_the_link_as_written(registry):
+    """The host a researcher wrote decides whether the link is a certain identity decision (#40), so it stays on record."""
+    _, res, _ = ki_adapter(registry)
+    hints = {r.ref.source_ref: r.hints for r in res.records if r.ref.entity_type is EntityType.PROJECT}
+    assert hints[f"{KI_ID}|{PARLAMENTI}"] == {"url": PARLAMENTI, "stated_url": "https://kisebbsegkutato.tk.hu/" + PARLAMENTI_PATH}
+    assert hints[f"{KI_ID}|{OTHER_LINKS[0]}"] == {"url": OTHER_LINKS[0], "stated_url": OTHER_LINKS[0]}
+
+
 def test_sources_opt_in_to_following_profile_links(registry):
     adapter, res, _ = ki_adapter(registry, follow=False)
     assert adapter.linked_projects == []
@@ -251,6 +289,31 @@ def test_linked_page_becomes_a_project_and_the_mention_resolves_by_url(workdir, 
     for url in OTHER_LINKS:
         assert mention_for(after, url)["resolution"]["status"] == "UNRESOLVED"
     assert [f for f in findings if f.severity == "error"] == []
+
+
+def test_a_page_linked_on_a_verified_and_on_an_inferred_host_is_fetched_but_only_the_trusted_link_is_certain(
+        workdir, registry, tmp_path):
+    """#40 end to end. Two profiles link the same page, one through a verified alias, one through the inferred one.
+    The page is fetched on the trusted statement; the other profile's mention is not tied to it by that link."""
+    html = (FIXTURES / "ki_eiler_ferenc.html").read_text(encoding="utf-8")
+    verified = "https://kisebbsegkutato.tk.hu/" + PARLAMENTI_PATH
+    assert verified in html
+    copy = tmp_path / "ki_eiler_ferenc_inferred.html"
+    copy.write_text(html.replace(verified, "https://kisebbsegkutato.tk.hun-ren.hu/" + PARLAMENTI_PATH), encoding="utf-8")
+    second = KI + "kutato/eiler-ferenc-masolat"
+    adapter, res, fetcher = ki_adapter(registry, {PARLAMENTI: "ki_project_parlamenti_kepviselet.html"},
+                                       profiles={second: copy})
+    D.follow_profile_project_links({KI_ID: adapter}, {KI_ID: res}, registry)
+    row = frontier_row(res, PARLAMENTI)
+    assert (row["decision"], row["host_status"], len(row["stated_urls"])) == ("enqueued", "inferred", 2)
+    assert fetcher.asked.count(PARLAMENTI) == 1
+    write_staged(workdir, KI_ID, res)
+    out, _ = build("mixed", paths=workdir, registry_path=workdir.config / "sources.yaml")
+    ms = {m["source_url"]: m for m in load(out, "entities/ProjectMention.jsonl") if m["linked_url"] == PARLAMENTI}
+    assert set(ms) == {EILER, second}
+    trusted, inferred = ms[EILER]["resolution"], ms[second]["resolution"]
+    assert (trusted["status"], trusted["signals"]) == ("DETERMINISTIC", ["PROJECT_URL_EXACT"])
+    assert "PROJECT_URL_EXACT" not in inferred["signals"] and inferred["method"] != "project_url"
 
 
 def test_unresolved_link_reasons_come_from_the_frontier_not_from_the_url(workdir, registry):

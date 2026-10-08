@@ -12,7 +12,10 @@ This module follows such links **one hop, under the registry's scope**:
 * the link's host must belong to a source that is **enabled** in ``config/sources.yaml`` and has
   an adapter, and the source's profiles must opt in (``follow_profile_project_links``);
 * the URL must have the shape of one of that source's project pages (adapter decides);
-* a host that is only an *inferred* alias is not fetched: its path mapping was never verified;
+* a page that every profile wrote on an *inferred* alias only is not fetched: that alias's path mapping
+  was never verified. One statement on a canonical host or a verified alias is enough to fetch the
+  page, whatever other profiles wrote (#40); a mention whose own link is inferred-only still does not
+  resolve by URL (``canonical/project_mentions.py``);
 * the page is fetched through the owner source's adapter with the usual polite fetcher (robots,
   delays, snapshot reuse), parsed with the ordinary project-page parser, and lands in the owner's
   staged output like any listing-discovered page;
@@ -78,7 +81,8 @@ def host_scope(registry: Registry, host: str, institution: str | None) -> tuple[
 
 
 def host_status(registry: Registry, stated_urls: list[str]) -> str:
-    """The least certain registry status among the hosts a link was written with."""
+    """The least certain registry status among the hosts a link was written with (what the frontier row reports;
+    the fetch decision looks at the most certain statement, ``Registry.states_trusted_host``)."""
     statuses = {registry.alias_status(urlsplit(u).hostname or "") for u in stated_urls}
     for worst in ("inferred", "unknown", "verified", "canonical"):
         if worst in statuses:
@@ -114,7 +118,7 @@ def follow_profile_project_links(adapters: dict[str, SourceAdapter], results: di
         elif scope == IN_SCOPE:
             reason = None
             adapter = adapters.get(owner or "")
-            if hstat == "inferred":
+            if hstat == "inferred" and not registry.states_trusted_host(stated):
                 reason = ALIAS_UNVERIFIED
             elif adapter is None:
                 reason = OWNER_NOT_IN_RUN

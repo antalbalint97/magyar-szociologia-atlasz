@@ -32,7 +32,7 @@ from ..discovery import GRANT_REGISTRY, IN_SCOPE, host_scope
 from ..models.enums import EntityType, IdentityAnchor, RelationType
 from ..normalize.urls import canonical_url
 from ..registry import Registry
-from ..resolution.projects import registry_grant_keys
+from ..resolution.projects import LINK_ONLY_INFERRED_ALIAS, registry_grant_keys
 
 SOURCE_TYPE_PAGE = {"institutional_profile": "profile", "unit_page": "unit", "project_page": "project",
                     "institutional_listing": "listing"}
@@ -346,6 +346,8 @@ UNRESOLVED_CATEGORIES = {
     "linked_page_other_unit_site": "the linked page is on another TK unit's site that is not an enabled source",
     "linked_page_not_project_path": "the link is on an in-scope host but is not the path shape of a project page",
     "linked_page_fetch_failed": "the page was requested and did not come back",
+    "linked_page_alias_unverified": "this mention's own link names the page only through an inferred host alias "
+                                    "(the page itself may be fetched and anchored)",
     "linked_page_fetched_no_project": "the page was fetched and no Project was anchored on it",
     "linked_page_no_discovery_record": "the link was never put on the frontier",
 }
@@ -356,6 +358,8 @@ def unresolved_category(m, frontier_by_url: dict[str, dict]) -> str:
         return "deferred_to_ontology"
     if m.resolution.status.value == "REVIEW_REQUIRED":
         return "identity_review"
+    if (m.resolution.reason or "").startswith(LINK_ONLY_INFERRED_ALIAS):
+        return "linked_page_alias_unverified"
     if not m.linked_url:
         return "title_only_no_page_link"
     if registry_grant_keys(m.linked_url):

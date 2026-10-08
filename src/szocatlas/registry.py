@@ -143,6 +143,14 @@ class Registry(BaseModel):
                 return "inferred"
         return "unknown"
 
+    def states_trusted_host(self, urls: list[str]) -> bool:
+        """True when at least one URL, as a page wrote it, is on a source's own host or on a verified alias.
+
+        A link that exists only through an inferred alias is never a certain decision (#14, #40)."""
+        from urllib.parse import urlsplit
+
+        return any(self.alias_status(urlsplit(u).hostname or "") in ("canonical", "verified") for u in urls)
+
 
 def load_registry(path: Path | str = DEFAULT_REGISTRY) -> Registry:
     with open(path, encoding="utf-8") as fh:

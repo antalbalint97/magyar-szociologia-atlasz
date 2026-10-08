@@ -48,7 +48,8 @@ what they mean ("Koordinátor" is not "Projektvezető", #36).
 
 **What the crawl fetches.** Pages that a configured listing shows, plus the pages that a
 profile of an enabled source links from its project section when the link's host belongs to an
-enabled source (one hop, project-page path shape, verified host aliases; ADR-0009). Every link
+enabled source (one hop, project-page path shape, at least one statement on the canonical host or a
+verified host alias; ADR-0009). Every link
 the crawl did not follow is on the release's frontier with its reason. A page's content is never
 inferred from its URL.
 
@@ -146,7 +147,7 @@ are URL normalisation declared in the registry, not entity resolution: they are 
 page under historical hostnames. An alias is *verified* when a 301 to the same path was
 checked (`verified_host_aliases`, #14) and *inferred* otherwise. The parser keeps the URL
 as written (`stated_url`), so a profile link that exists only through an inferred alias
-is never a certain identity decision (ADR-0007).
+is never a certain identity decision (ADR-0007), and neither is a project link (ADR-0009, #40).
 
 ## 4. Topics and methods
 
