@@ -11,7 +11,8 @@ Mention ids are ``pjm_`` + a hash of (source record ref, observing page URL).
 
 This module makes only the *certain* decisions: the mention names the Project's own
 page URL, or a reviewer joined its record to an anchored one. Everything else leaves
-here pending for the project resolver (resolution/projects.py).
+here pending for the project resolver (resolution/projects.py). A link that was written
+only on an inferred host alias is not a certain decision, as for profile links (#14, #40).
 """
 
 from __future__ import annotations
@@ -23,7 +24,15 @@ from urllib.parse import urlsplit
 from ..models.entities import ID_PREFIX, MentionContext, ProjectMention, ProjectMentionResolution
 from ..models.enums import EntityType, IdentityAnchor, MentionResolutionStatus, RelationType
 from ..models.provenance import Claim, SourceDocument, SourceRecord, stable_hash
-from ..resolution.projects import PROJECT_RESOLVER_DOC, activity_cues, grant_keys, registry_grant_keys, title_key
+from ..registry import Registry
+from ..resolution.projects import (
+    LINK_ONLY_INFERRED_ALIAS,
+    PROJECT_RESOLVER_DOC,
+    activity_cues,
+    grant_keys,
+    registry_grant_keys,
+    title_key,
+)
 
 OVERRIDES = "review/manual_overrides.yaml"
 Side = tuple[str, str]  # (claim_id, "subject" | "object")
@@ -44,6 +53,7 @@ class _Obs:
     ref: str
     url: str
     labels: list[str] = field(default_factory=list)
+    stated_urls: set[str] = field(default_factory=set)  # the link as the page wrote it (host aliases not applied)
     document_ids: set[str] = field(default_factory=set)
     claims: list[tuple[Claim, str]] = field(default_factory=list)  # (claim, "out" | "in")
 
@@ -62,9 +72,11 @@ def build_project_mentions(
     ref_to_id: dict[str, str],
     anchors: dict[str, set[IdentityAnchor]],
     person_sides: dict[Side, str],
+    registry: Registry | None = None,
 ) -> ProjectMentionBuild:
     """``person_sides``: person side of a claim -> Person id, for observations on the person's
-    own profile (the profile owner who lists a project)."""
+    own profile (the profile owner who lists a project). ``registry`` tells which hosts a link
+    may have been written on with certainty (without it the written host is not checked)."""
     own: dict[str, set[str]] = defaultdict(set)
     for r in records:
         if r.ref.entity_type is EntityType.PROJECT and r.identity_anchor and r.document_id in documents:
@@ -85,8 +97,11 @@ def build_project_mentions(
     for r in records:
         if r.ref.entity_type is EntityType.PROJECT and r.ref.source_ref:
             any_label.setdefault(r.ref.source_ref, r.label)
-            if (o := observe(r.ref.source_ref, r.document_id)) and r.label not in o.labels:
-                o.labels.append(r.label)
+            if o := observe(r.ref.source_ref, r.document_id):
+                if r.label not in o.labels:
+                    o.labels.append(r.label)
+                if r.hints.get("stated_url"):
+                    o.stated_urls.add(str(r.hints["stated_url"]))
     claim_obs: dict[Side, tuple[str, str]] = {}
     for c in claims:
         for side, pos, ref in (("out", "subject", c.subject), ("in", "object", c.object)):
@@ -167,7 +182,7 @@ def build_project_mentions(
             stated_status=status,
             context=context,
             activity_cues=activity_cues(stated),
-            resolution=_certain(ref, ref_to_id.get(ref), anchors),
+            resolution=_certain(ref, sorted(o.stated_urls), ref_to_id.get(ref), anchors, registry),
         )
     claim_mention = {side: key_to_id[k] for side, k in claim_obs.items() if k in key_to_id}
     return ProjectMentionBuild(out, claim_mention, own_claims)
@@ -208,14 +223,19 @@ def _context(o: _Obs, rels: list[Claim], ref_to_id: dict[str, str],
     return out
 
 
-def _certain(ref: str, pid: str | None, anchors: dict[str, set[IdentityAnchor]]) -> ProjectMentionResolution:
+def _certain(ref: str, stated_urls: list[str], pid: str | None, anchors: dict[str, set[IdentityAnchor]],
+             registry: Registry | None) -> ProjectMentionResolution:
     if pid is None:
         return ProjectMentionResolution(status=MentionResolutionStatus.UNRESOLVED,
                                         reason="pending evidence resolution", decision_source=PROJECT_RESOLVER_DOC)
     kinds = anchors.get(ref, set())
     if IdentityAnchor.PROJECT_PAGE in kinds:
-        # the observation names the project's own page (after host aliasing; no project link
-        # in the snapshot is written on an inferred alias host, see ADR-0008)
+        # the observation names the project's own page after host aliasing; how it wrote the link matters
+        # (#14, #40): a link that exists only through an inferred alias was never verified to reach that
+        # page, so it is no certain decision. The page may be anchored by another profile's trusted link.
+        if stated_urls and registry is not None and not registry.states_trusted_host(stated_urls):
+            return ProjectMentionResolution(status=MentionResolutionStatus.UNRESOLVED,
+                                            reason=LINK_ONLY_INFERRED_ALIAS, decision_source=PROJECT_RESOLVER_DOC)
         return ProjectMentionResolution(status=MentionResolutionStatus.DETERMINISTIC, project_id=pid,
                                         method="project_url", signals=["PROJECT_URL_EXACT"],
                                         evidence={"project_url": _ref_url(ref)},

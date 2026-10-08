@@ -161,7 +161,7 @@ The **decision** names a rule and lists the signals it used. There is no score.
 
 | Signal | Class | Meaning |
 |---|---|---|
-| `PROJECT_URL_EXACT` | certain | the mention links the Project's own page (the canonical URL, after host aliasing) |
+| `PROJECT_URL_EXACT` | certain | the mention links the Project's own page (the canonical URL, after host aliasing), and its page wrote the link on the canonical host or a verified alias (a link only through an inferred alias is not certain, #40, ADR-0009) |
 | `MANUAL_SAME_AS` | certain | `project_decisions` or `same_as` in `review/manual_overrides.yaml` |
 | `GRANT_ID_MATCH` | strong | same grant key (programme letters and funder label ignored, see "Funders") |
 | `TITLE_EXACT` | strong (title) | same title up to case, accents and punctuation |

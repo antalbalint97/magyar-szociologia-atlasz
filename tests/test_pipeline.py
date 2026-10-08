@@ -162,6 +162,25 @@ def test_rebuild_is_deterministic(release):
     assert strip(mentions(out)) == strip(mentions(out2))
 
 
+def test_rebuilding_a_release_id_keeps_no_entity_file_the_build_did_not_write(release):
+    """#41: entities/ is build output, so a type with no rows in this build must not keep the last build's file."""
+    workdir, out, _ = release
+    files = {f.name for f in (out / "entities").glob("*.jsonl")}
+    assert {"Person.jsonl", "Project.jsonl", "PersonMention.jsonl", "ProjectMention.jsonl"} <= files
+    persons = (out / "entities" / "Person.jsonl").read_text()
+    # the same id from a selection with no staged source: no persons, projects or mentions at all
+    again, _ = build("t1", source_ids=["no_such_source"], paths=workdir, registry_path=workdir.config / "sources.yaml")
+    assert again == out
+    manifest = json.loads((out / "manifest.json").read_text())
+    on_disk = {f.stem for f in (out / "entities").glob("*.jsonl")}
+    assert on_disk == set(manifest["entities"])
+    assert not on_disk & {"Person", "Project", "PersonMention", "ProjectMention"}
+    # the full source set again restores the same files, byte for byte
+    build("t1", paths=workdir, registry_path=workdir.config / "sources.yaml")
+    assert {f.name for f in (out / "entities").glob("*.jsonl")} == files
+    assert (out / "entities" / "Person.jsonl").read_text() == persons
+
+
 def test_disputed_claim_rejection_removes_it(release):
     workdir, out, _ = release
     k = people(out)["Koltai Júlia"]

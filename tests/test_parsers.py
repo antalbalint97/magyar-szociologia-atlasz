@@ -60,6 +60,37 @@ def test_koltai_profile_outside_sociology_institute(fixture_html, aliases):
     assert len(prof.projects) == 5
 
 
+def _section_projects(html):
+    """The profile 'Projektek' section parser on a few ``<p>`` blocks: (project mentions, unattached lines)."""
+    rejected: list[str] = []
+    soup = BeautifulSoup(f"<div>{html}</div>", "lxml")
+    out = P._profile_projects(soup.div.find_all("p"), "https://szociologia.tk.elte.hu/", {}, rejected)
+    return out, rejected
+
+
+def test_a_period_and_role_header_is_merged_with_the_project_line_that_follows():
+    out, rejected = _section_projects(
+        "<p><b>2022-2027 vezető kutató</b></p><p>Egy hosszabb leírás arról, hogy mit kutat.</p>")
+    assert [(m.title, m.period_from, m.period_until, m.role) for m in out] == [
+        ("Egy hosszabb leírás arról, hogy mit kutat.", "2022", "2027", "vezető kutató")]
+    assert rejected == []
+
+
+def test_a_period_and_role_header_with_no_project_line_after_it_is_never_a_project():
+    """#45: the held header is unattached metadata, whatever ends the run of lines."""
+    out, rejected = _section_projects("<p>Egy projekt címe</p><p><b>2022-2027 vezető kutató</b></p>")
+    assert [m.title for m in out] == ["Egy projekt címe"]
+    assert rejected == ["2022-2027 vezető kutató"]
+    assert P.metadata_kind(rejected[0]) == "period_role"
+    out, rejected = _section_projects("<p><b>2022-2027 vezető kutató</b></p>")
+    assert out == [] and rejected == ["2022-2027 vezető kutató"]
+    # a second header replaces the first one: the first is kept as metadata, not lost
+    out, rejected = _section_projects(
+        "<p><b>2022-2027 vezető kutató</b></p><p><b>2020-2021 résztvevő</b></p><p>A projekt leírása.</p>")
+    assert [(m.title, m.role) for m in out] == [("A projekt leírása.", "résztvevő")]
+    assert rejected == ["2022-2027 vezető kutató"]
+
+
 def test_category_only_position(fixture_html, aliases):
     """'<h4>Kutatási asszisztens</h4> (TK Recens)': the category is the stated position."""
     prof = P.parse_profile(fixture_html("recens_freigang_istvan.html"),

@@ -35,8 +35,10 @@ permission to crawl the host. The crawl follows such a link **one hop**, when al
   registry still defines the allowed hosts; the profile only supplies the path;
 * the URL has the **path shape** of one of that source's project pages (TK CMS: one path
   segment, no query, not a menu/staff/category/news segment, not a configured unit page);
-* a host that is only an **inferred** alias is not fetched (its path mapping was never
-  verified, #14); verified aliases are;
+* a page that **every** profile linking it wrote on an **inferred** alias is not fetched (the
+  alias's path mapping was never verified, #14); verified aliases are followed, and so is a page
+  that at least one profile wrote on the canonical host or a verified alias, whatever other
+  profiles wrote (#40: the decision is per page, not per statement);
 * the page is **not already fetched** (the frontier row says `already_discovered`).
 
 A followed page goes through the owner source's ordinary fetcher (robots.txt, per-host delay,
@@ -77,14 +79,43 @@ discovered_via: [{type: profile_project_link, source_id, source_document, source
 is one row with three provenance entries. Nothing is inferred from a URL: a page that was not
 fetched stays "not fetched", with the decision and its reason, and its content is never
 guessed from its address. A historical or unreachable host is recorded as it was written
-(`stated_urls`), with the registry's `host_status`; a fetch is recorded only if it was
-attempted.
+(`stated_urls`), with the registry's `host_status`, which is the **least certain** of the hosts
+the profiles used (the row says how weak the weakest statement was; the fetch decision looks at
+the strongest); a fetch is recorded only if it was attempted.
 
 `ProjectMention.resolution.reason` takes its explanation for an unresolved linked page from the
 frontier ("linked project page not followed (external_host)", "…fetch failed (HTTP 404)",
 "linked page was not on the crawl frontier"). The frontier explains; it never resolves.
 Resolution of a mention to a newly fetched page is `PROJECT_URL_EXACT` as before: a title is
 never used to stand in for a missing page anchor.
+
+### A link written on an inferred alias (#40)
+
+Which pages are fetched and which mentions are certain are two questions about the same
+statements, answered separately:
+
+| Question | Unit | Rule |
+|---|---|---|
+| Is the page fetched? | the page (normalised URL) | refuse (`alias_unverified`) only if no profile wrote it on the canonical host or a verified alias |
+| What does the frontier row say? | the page | `stated_urls`: every written form; `host_status`: the least certain of them; `discovered_via`: every profile |
+| Does a mention resolve by `PROJECT_URL_EXACT`? | the mention (one profile page) | only if that page wrote the link on the canonical host or a verified alias; one such statement among its own is enough |
+| How is the coverage counted? | the distinct URL, as before | the page counts as fetched once; a mention that its own link does not tie to the page is counted by its own resolution |
+
+A profile whose link exists only through an inferred alias is still unverified about *which page it
+meant*, even when another profile's trusted link got the page fetched. Its mention is therefore not
+a certain decision, the same rule as for profile links (ADR-0007): it stays pending for the
+evidence rules of ADR-0008 (a title or a grant id plus an independent observation, such as the page
+linking the profile owner), and its reason starts "project link only through an inferred host
+alias". If the evidence rules decide nothing, coverage counts it as `linked_page_alias_unverified`,
+which is not "fetched, no Project anchored": the Project exists, this mention's link does not reach
+it with certainty. Before #40 the build did not look at the written host of a project link, so a
+page anchored by a listing would have resolved such a mention by URL.
+
+In release `p31` the rule changes nothing: of 208 observations of a project link in a profile's project section,
+84 use a canonical host, 83 a verified alias, 40 a host outside the registry (those pages are never
+anchored) and 1 an inferred alias (`jog.tk.hu`, a unit that is not an enabled source, so its page was
+never fetched). The replay rebuild is identical to `p31` apart from timestamps and the parser
+version string (`tk/0.6.1`).
 
 ## Decision 2: parsers read explicit labels only (tk/0.5.0)
 
@@ -145,7 +176,7 @@ Rules of the measurement:
   frontier (never from the URL's text): `identity_review`, `deferred_to_ontology`,
   `title_only_no_page_link`, `linked_page_external_site`, `linked_page_grant_registry`,
   `linked_page_other_unit_site`, `linked_page_not_project_path`, `linked_page_fetch_failed`,
-  `linked_page_fetched_no_project`, `linked_page_no_discovery_record`.
+  `linked_page_alias_unverified` (#40), `linked_page_fetched_no_project`, `linked_page_no_discovery_record`.
 * **QA seeds are sentinels, not a sample.** "Present"/"Missing" is reported apart; a seed is
   never in a denominator and passing says nothing about the people not listed (#13).
 * **Network consequences are exposed, not corrected**: researchers with no project edge and

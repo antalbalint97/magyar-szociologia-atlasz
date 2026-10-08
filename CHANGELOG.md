@@ -2,6 +2,32 @@
 
 ## Unreleased (Milestone 2 branch)
 
+* Codex review follow-ups (#40, #41, #43, #45): four findings of the automated review of PRs #26 and
+  #2, each reproduced before it was filed. TK parser 0.6.1 (#45, and the project record now keeps the
+  link as written for #40). A replay rebuild of `p31` differs from it only in timestamps and the
+  parser version string (15 of 22 files byte for byte, 6 once timestamps, the release id and
+  `tk/0.6.1` are masked, the quality report differs only in its `generated_at` line); the review
+  files are unchanged.
+  * #40, profile-link following: the fetch decision is per page, not per statement. A page that one
+    profile wrote on the canonical host or a verified alias is fetched even if another profile wrote
+    it on an inferred alias; a page every profile wrote on an inferred alias is still skipped
+    (`alias_unverified`). The decision had a second half: the build never looked at the host a
+    project link was written on, so a mention whose link existed only through an inferred alias
+    resolved by `PROJECT_URL_EXACT` as soon as the page was anchored (reproduced on the previous
+    code). The adapter now keeps the link as written on the project record (`stated_url`), and such a
+    mention is no certain decision, as for profile links (ADR-0007): it goes to the evidence rules
+    and, if they decide nothing, to the new coverage category `linked_page_alias_unverified`.
+    ADR-0009 states the rule; `p31` has no mention that it affects (1 of 208 profile-section project
+    links used an inferred alias, `jog.tk.hu`, for a unit that is not an enabled source).
+  * #41, release builder: `entities/` is wholly build output, so a rebuild of an existing release id
+    removes the entity files of types the new build has no rows for (they used to stay behind and
+    contradict `manifest.entities`).
+  * #43, fixture scrubber: a phone number is now also recognised after a label in the same text node
+    (`Telefon: (1) 224 6700`) and when written with an area code (`1/224-6700`); the scrubber is
+    tested on its own, and a test scrubs every committed fixture again and fails if anything
+    changes. It remains a safety net: every new capture is still read by eye.
+  * #45, TK parser: a period-and-role header that ends a profile's project section (or is followed
+    by another one) is kept as unattached metadata, not turned into a project titled with the role.
 * Analysis readiness (#17): every release has `analysis_readiness.json` / `analysis_readiness.md`,
   written by `szocatlas build`, summarised in `manifest.analysis_readiness` and in a section of
   the quality report. `szocatlas readiness <release> [--json] [--write]` measures any release, old

@@ -24,7 +24,7 @@ from bs4 import BeautifulSoup, NavigableString, Tag
 from ...normalize.names import clean_display_name, normalise_whitespace
 from ...normalize.urls import canonical_url, mtmt_id, orcid_id, scholar_id
 
-PARSER_VERSION = "tk/0.6.0"
+PARSER_VERSION = "tk/0.6.1"
 
 PROFILE_PATH_RE = re.compile(r"^/kutato/(?!pdf/)([a-z0-9][a-z0-9-]*)/?$")
 CV_PATH_RE = re.compile(r"^/kutato/pdf/(\d+)$")
@@ -782,6 +782,8 @@ def metadata_kind(text: str) -> str:
             return kind
     if re.fullmatch(r"\d{4}\.?", t):
         return "period"
+    if (m := LEADING_PERIOD_RE.match(t)) and PROJECT_ROLE_RE.match(t[m.end():].strip()):
+        return "period_role"  # "2022-2027 vezető kutató" with no project line after it (#45)
     return "table_row" if " | " in t else "other"
 
 
@@ -810,7 +812,7 @@ def _profile_projects(blocks: list[Tag], base: str, aliases: dict[str, str],
     flat: list[ProjectMention] = []
 
     def flush_flat():
-        out.extend(_merge_period_headers(flat))
+        out.extend(_merge_period_headers(flat, rejected))
         flat.clear()
 
     for kind, item in order:
@@ -866,16 +868,20 @@ def _table_row_mention(cells: list[Line]) -> ProjectMention | None:
 KUTATAS_CIME_RE = re.compile(r"kutatás címe:\s*[„\"]?(.+?)[”\"]?(?:\.\s+[A-ZÁÉÍÓÖŐÚÜŰ][^.]{0,30}:|\.?$)", re.I)
 
 
-def _merge_period_headers(mentions: list[ProjectMention]) -> list[ProjectMention]:
+def _merge_period_headers(mentions: list[ProjectMention], rejected: list[str]) -> list[ProjectMention]:
     """'<b>2022-2027 vezető kutató</b>' followed by a paragraph describing the project.
 
     The bold line carries the period and the person's role; the next paragraph names
-    the project. They are one mention.
+    the project. They are one mention. A header that no project line follows (the run of
+    lines ends, or another header comes first) names no project: it is kept in ``rejected``
+    as unattached metadata, never as a project titled with the role (#45).
     """
     out: list[ProjectMention] = []
     pending: ProjectMention | None = None
     for pm in mentions:
         if pm.url is None and pm.period_from and PROJECT_ROLE_RE.match(pm.title.strip()):
+            if pending is not None:
+                rejected.append(pending.snippet)
             pending = pm
             continue
         if pending is not None:
@@ -890,7 +896,7 @@ def _merge_period_headers(mentions: list[ProjectMention]) -> list[ProjectMention
             pending = None
         out.append(pm)
     if pending is not None:
-        out.append(pending)
+        rejected.append(pending.snippet)
     return out
 
 

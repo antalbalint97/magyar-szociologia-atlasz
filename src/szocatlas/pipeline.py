@@ -261,6 +261,9 @@ def build(release_id: str, *, source_ids: list[str] | None = None, paths: Paths 
 
     out = paths.releases / release_id
     (out / "entities").mkdir(parents=True, exist_ok=True)
+    # entities/ is wholly build output: a type with no rows in this build must not keep the last build's file (#41)
+    for stale in (out / "entities").glob("*.jsonl"):
+        stale.unlink()
     for etype in sorted({e.entity_type for e in ds.entities.values()}, key=lambda t: t.value):
         dump_jsonl(out / "entities" / f"{etype.value}.jsonl",
                    sorted(ds.by_type(etype), key=lambda e: e.canonical_id))
@@ -393,7 +396,7 @@ def canonicalize(records, claims, documents, ref_to_id, decisions, anchors, regi
     ev = {k: sorted(v) for k, v in evidence.items()}
     docs = {d.document_id: d for d in documents}
     mb = build_mentions(records, claims, docs, ref_to_id, decisions, anchors, registry)
-    pmb = build_project_mentions(records, claims, docs, ref_to_id, anchors, mb.own_claims)
+    pmb = build_project_mentions(records, claims, docs, ref_to_id, anchors, mb.own_claims, registry)
     certain_persons = claim_persons(mb.mentions, mb.claim_mention, mb.own_claims, certain_only=True)
     certain_projects = claim_projects(pmb.mentions, pmb.claim_mention, pmb.own_claims, certain_only=True)
     # pass 1a: certain evidence only; the context project rules may use

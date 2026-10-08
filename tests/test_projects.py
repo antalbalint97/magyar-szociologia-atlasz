@@ -27,6 +27,7 @@ from szocatlas.registry import REPO_ROOT
 from szocatlas.resolution import mentions as R
 from szocatlas.resolution import projects as PR
 from szocatlas.resolution.matcher import IdentityMap, Overrides, identity_anchors, resolve
+from szocatlas.validation.coverage import unresolved_category
 from szocatlas.validation.qa import run_checks
 
 NOW = datetime(2026, 10, 4, tzinfo=UTC)
@@ -110,7 +111,7 @@ class World:
         return er
 
     def profile(self, url: str, name: str, projects=()) -> str:
-        """An own profile listing projects: (title, url | None, period_from, role)."""
+        """An own profile listing projects: (title, url | None, period_from, role[, link as written])."""
         ref = f"{self.owner(url)}|{url}"
         er = EntityRef(entity_type=EntityType.PERSON, source_ref=ref)
         self.records.append(SourceRecord(ref=er, label=name, document_id=self.doc(url),
@@ -118,9 +119,11 @@ class World:
         self.claim(er, "name", url, "profile.h1", name)
         self.claim(er, "profile_url", url, "document.url", url)
         self.claim(er, "AFFILIATED_WITH", url, "profile.position", obj=self.site(url.split("/kutato/")[0]))
-        for title, purl, period, role in projects:
+        for title, purl, period, role, *written in projects:
             pref = self.project_ref(purl, title, url)
-            self.records.append(SourceRecord(ref=pref, label=title, document_id=self.doc(url)))
+            # the adapter keeps the link as the page wrote it next to the alias-normalised one (#40)
+            hints = {"url": purl, "stated_url": written[0]} if written else {}
+            self.records.append(SourceRecord(ref=pref, label=title, document_id=self.doc(url), hints=hints))
             self.claim(pref, "title", url, "profile.section.projektek", title)
             kw = dict(valid_from=period, temporal_basis=TemporalBasis.EXPLICIT) if period else {}
             self.claim(er, "PARTICIPATES_IN", url, "profile.section.projektek", obj=pref,
@@ -367,6 +370,67 @@ def test_link_to_another_site_blocks(tmp_path, registry):
     ds, _ = w.build(tmp_path)
     m = pm_on(ds, prof)
     assert m.resolution.status is S.REVIEW_REQUIRED and PR.LINKS_OTHER_PAGE in m.candidates[0].negative_signals
+
+
+# ---------------------------------------------------------------- the host a link was written on (#14, #40)
+PARLAMENTI = "a-kisebbsegek-parlamenti-kepviselete-osszehasonlitasban"
+PARLAMENTI_TITLE = "A kisebbségek parlamenti képviselete nemzetközi összehasonlításban"
+CANONICAL_HOST, VERIFIED_ALIAS, INFERRED_ALIAS = (
+    "kisebbsegkutato.tk.elte.hu", "kisebbsegkutato.tk.hu", "kisebbsegkutato.tk.hun-ren.hu")
+
+
+def alias_world(registry, *written, owner_on_page=True, title=PARLAMENTI_TITLE):
+    """One anchored project page and one profile that links it, written on each of the given hosts."""
+    w = World(registry)
+    url, prof = f"{KI}/{PARLAMENTI}", f"{KI}/kutato/eiler-ferenc"
+    page = w.page(url, PARLAMENTI_TITLE, people=(("Eiler Ferenc", prof),) if owner_on_page else ())
+    w.profile(prof, "Eiler Ferenc", [(title, url, None, f"szerep {i}", f"https://{h}/{PARLAMENTI}")
+                                     for i, h in enumerate(written)])
+    return w, page, prof
+
+
+@pytest.mark.parametrize("host", [CANONICAL_HOST, VERIFIED_ALIAS])
+def test_a_link_on_a_trusted_host_is_a_certain_project_url(tmp_path, registry, host):
+    w, page, prof = alias_world(registry, host)
+    ds, ids = w.build(tmp_path)
+    m = pm_on(ds, prof)
+    assert (m.resolution.status, m.resolution.signals) == (S.DETERMINISTIC, [PR.PROJECT_URL_EXACT])
+    assert m.resolution.project_id == ids[page.source_ref]
+
+
+def test_a_link_only_on_an_inferred_alias_is_no_certain_project_url(tmp_path, registry):
+    """#40: the page is anchored (e.g. another profile's trusted link fetched it), but this link was written on
+    an alias nobody verified, so it is not a certain decision. Corroborated by the page, it resolves by a rule."""
+    w, page, prof = alias_world(registry, INFERRED_ALIAS)
+    ds, ids = w.build(tmp_path)
+    m = pm_on(ds, prof)
+    assert m.linked_url == f"{KI}/{PARLAMENTI}"
+    assert m.resolution.status is S.HIGH_CONFIDENCE_AUTO and m.resolution.method == "title_and_owner"
+    assert PR.PROJECT_URL_EXACT not in m.resolution.signals
+    assert m.resolution.project_id == ids[page.source_ref]
+
+
+def test_an_inferred_alias_link_without_other_evidence_stays_unresolved_and_says_why(tmp_path, registry):
+    w, page, prof = alias_world(registry, INFERRED_ALIAS, owner_on_page=False, title="Parlamenti képviselet")
+    ds, _ = w.build(tmp_path)
+    m = pm_on(ds, prof)
+    assert m.resolution.status is S.UNRESOLVED and m.resolution.project_id is None
+    assert m.resolution.reason.startswith(PR.LINK_ONLY_INFERRED_ALIAS)
+    # not "fetched, no Project anchored": the Project exists, the mention's link does not reach it with certainty
+    assert "no Project anchored" not in m.resolution.reason
+    assert unresolved_category(m, {}) == "linked_page_alias_unverified"
+    # the same profile with a link on a verified alias resolves by URL, whatever the title says
+    w, page, prof = alias_world(registry, VERIFIED_ALIAS, owner_on_page=False, title="Parlamenti képviselet")
+    ds, _ = w.build(tmp_path)
+    assert pm_on(ds, prof).resolution.status is S.DETERMINISTIC
+
+
+def test_one_trusted_statement_on_a_profile_is_enough_for_its_mention(tmp_path, registry):
+    """The profile wrote the page twice, on an inferred alias and on a verified one (the same rule as for profile links)."""
+    w, page, prof = alias_world(registry, INFERRED_ALIAS, VERIFIED_ALIAS)
+    ds, _ = w.build(tmp_path)
+    m = pm_on(ds, prof)
+    assert (m.resolution.status, m.resolution.signals) == (S.DETERMINISTIC, [PR.PROJECT_URL_EXACT])
 
 
 def test_uncertain_activity_is_preserved_for_issue_9(tmp_path, registry):

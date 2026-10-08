@@ -34,6 +34,9 @@ from .mentions import title_fold
 
 PROJECT_RESOLVER_DOC = "docs/adr/0008-project-mentions-vs-canonical-projects.md"
 OVERRIDES = "review/manual_overrides.yaml"
+# The build stage's reason for a mention whose page is anchored but whose own link was written only on an
+# inferred host alias: the link is not a certain decision, so the mention goes on to the evidence rules (#40).
+LINK_ONLY_INFERRED_ALIAS = "project link only through an inferred host alias"
 
 # ---------------------------------------------------------------- signal vocabulary
 PROJECT_URL_EXACT = "PROJECT_URL_EXACT"
@@ -432,6 +435,17 @@ def link_reason(url: str, links: dict[str, dict[str, Any]]) -> str:
 
 def _why_not(m: ProjectMention, cands: list[ProjectCandidate], viable: list[ProjectCandidate],
              prior: str | None, links: dict[str, dict[str, Any]]) -> str:
+    if prior != LINK_ONLY_INFERRED_ALIAS:
+        return _why_not_candidates(m, cands, viable, links)
+    # the page may be anchored (it was fetched on another profile's trusted link), so the frontier's
+    # "fetched, no Project anchored" would be wrong here: say what the mention's own link is worth
+    if not cands:
+        return prior + "; no anchored Project with a compatible title or grant id"
+    return f"{prior}; {_why_not_candidates(m, cands, viable, links)}"
+
+
+def _why_not_candidates(m: ProjectMention, cands: list[ProjectCandidate], viable: list[ProjectCandidate],
+                        links: dict[str, dict[str, Any]]) -> str:
     if not cands:
         if m.linked_url and not registry_grant_keys(m.linked_url):
             return link_reason(m.linked_url, links) + "; no anchored Project with a compatible title or grant id"

@@ -103,9 +103,10 @@ def test_project_mentions_have_an_explicit_reason_for_staying_unresolved(workdir
 
 
 def test_unresolved_category_is_derived_from_the_mention_and_the_frontier():
-    def mention(url=None, observation="profile_list", status="UNRESOLVED", method=None):
+    def mention(url=None, observation="profile_list", status="UNRESOLVED", method=None, reason=None):
         return SimpleNamespace(linked_url=url, observation=observation,
-                               resolution=SimpleNamespace(status=SimpleNamespace(value=status), method=method))
+                               resolution=SimpleNamespace(status=SimpleNamespace(value=status), method=method,
+                                                          reason=reason))
 
     frontier = {
         "https://ext.example/p": {"decision": "skipped", "scope": "external", "reason": "external_host", "fetch": {}},
@@ -126,6 +127,10 @@ def test_unresolved_category_is_derived_from_the_mention_and_the_frontier():
     assert cat(mention("https://other.tk.hu/p"), frontier) == "linked_page_other_unit_site"
     assert cat(mention("https://ki/p"), frontier) == "linked_page_fetch_failed"
     assert cat(mention("https://ki/q"), frontier) == "linked_page_fetched_no_project"
+    # #40: the page may be anchored by another profile's trusted link; this mention's own link was written on an
+    # inferred alias, which is not "fetched, no Project anchored"
+    why = "project link only through an inferred host alias; no anchored Project with a compatible title or grant id"
+    assert cat(mention("https://ki/q", reason=why), frontier) == "linked_page_alias_unverified"
     assert cat(mention("https://ki/n"), frontier) == "linked_page_not_project_path"
     assert cat(mention("https://ki/x"), frontier) == "linked_page_no_discovery_record"
     assert cat(mention("https://ki/x", observation="project_listing"), frontier) == "linked_page_not_project_path"
