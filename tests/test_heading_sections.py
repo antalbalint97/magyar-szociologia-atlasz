@@ -387,7 +387,7 @@ def test_claims_from_a_heading_name_the_heading_the_line_and_the_parser(registry
     assert [(c.evidence.locator, c.evidence.snippet) for c in pi] == [
         ("project.heading.vezeto.unlinked", "Projektvezető: Tibori Tímea"),
         ("project.heading.vezeto.unlinked", "Kutatásvezető (MTA SZKI): Kovács Éva")]
-    assert all(c.parser_version == P.PARSER_VERSION == "tk/0.6.0" for c in res.claims)
+    assert all(c.parser_version == P.PARSER_VERSION == "tk/0.6.1" for c in res.claims)
     part = [c for c in res.claims if c.predicate == "PARTICIPATES_IN"]
     assert len(part) == 5
     assert {c.evidence.locator for c in part} == {"project.heading.resztvevok.unlinked"}

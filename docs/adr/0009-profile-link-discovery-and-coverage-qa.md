@@ -114,7 +114,8 @@ page anchored by a listing would have resolved such a mention by URL.
 In release `p31` the rule changes nothing: of 208 observations of a project link in a profile's project section,
 84 use a canonical host, 83 a verified alias, 40 a host outside the registry (those pages are never
 anchored) and 1 an inferred alias (`jog.tk.hu`, a unit that is not an enabled source, so its page was
-never fetched). The replay rebuild is identical to `p31` apart from timestamps.
+never fetched). The replay rebuild is identical to `p31` apart from timestamps and the parser
+version string (`tk/0.6.1`).
 
 ## Decision 2: parsers read explicit labels only (tk/0.5.0)
 

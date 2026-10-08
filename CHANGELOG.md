@@ -3,9 +3,11 @@
 ## Unreleased (Milestone 2 branch)
 
 * Codex review follow-ups (#40, #41, #43, #45): four findings of the automated review of PRs #26 and
-  #2, each reproduced before it was filed. A replay rebuild of `p31` is identical to it apart from
-  timestamps (17 of 22 files byte for byte, 4 once timestamps and the release id are masked, the
-  quality report differs only in its `generated_at` line); the review files are unchanged.
+  #2, each reproduced before it was filed. TK parser 0.6.1 (#45, and the project record now keeps the
+  link as written for #40). A replay rebuild of `p31` differs from it only in timestamps and the
+  parser version string (15 of 22 files byte for byte, 6 once timestamps, the release id and
+  `tk/0.6.1` are masked, the quality report differs only in its `generated_at` line); the review
+  files are unchanged.
   * #40, profile-link following: the fetch decision is per page, not per statement. A page that one
     profile wrote on the canonical host or a verified alias is fetched even if another profile wrote
     it on an inferred alias; a page every profile wrote on an inferred alias is still skipped

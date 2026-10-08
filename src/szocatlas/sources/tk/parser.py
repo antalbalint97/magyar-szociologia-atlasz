@@ -24,7 +24,7 @@ from bs4 import BeautifulSoup, NavigableString, Tag
 from ...normalize.names import clean_display_name, normalise_whitespace
 from ...normalize.urls import canonical_url, mtmt_id, orcid_id, scholar_id
 
-PARSER_VERSION = "tk/0.6.0"
+PARSER_VERSION = "tk/0.6.1"
 
 PROFILE_PATH_RE = re.compile(r"^/kutato/(?!pdf/)([a-z0-9][a-z0-9-]*)/?$")
 CV_PATH_RE = re.compile(r"^/kutato/pdf/(\d+)$")
