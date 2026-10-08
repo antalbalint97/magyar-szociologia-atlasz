@@ -261,6 +261,9 @@ def build(release_id: str, *, source_ids: list[str] | None = None, paths: Paths 
 
     out = paths.releases / release_id
     (out / "entities").mkdir(parents=True, exist_ok=True)
+    # entities/ is wholly build output: a type with no rows in this build must not keep the last build's file (#41)
+    for stale in (out / "entities").glob("*.jsonl"):
+        stale.unlink()
     for etype in sorted({e.entity_type for e in ds.entities.values()}, key=lambda t: t.value):
         dump_jsonl(out / "entities" / f"{etype.value}.jsonl",
                    sorted(ds.by_type(etype), key=lambda e: e.canonical_id))
