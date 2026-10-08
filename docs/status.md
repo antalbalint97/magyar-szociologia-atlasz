@@ -2,7 +2,7 @@
 
 High-level snapshot of the research and engineering state. **GitHub Issues are the source
 of truth for actionable work**; this page links to them and does not duplicate them.
-Last updated: 2026-10-05.
+Last updated: 2026-10-08.
 
 ## Current release
 
@@ -67,7 +67,7 @@ grades rest on (p31, each figure with its denominator in the document):
 **Milestone 2: Canonicalization & Coverage** (tracking issue #3). It turns the TK
 crawl into a trustworthy canonical graph before more institutions are added.
 
-## Completed capabilities (Milestone 1, PRs #1 and #2, not merged yet; #8 fixed inside #2)
+## Completed capabilities (Milestone 1, PRs #1 and #2, merged into main on 2026-10-05; #8 fixed inside #2)
 
 - Claims as the unit of storage, with provenance to content-addressed raw snapshots.
 - Polite fetcher (robots.txt, delays, retries/backoff, replay).
@@ -80,14 +80,14 @@ crawl into a trustworthy canonical graph before more institutions are added.
 
 ## Known blockers
 
-- **Identity**: #4, #5 and #27 are done on the Milestone 2 branch (not merged). 67 person
+- **Identity**: #4, #5 and #27 are done and merged (PR #26, 2026-10-05). 67 person
   mentions wait for review (`review/mention_review.yaml`). 362 have no candidate, mostly
   former staff whose profile is gone and outside collaborators (#28); 130 of them were made
   visible by #31. A stated affiliation is not used as resolver evidence (#34), and the identity
   basis of a project edge is only derivable from claims, not stored (#37).
-- **Projects**: #7 is closed on the Milestone 2 branch (ADR-0008, not merged). #16 stays open:
-  its first sub-problem (project pages that profiles link) is implemented there (ADR-0009, not
-  merged); research-group pages, KI thematic research pages and CSS-RECENS former members are not.
+- **Projects**: #7 is closed (ADR-0008, merged with PR #26). #16 stays open:
+  its first sub-problem (project pages that profiles link) is implemented (ADR-0009, merged with
+  PR #26); research-group pages, KI thematic research pages and CSS-RECENS former members are not.
   #31 (ADR-0010) reads the SZI heading template. 51 of the 193 SZI project pages still state
   people under a label no field takes; what those labels mean is a decision (#36). A wrong
   abstract is stored on 14 pages by the legacy description rule (#35).
