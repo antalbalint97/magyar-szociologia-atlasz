@@ -37,6 +37,8 @@ Releases are not in git. A hosted build downloads one release tarball at build t
 | `GRAPH_RELEASE` | release id = the tarball's top directory, e.g. `2026-10-tk-m2-p31` (optional, checked when set) |
 | `ATLAS_RELEASE_SHA256` | sha256 of the tarball (optional, recommended: pins the exact artifact) |
 
+On Vercel (`VERCEL=1`) a build without `ATLAS_RELEASE_URL` stops as well (`ATLAS_ALLOW_FIXTURE=1`
+deploys the fixture deliberately). Node 22.6+ is required (`engines`), for `--experimental-strip-types`.
 With `ATLAS_RELEASE_URL` set the build stops, instead of falling back to the fixture, when the download
 fails, the archive does not extract, `manifest.json` is missing, its `release_id` differs from
 `GRAPH_RELEASE`, `dataset_kind` is not `snapshot`, the sha256 differs, or the application's
